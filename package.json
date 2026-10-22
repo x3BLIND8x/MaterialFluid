@@ -1,0 +1,102 @@
+{
+  "name": "materialfluid",
+  "version": "0.1.0",
+  "description": "Material-inspired React components with fluid motion and English/Persian support",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSE",
+    "VALIDATION.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./icons": {
+      "types": "./dist/material-icons.d.ts",
+      "import": "./dist/icons.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./fonts.css": "./dist/fonts.css",
+    "./fonts/*": "./dist/fonts/*"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "icons:generate": "python scripts/fetch-icons.py",
+    "dev": "vite --host 127.0.0.1",
+    "handoff": "node scripts/create-handoff.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "build": "npm run typecheck && vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/copy-assets.mjs",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "preview": "vite preview --host 127.0.0.1",
+    "smoke": "node scripts/package-smoke.mjs",
+    "browser:install": "node scripts/install-browser.mjs"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@material/material-color-utilities": "^0.3.0",
+    "@radix-ui/react-accordion": "^1.2.0",
+    "@radix-ui/react-alert-dialog": "^1.1.0",
+    "@radix-ui/react-checkbox": "^1.3.0",
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
+    "@radix-ui/react-popover": "^1.1.0",
+    "@radix-ui/react-radio-group": "^1.3.0",
+    "@radix-ui/react-select": "^2.2.0",
+    "@radix-ui/react-slider": "^1.3.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.0",
+    "@radix-ui/react-tooltip": "^1.2.0",
+    "@tanstack/react-table": "^8.21.0",
+    "motion": "^12.23.0",
+    "react-day-picker": "^9.11.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@eslint/js": "^9.0.0",
+    "@fontsource-variable/jetbrains-mono": "^5.2.0",
+    "@fontsource-variable/nunito": "^5.2.0",
+    "@playwright/test": "^1.56.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.6.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.0.0",
+    "jsdom": "^26.0.0",
+    "prettier": "^3.9.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/x3BLIND8x/MaterialFluid.git"
+  },
+  "homepage": "https://github.com/x3BLIND8x/MaterialFluid#readme",
+  "bugs": {
+    "url": "https://github.com/x3BLIND8x/MaterialFluid/issues"
+  }
+}

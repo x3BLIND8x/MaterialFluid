@@ -1,0 +1,23 @@
+node_modules/
+.cache/
+dist/
+showcase-dist/
+test-results/
+playwright-report/
+.impeccable/review/
+*.tgz
+*.log
+
+# Local configuration, credentials, and generated release artifacts.
+.env
+.env.*
+!.env.example
+.codex/
+.agents/
+.aws/
+.impeccable/
+*.zip
+*.tar
+coverage/
+__pycache__/
+.DS_Store
