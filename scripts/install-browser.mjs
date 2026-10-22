@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const cli = require.resolve("playwright/cli");
+const cli = resolve(dirname(require.resolve("playwright/package.json")), "cli.js");
 const result = spawnSync(process.execPath, [cli, "install", "chromium"], {
   stdio: "inherit",
   env: { ...process.env,
