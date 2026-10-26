@@ -21,7 +21,10 @@ import { cx, useControllable, setRef } from "./utils";
 import { useMaterialFluid } from "./provider";
 import { AutoHeight } from "./auto-height";
 import { RollingNumber } from "./rolling-number";
+import { localizeDigits } from "./numerals";
 import { Portal } from "./portal";
+import { FieldTriggerIcon } from "./field-trigger-icon";
+import { OptionsExpansionBody, useOptionsExpansion } from "./options-expansion";
 
 function useFieldPadding() {
   const [focused, setFocused] = useState(false);
@@ -330,8 +333,9 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
       return () => surface.removeEventListener("wheel", wheel as EventListener);
     });
     return <TextField {...props} className={cx(props.className, presentation === "goal" && "mf-number-field--goal")} ref={node => { input.current = node; setRef(ref, node); }} type="number" inputMode="decimal"
-      valueOverlayActive={!editing && valid}
-      valueOverlay={valid ? <span className="mf-number-value-content" data-editing={editing || undefined}><RollingNumber value={Number(value)} format={() => value} /></span> : null}
+      placeholder={props.placeholder === undefined ? undefined : localizeDigits(props.placeholder, locale)}
+      valueOverlayActive={valid && (locale === "fa" || !editing)}
+      valueOverlay={valid ? <span className="mf-number-value-content" dir="ltr" data-editing={editing || undefined}>{locale === "fa" && editing ? localizeDigits(value, locale) : <RollingNumber value={Number(value)} format={() => localizeDigits(value, locale)} />}</span> : null}
       trailing={<>{props.trailing}{unit && <span className="mf-number-unit">{unit}</span>}<ButtonGroup label={`${typeof props.label === "string" ? props.label : (locale === "fa" ? "مقدار" : "Value")}: ${locale === "fa" ? "تنظیم مقدار" : "Adjust value"}`} className="mf-number-stepper" variant="ghost">
         <IconButton variant="ghost" size="sm" label={locale === "fa" ? "کاهش" : "Decrease"} disabled={props.disabled || props.readOnly || (props.min !== undefined && valid && Number(value) <= Number(props.min))} onPointerDown={event => event.preventDefault()} onClick={() => step(-1)}><AnimatedIcon name="minus" size={16} /></IconButton>
         <IconButton variant="ghost" size="sm" label={locale === "fa" ? "افزایش" : "Increase"} disabled={props.disabled || props.readOnly || (props.max !== undefined && valid && Number(value) >= Number(props.max))} onPointerDown={event => event.preventDefault()} onClick={() => step(1)}><AnimatedIcon name="plus" size={16} /></IconButton>
@@ -384,6 +388,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const generatedId = useId();
     const id = givenId ?? generatedId;
     const { dir, locale } = useMaterialFluid();
+    const trigger = useRef<HTMLButtonElement | null>(null);
+    const { panel, side: optionsSide } = useOptionsExpansion(open, trigger);
     return (
       <FormField
         label={label}
@@ -394,26 +400,25 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       >
         <SelectPrimitive.Root {...props} open={open} onOpenChange={next => { setOpen(next); }} value={selected} onValueChange={setSelected} dir={dir}>
           <SelectPrimitive.Trigger
-            ref={ref}
+            ref={node => { trigger.current = node; setRef(ref, node); }}
             id={id}
             aria-invalid={!!error || undefined}
             aria-describedby={error ? `${id}-help` : undefined}
             className="mf-select-trigger mf-single-select-trigger"
           >
             <SelectPrimitive.Value placeholder={placeholder} />
-            <SelectPrimitive.Icon className="mf-field-adornment">
-              <AnimatedIcon name="chevron-down" size={18} />
-            </SelectPrimitive.Icon>
+            <SelectPrimitive.Icon><FieldTriggerIcon /></SelectPrimitive.Icon>
           </SelectPrimitive.Trigger>
           <Portal className={className}>
             <SelectPrimitive.Content
+              ref={panel}
               position="popper"
               align="start"
-              side="bottom"
-              sideOffset={6}
-              className="mf-floating mf-select-content mf-options-popup"
+              side={optionsSide}
+              sideOffset={-1}
+              className="mf-select-content mf-options-popup"
             >
-              <SelectPrimitive.Viewport className="mf-select-viewport mf-options-list">
+              <OptionsExpansionBody><SelectPrimitive.Viewport className="mf-select-viewport mf-options-list">
                 {!options.length && <p className="mf-options-empty" role="status">{locale === "fa" ? "گزینه‌ای در دسترس نیست" : "No options available"}</p>}
                 {options.map((o) => (
                   <SelectPrimitive.Item
@@ -430,7 +435,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     </SelectPrimitive.ItemIndicator>
                   </SelectPrimitive.Item>
                 ))}
-              </SelectPrimitive.Viewport>
+              </SelectPrimitive.Viewport></OptionsExpansionBody>
             </SelectPrimitive.Content>
           </Portal>
         </SelectPrimitive.Root>
@@ -466,6 +471,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
     const [selected, set] = useControllable(value, defaultValue, onValueChange);
     const [query, setQuery] = useState("");
     const [open, setOpen] = useState(false);
+    const { panel, side: optionsSide } = useOptionsExpansion(open, anchor);
     const [index, setIndex] = useState(0);
     const id = useId();
     const { locale } = useMaterialFluid();
@@ -555,20 +561,22 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
               onKeyDown={key}
               trailing={<IconButton variant="ghost" size="sm" label={locale === "fa" ? "نمایش پیشنهادها" : "Show suggestions"} aria-expanded={open} disabled={disabled || props.readOnly}
                 onPointerDown={event => event.preventDefault()}
-                onClick={() => { const next = !open; if (next) { input.current?.focus(); setQuery(""); setIndex(0); } setOpen(next); }}><AnimatedIcon name="chevron-down" size={16} /></IconButton>}
+                onClick={() => { const next = !open; if (next) { input.current?.focus(); setQuery(""); setIndex(0); } setOpen(next); }}><AnimatedIcon name="chevron-down" size={28} /></IconButton>}
             />
           </div>
         <Portal className={props.className}>
           <PopoverPrimitive.Content
+            ref={panel}
+            side={optionsSide}
             aria-label={label}
-            className="mf-floating mf-combobox-content mf-options-popup"
+            className="mf-combobox-content mf-options-popup"
             onInteractOutside={event => { if (anchor.current?.contains(event.target as Node)) event.preventDefault(); }}
             align="start"
-            sideOffset={6}
+            sideOffset={-1}
             onOpenAutoFocus={(e) => e.preventDefault()}
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
-            <div id={`${id}-list`} role="listbox" aria-label={label} className="mf-options-list">
+            <OptionsExpansionBody><div id={`${id}-list`} role="listbox" aria-label={label} className="mf-options-list">
               {results.length ? (
                 results.map((o, i) => (
                   <div
@@ -602,7 +610,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
                 onPointerMove={() => setIndex(results.length)} onPointerDown={event => { event.preventDefault(); chooseCustom(); }}>
                 <span className="mf-select-item-label">{locale === "fa" ? `افزودن «${query.trim()}»` : `Add “${query.trim()}”`}</span><AnimatedIcon name="plus" size={16} />
               </div>}
-            </div>
+            </div></OptionsExpansionBody>
           </PopoverPrimitive.Content>
         </Portal>
       </PopoverPrimitive.Root>
@@ -630,6 +638,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     const list = useRef<HTMLDivElement>(null);
     const anchor = useRef<HTMLDivElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
+    const { panel, side: optionsSide } = useOptionsExpansion(open, anchor);
     const { locale, motion: mode, reducedMotion } = useMaterialFluid();
     const expressive = mode === "expressive" && !reducedMotion;
     const transition = expressive ? { type: "spring" as const, stiffness: 420, damping: 28, mass: .8 } : { duration: 0 };
@@ -651,14 +660,14 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   </motion.span>) : <motion.span key="placeholder" className="mf-multi-placeholder" onClick={() => !disabled && setOpen(true)}>{placeholder}</motion.span>}
                 </AnimatePresence>
               </div>
-              <PopoverPrimitive.Trigger asChild><IconButton ref={node => { trigger.current = node; setRef(ref, node); }} id={id} label={`${label}: ${locale === "fa" ? "انتخاب گزینه‌ها" : "Choose options"}`} variant="ghost" size="sm" disabled={disabled} aria-haspopup="listbox" aria-controls={open ? `${id}-list` : undefined}><AnimatedIcon name="chevron-down" size={16} /></IconButton></PopoverPrimitive.Trigger>
+              <PopoverPrimitive.Trigger asChild><IconButton ref={node => { trigger.current = node; setRef(ref, node); }} id={id} label={`${label}: ${locale === "fa" ? "انتخاب گزینه‌ها" : "Choose options"}`} variant="ghost" size="sm" disabled={disabled} aria-haspopup="listbox" aria-controls={open ? `${id}-list` : undefined}><AnimatedIcon name="chevron-down" size={28} /></IconButton></PopoverPrimitive.Trigger>
             </div>
           </AutoHeight>
         </div></PopoverPrimitive.Anchor>
         <Portal className={className}>
-          <PopoverPrimitive.Content aria-label={label} className="mf-floating mf-multiselect-content mf-options-popup" align="start" sideOffset={6}
+          <PopoverPrimitive.Content ref={panel} side={optionsSide} aria-label={label} className="mf-multiselect-content mf-options-popup" align="start" sideOffset={-1}
             onInteractOutside={event => { if (anchor.current?.contains(event.target as Node)) event.preventDefault(); }}>
-            <TextField className="mf-choice-field mf-multi-search" label={locale === "fa" ? "جستجوی گزینه‌ها" : "Search options"} placeholder={locale === "fa" ? "جستجو…" : "Search…"} value={query} disabled={disabled}
+            <OptionsExpansionBody><TextField className="mf-choice-field mf-multi-search" label={locale === "fa" ? "جستجوی گزینه‌ها" : "Search options"} placeholder={locale === "fa" ? "جستجو…" : "Search…"} value={query} disabled={disabled}
               onChange={event => setQuery(event.currentTarget.value)}
               onKeyDown={event => { if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); const options = list.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"); if (options?.length) options[event.key === "ArrowDown" ? 0 : options.length - 1].focus(); } }} />
             <div ref={list} id={`${id}-list`} className="mf-options-list" role="listbox" aria-multiselectable="true" aria-label={label} onKeyDown={event => {
@@ -673,7 +682,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                 <span className="mf-select-item-label">{option.label}</span>
               </motion.button>)}
               {!results.length && <p className="mf-options-empty" role="status">{locale === "fa" ? (query ? "نتیجه‌ای یافت نشد" : "گزینه‌ای در دسترس نیست") : (query ? "No matching options" : "No options available")}</p>}
-            </div>
+            </div></OptionsExpansionBody>
           </PopoverPrimitive.Content>
         </Portal>
       </PopoverPrimitive.Root>

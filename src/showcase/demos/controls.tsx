@@ -18,6 +18,7 @@ import {
 import { AnimatedIcon, registerMaterialIcons, type IconName } from "../../kit/icons";
 import { IconSwap } from "../../kit/icon-swap";
 import { RollingNumber } from "../../kit/rolling-number";
+import { localizeDigits } from "../../kit/numerals";
 import { actionIcons } from "./action-icons";
 import { getMaterialIcon } from "../../kit/icon-registry";
 import { useMaterialFluid } from "../../kit/provider";
@@ -163,13 +164,13 @@ function ButtonGroupExamples({ disabled, fa }: { disabled?: boolean; fa: boolean
   return <div className="demo-stack">
     <div className="demo-stack demo-button-group-example">
       <span className="demo-group-label">{t("Playback", "پخش")}</span>
-      <ButtonGroup label={t("Playback", "پخش")}>
+      <ButtonGroup label={t("Playback", "پخش")} dir="ltr">
         <IconButton label={t("Rewind 10 seconds", "۱۰ ثانیه به عقب")} disabled={disabled} onClick={() => setSeconds(value => Math.max(0, value - 10))}><PlaybackIcon name="rewind" /></IconButton>
         <IconButton variant="primary" label={playing ? t("Pause", "مکث") : t("Play", "پخش")} aria-pressed={playing} disabled={disabled} onClick={() => setPlaying(value => !value)}><PlaybackIcon name={playing ? "pause" : "play"} /></IconButton>
         <IconButton label={t("Forward 10 seconds", "۱۰ ثانیه به جلو")} disabled={disabled} onClick={() => setSeconds(value => value + 10)}><PlaybackIcon name="forward" /></IconButton>
         <IconButton label={t("Stop", "توقف")} disabled={disabled} onClick={() => { setPlaying(false); setSeconds(0); }}><PlaybackIcon name="stop" /></IconButton>
       </ButtonGroup>
-      <output className="demo-caption"><RollingNumber value={seconds} format={value => `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`} /></output>
+      <output className="demo-caption" dir="ltr"><RollingNumber value={seconds} format={value => localizeDigits(`${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`, fa ? "fa" : "en")} /></output>
     </div>
     <div className="demo-stack demo-button-group-example">
       <span className="demo-group-label">{t("Formatting", "قالب‌بندی")}</span>
@@ -180,7 +181,7 @@ function ButtonGroupExamples({ disabled, fa }: { disabled?: boolean; fa: boolean
     </div>
     <ButtonGroup label={t("Pagination", "صفحه‌بندی")}>
       <Button disabled={disabled || page === 1} onClick={() => setPage(value => value - 1)}>{t("Previous", "قبلی")}</Button>
-      <output className="mf-button-group-value" aria-live="polite" aria-label={t(`Page ${page} of 5`, `صفحهٔ ${page} از ۵`)}><RollingNumber value={page} /><span aria-hidden="true">/</span><span aria-hidden="true">5</span></output>
+      <output className="mf-button-group-value" dir="ltr" aria-live="polite" aria-label={t(`Page ${page} of 5`, `صفحهٔ ${localizeDigits(String(page), "fa")} از ۵`)}><RollingNumber value={page} format={value => localizeDigits(String(value), fa ? "fa" : "en")} /><span aria-hidden="true">/</span><span aria-hidden="true">{fa ? "۵" : "5"}</span></output>
       <Button disabled={disabled || page === 5} onClick={() => setPage(value => value + 1)}>{t("Next", "بعدی")}</Button>
     </ButtonGroup>
   </div>;

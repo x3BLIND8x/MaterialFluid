@@ -217,7 +217,7 @@ describe("picker and control glyph regressions", () => {
   it("navigates date overlay month and year views and restores field focus", async () => {
     render(<MaterialFluidProvider motion="minimal"><DatePicker label="Start date" calendar="gregorian" defaultValue="2026-10-14" /></MaterialFluidProvider>);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", {name:"Choose date"}));
+    await user.click(screen.getByRole("button", {name:"Start date"}));
     const overlay = within(screen.getByRole("dialog", {name:"Start date"}));
     await user.click(overlay.getByRole("button", {name:"October"}));
     expect(overlay.getByRole("group", {name:"Choose month"})).not.toBeNull();
@@ -229,7 +229,7 @@ describe("picker and control glyph regressions", () => {
     expect(overlay.getByRole("button", {name:"2028"})).not.toBeNull();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", {name:"Start date"})).toBeNull();
-    expect(document.activeElement).toBe(screen.getByRole("textbox", {name:"Start date"}));
+    expect(document.activeElement).toBe(screen.getByRole("button", {name:"Start date"}));
   });
   it("keeps incoming notifications in history while the center is open", async () => {
     const changed = vi.fn();

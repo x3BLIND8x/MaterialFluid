@@ -466,8 +466,8 @@ export function DataTable<T>(rawProps: DataTableProps<T>) {
       <div className="mf-table-footer">
         <span className="mf-muted">
           {fa ? "صفحه" : "Page"}{" "}
-          {(table.getState().pagination.pageIndex + 1).toLocaleString(locale)} /{" "}
-          {Math.max(1, table.getPageCount()).toLocaleString(locale)}
+          <bdi dir="ltr">{(table.getState().pagination.pageIndex + 1).toLocaleString(locale)} /{" "}
+          {Math.max(1, table.getPageCount()).toLocaleString(locale)}</bdi>
         </span>
         <div>
           <Button

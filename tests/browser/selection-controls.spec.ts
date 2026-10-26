@@ -1,6 +1,402 @@
 import { selectSize } from "./helpers";
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 import { catalogue } from "../../src/showcase/catalogue";
+
+test("slider outlines follow keyboard focus and stay hidden after mouse release", async ({ page }) => {
+  await page.goto("/#/components/slider");
+  const slider = page.locator(".live-stage .mf-slider").first();
+  const thumb = slider.getByRole("slider");
+  const handle = thumb.locator(".mf-slider-handle");
+  await thumb.click();
+  await expect(thumb).toBeFocused();
+  await expect(handle).toHaveCSS("outline-style", "none");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(thumb).toBeFocused();
+  await expect(handle).toHaveCSS("outline-style", "solid");
+  // A mouse selection must also clear an existing keyboard focus ring.
+  await thumb.click();
+  await expect(handle).toHaveCSS("outline-style", "none");
+  const track = (await slider.locator(".mf-slider-track").boundingBox())!;
+  await page.mouse.click(track.x + track.width * .34, track.y + track.height / 2);
+  await expect(thumb).toBeFocused();
+  await expect(handle).toHaveCSS("outline-style", "none");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(handle).toHaveCSS("outline-style", "solid");
+});
+
+test("track clicks spring toward the pointer and keep animating after a quick release", async ({ page }) => {
+  for (const locale of ["en", "fa"]) {
+    await page.goto("/#/components/slider");
+    await page.evaluate(locale => localStorage.setItem("materialfluid.preferences", JSON.stringify({ locale, motion: "expressive" })), locale);
+    await page.reload();
+    for (const index of [0, 1]) {
+      const slider = page.locator(".live-stage .mf-slider").nth(index);
+      const thumb = slider.getByRole("slider");
+      const track = (await slider.locator(".mf-slider-track").boundingBox())!;
+      for (const quickRelease of [false, true]) {
+        const x = track.x + track.width * (quickRelease ? .22 : .82);
+        await page.mouse.move(x, track.y + track.height / 2);
+        // Record from pointer-down so automation overhead cannot consume the spring.
+        await thumb.evaluate(el => {
+          (el as HTMLElement & { __mfTrackRecording?: Promise<number[]> }).__mfTrackRecording = new Promise<number[]>(resolve => {
+          document.addEventListener("pointerdown", () => {
+            const positions = [el.getBoundingClientRect().x];
+            const frame = () => {
+              positions.push(el.getBoundingClientRect().x);
+              if (positions.length < 22) requestAnimationFrame(frame);
+              else resolve(positions);
+            };
+            requestAnimationFrame(frame);
+          }, { once: true, capture: true });
+          });
+        });
+        await page.mouse.down();
+        if (quickRelease) await page.mouse.up();
+        const frames = await thumb.evaluate(el => (el as HTMLElement & { __mfTrackRecording?: Promise<number[]> }).__mfTrackRecording!);
+        expect(new Set(frames.map(x => x.toFixed(2))).size).toBeGreaterThan(5);
+        if (!quickRelease) await page.mouse.up();
+        await expect(slider).not.toHaveAttribute("data-pointer-motion", "true");
+        const value = Number(await thumb.getAttribute("aria-valuenow"));
+        const expectedX = track.x + track.width * (locale === "fa" ? 1 - value / 100 : value / 100);
+        const bounds = (await thumb.boundingBox())!;
+        expect(Math.abs(bounds.x + bounds.width / 2 - expectedX)).toBeLessThan(1);
+        await expect(thumb.locator(".mf-slider-handle")).toHaveCSS("outline-style", "none");
+      }
+    }
+  }
+});
+
+test("held arrow keys keep slider movement and pressed-handle animation active", async ({ page }) => {
+  await page.goto("/#/components/slider");
+  const slider = page.locator(".live-stage .mf-slider").nth(1);
+  const thumb = slider.getByRole("slider");
+  const handle = thumb.locator(".mf-slider-handle");
+  await thumb.focus();
+  await page.keyboard.down("ArrowRight");
+  await expect(thumb).toHaveAttribute("aria-valuenow", "60");
+  await expect(slider).toHaveAttribute("data-key-held", "true");
+  await expect.poll(() => handle.evaluate(el => parseFloat(getComputedStyle(el).width))).toBeLessThan(3);
+  for (const value of [70, 80, 90]) {
+    const before = (await thumb.boundingBox())!.x;
+    await page.keyboard.down("ArrowRight");
+    await expect(thumb).toHaveAttribute("aria-valuenow", String(value));
+    await expect(slider).toHaveAttribute("data-key-held", "true");
+    await expect.poll(async () => (await thumb.boundingBox())!.x).toBeGreaterThan(before + 1);
+    expect(await thumb.locator("..").evaluate(el => parseFloat(getComputedStyle(el).transitionDuration))).toBeGreaterThan(0);
+  }
+  await page.keyboard.up("ArrowRight");
+  await expect(slider).not.toHaveAttribute("data-key-held", "true");
+  await expect(handle).toHaveCSS("width", "4px");
+});
+
+test("held sliders follow a continuous spring and settle to steps in LTR and RTL", async ({ page }) => {
+  for (const locale of ["en", "fa"]) {
+    await page.goto("/#/components/slider");
+    await page.evaluate(locale => localStorage.setItem("materialfluid.preferences", JSON.stringify({ locale, motion: "expressive" })), locale);
+    await page.reload();
+    for (const index of [0, 1]) {
+      const slider = page.locator(".live-stage .mf-slider").nth(index);
+      const thumb = slider.getByRole("slider");
+      await thumb.hover();
+      await page.mouse.down();
+      const track = (await slider.locator(".mf-slider-track").boundingBox())!;
+      for (const fraction of [.14, .83, .37]) {
+        const x = track.x + track.width * fraction;
+        await page.mouse.move(x, track.y + track.height / 2);
+        const frames = await thumb.evaluate(async (el, rtl) => {
+          const samples: { x: number; gapError: number }[] = [];
+          for (let i = 0; i < 35; i++) {
+            const bounds = el.getBoundingClientRect();
+            const center = bounds.x + bounds.width / 2;
+            const segment = el.closest(".mf-slider")!.querySelector(".mf-slider-segment")!.getBoundingClientRect();
+            samples.push({ x: center, gapError: Math.abs(center - (rtl ? segment.left : segment.right)) });
+            await new Promise(requestAnimationFrame);
+          }
+          return samples;
+        }, locale === "fa");
+        expect(new Set(frames.map(frame => frame.x.toFixed(2))).size).toBeGreaterThan(5);
+        expect(Math.max(...frames.map(frame => frame.gapError))).toBeLessThan(1);
+        await expect.poll(async () => {
+          const bounds = (await thumb.boundingBox())!;
+          return Math.abs(bounds.x + bounds.width / 2 - x);
+        }).toBeLessThan(1);
+      }
+      await expect(slider.locator(".mf-slider-value")).toHaveCount(0);
+      await expect(thumb).toHaveCSS("box-shadow", "none");
+      await expect(thumb.locator(".mf-slider-handle")).toHaveCSS("outline-style", "none");
+      const releaseX = track.x + track.width * .64;
+      await page.mouse.move(releaseX, track.y + track.height / 2);
+      await page.mouse.up();
+      if (index === 1) {
+        const frames = await thumb.evaluate(async el => {
+          const positions = [el.getBoundingClientRect().x];
+          for (let i = 0; i < 30; i++) {
+            await new Promise(requestAnimationFrame);
+            positions.push(el.getBoundingClientRect().x);
+          }
+          return positions;
+        });
+        expect(new Set(frames.map(x => x.toFixed(2))).size).toBeGreaterThan(5);
+      }
+      const value = Number(await thumb.getAttribute("aria-valuenow"));
+      const targetX = track.x + track.width * (locale === "fa" ? 1 - value / 100 : value / 100);
+      await expect.poll(async () => {
+        const bounds = (await thumb.boundingBox())!;
+        return Math.abs(bounds.x + bounds.width / 2 - targetX);
+      }).toBeLessThan(1);
+      await expect(slider).not.toHaveAttribute("data-pointer-motion", "true");
+    }
+  }
+});
+
+test("range slider press feedback affects only the held handle and its gaps", async ({ page }) => {
+  for (const locale of ["en", "fa"]) {
+    await page.goto("/#/components/slider");
+    await page.evaluate(locale => localStorage.setItem("materialfluid.preferences", JSON.stringify({ locale, motion: "expressive" })), locale);
+    await page.reload();
+    const slider = page.locator(".live-stage .mf-slider").nth(2);
+    for (const index of [0, 1, 0]) {
+      const held = slider.getByRole("slider").nth(index);
+      await held.hover();
+      await page.mouse.down();
+      const samples = await slider.evaluate(async (el, inactive) => {
+        const frames: { width: number; gaps: number[] }[] = [];
+        for (let i = 0; i < 15; i++) {
+          const handle = el.querySelectorAll(".mf-slider-handle")[inactive].getBoundingClientRect();
+          const center = handle.x + handle.width / 2;
+          const pieces = Array.from(el.querySelectorAll(".mf-slider-piece")).map(piece => piece.getBoundingClientRect());
+          frames.push({ width: handle.width, gaps: [center - Math.max(...pieces.filter(piece => piece.right < center).map(piece => piece.right)), Math.min(...pieces.filter(piece => piece.left > center).map(piece => piece.left)) - center] });
+          await new Promise(requestAnimationFrame);
+        }
+        return frames;
+      }, 1 - index);
+      for (const sample of samples) {
+        expect(sample.width).toBeCloseTo(4, 1);
+        for (const gap of sample.gaps) expect(gap).toBeCloseTo(8, 1);
+      }
+      await expect(held).toHaveAttribute("data-pressed", "true");
+      await expect.poll(() => held.locator(".mf-slider-handle").evaluate(el => parseFloat(getComputedStyle(el).width))).toBeLessThan(3);
+      await page.mouse.up();
+    }
+  }
+});
+
+test("slider full and empty corner rounding animates in both directions", async ({ page }) => {
+  for (const locale of ["en", "fa"]) {
+    await page.goto("/#/components/slider");
+    await page.evaluate(locale => localStorage.setItem("materialfluid.preferences", JSON.stringify({ locale, motion: "expressive" })), locale);
+    await page.reload();
+    const slider = page.locator(".live-stage .mf-slider").first();
+    const thumb = slider.getByRole("slider");
+    await expect(slider).toHaveAttribute("data-position-ready", "true");
+    for (const key of ["End", "Home", "End"]) {
+      const piece = slider.locator(key === "End" ? ".mf-slider-range > .mf-slider-piece" : ".mf-slider-segment:last-child > .mf-slider-piece");
+      await thumb.focus();
+      const samples = await piece.evaluate(async (el, { key, side }) => {
+        const radii: number[] = [parseFloat(getComputedStyle(el).getPropertyValue(side))];
+        // Start capture with the input so driver scheduling cannot miss the transition.
+        const thumb = el.closest(".mf-slider")!.querySelector('[role="slider"]')!;
+        thumb.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+        thumb.dispatchEvent(new KeyboardEvent("keyup", { key, bubbles: true }));
+        for (let i = 0; i < 25; i++) {
+          await new Promise(requestAnimationFrame);
+          radii.push(parseFloat(getComputedStyle(el).getPropertyValue(side)));
+        }
+        return radii;
+      }, { key, side: (key === "End") === (locale === "en") ? "border-top-right-radius" : "border-top-left-radius" });
+      expect(new Set(samples.map(radius => radius.toFixed(2))).size).toBeGreaterThan(4);
+      expect(samples.some(radius => radius > 2.1 && radius < 7.9)).toBe(true);
+      await expect(piece).toHaveCSS((key === "End") === (locale === "en") ? "border-top-right-radius" : "border-top-left-radius", "8px");
+    }
+  }
+});
+
+test("slider tracks keep gaps and rounded full or empty ends at every size", async ({ page }) => {
+  for (const locale of ["en", "fa"]) {
+    await page.goto("/#/components/slider");
+    await page.evaluate(locale => localStorage.setItem("materialfluid.preferences", JSON.stringify({ locale, motion: "minimal" })), locale);
+    await page.reload();
+    for (const size of ["sm", "md", "lg"]) {
+      await selectSize(page, size);
+      const slider = page.locator(".live-stage .mf-slider").first();
+      const thumb = slider.getByRole("slider");
+      await expect(thumb).toHaveCSS("width", "44px");
+      for (const key of ["Home", "End"]) {
+        await thumb.press(key);
+        const corners = await slider.locator(".mf-slider-piece").evaluateAll(pieces => pieces.filter(piece => piece.getBoundingClientRect().width > 1).map(piece => {
+          const css = getComputedStyle(piece);
+          const expected = piece.getBoundingClientRect().height / 2;
+          return [css.borderTopLeftRadius, css.borderTopRightRadius, css.borderBottomLeftRadius, css.borderBottomRightRadius].map(radius => Math.abs(parseFloat(radius) - expected));
+        }));
+        expect(corners).toHaveLength(1);
+        for (const error of corners.flat()) expect(error).toBeLessThan(.1);
+      }
+      await thumb.press("Home");
+      await thumb.press("PageUp");
+      const gapChecks = await page.locator(".live-stage .mf-slider").evaluateAll(sliders => sliders.map(slider => {
+        const handles = Array.from(slider.querySelectorAll(".mf-slider-handle")).map(handle => handle.getBoundingClientRect());
+        return Array.from(slider.querySelectorAll(".mf-slider-piece")).filter(piece => piece.getBoundingClientRect().width > 1).every(piece => {
+          const rect = piece.getBoundingClientRect();
+          return handles.every(handle => rect.right <= handle.left - 1 || rect.left >= handle.right + 1);
+        });
+      }));
+      expect(gapChecks.every(Boolean)).toBe(true);
+    }
+  }
+});
+
+async function expectOuterPress(control: Locator) {
+  const scale = () => control.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
+  await expect.poll(scale).toBeLessThan(.99);
+}
+
+test("checkbox and radio label presses animate and select their control", async ({ page }) => {
+  for (const route of ["checkbox", "radio-group"]) {
+    await page.goto(`/#/components/${route}`);
+    const control = page.locator(`.live-stage .${route === "checkbox" ? "mf-checkbox" : "mf-radio"}`).first();
+    const labelText = control.locator("..").locator(":scope > span");
+    let expectedChecked = await control.getAttribute("aria-checked") === "true";
+    for (let repeat = 0; repeat < 2; repeat++) {
+      await labelText.hover();
+      await page.mouse.down();
+      await expectOuterPress(control);
+      await page.mouse.up();
+      expectedChecked = route === "radio-group" || !expectedChecked;
+      await expect(control).toHaveAttribute("aria-checked", String(expectedChecked));
+      await expect.poll(() => control.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
+    }
+  }
+});
+
+test("radio preview keeps the previous dot visible and the pressed dot below active size", async ({ page }) => {
+  await page.goto("/#/components/radio-group");
+  const radios = page.locator(".live-stage .mf-radio-group").first().locator(".mf-radio");
+  const selected = radios.nth(1);
+  const other = radios.nth(0);
+  const dot = selected.locator(".mf-radio-center");
+  await expect(dot).toHaveAttribute("r", "6");
+  await other.locator("..").locator(":scope > span").hover();
+  await page.mouse.down();
+  await expectOuterPress(other);
+  await expect.poll(() => dot.evaluate(el => Number(el.getAttribute("r")))).toBeLessThan(5.8);
+  expect(await dot.evaluate(el => Number(el.getAttribute("r")))).toBeGreaterThan(5);
+  await expect.poll(() => other.locator(".mf-radio-center").evaluate(el => Number(el.getAttribute("r")))).toBeCloseTo(4.2, 1);
+  expect(await selected.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeGreaterThan(.93);
+  await page.mouse.up();
+  await expect(other).toHaveAttribute("aria-checked", "true");
+  await expect.poll(() => dot.evaluate(el => Number(el.getAttribute("r")))).toBeLessThan(.05);
+  await expect.poll(() => other.locator(".mf-radio-center").evaluate(el => Number(el.getAttribute("r")))).toBeCloseTo(6, 2);
+  await other.locator("..").locator(":scope > span").hover();
+  await page.mouse.down();
+  await expect.poll(() => other.locator(".mf-radio-center").evaluate(el => Number(el.getAttribute("r")))).toBeCloseTo(4.2, 1);
+  await page.mouse.up();
+});
+
+test("quick repeated clicks finish a visible outer spring after release", async ({ page }) => {
+  for (const route of ["checkbox", "radio-group"]) {
+    await page.goto(`/#/components/${route}`);
+    const control = page.locator(`.live-stage .${route === "checkbox" ? "mf-checkbox" : "mf-radio"}`).first();
+    for (let repeat = 0; repeat < 2; repeat++) {
+      await control.evaluate(element => {
+        const frames: number[] = [];
+        Object.assign(window, { outerFrames: frames });
+        element.addEventListener("pointerup", () => {
+          const sample = () => {
+            frames.push(new DOMMatrixReadOnly(getComputedStyle(element).transform).a);
+            if (frames.length < 60) requestAnimationFrame(sample);
+          };
+          requestAnimationFrame(sample);
+        }, { once: true });
+      });
+      await control.click({ delay: 10 });
+      await expect.poll(() => page.evaluate(() => (window as unknown as { outerFrames: number[] }).outerFrames.length)).toBe(60);
+      const frames = await page.evaluate(() => (window as unknown as { outerFrames: number[] }).outerFrames);
+      expect(Math.min(...frames)).toBeLessThan(route === "radio-group" ? .98 : .91);
+      if (route === "radio-group") expect(Math.max(...frames)).toBeLessThanOrEqual(1);
+      expect(new Set(frames.map(value => value.toFixed(3))).size).toBeGreaterThan(8);
+      await expect.poll(() => control.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
+    }
+  }
+});
+
+test("checkbox and radio outer shapes spring on press and respect reduced motion", async ({ page }) => {
+  for (const route of ["checkbox", "radio-group"]) {
+    await page.goto(`/#/components/${route}`);
+    const controls = page.locator(`.live-stage .${route === "checkbox" ? "mf-checkbox" : "mf-radio"}`);
+    for (const index of [0, 0, 0, 1, 1, 1]) {
+      const control = controls.nth(index);
+      const radius = await control.evaluate(el => getComputedStyle(el).borderRadius);
+      await control.hover();
+      await page.mouse.down();
+      await expectOuterPress(control);
+      await expect(control).toHaveCSS("border-radius", radius);
+      await page.mouse.up();
+      await expect.poll(() => control.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
+    }
+    await controls.first().focus();
+    await page.keyboard.down("Space");
+    await expectOuterPress(controls.first());
+    await page.keyboard.up("Space");
+    await expect.poll(() => controls.first().evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await controls.first().hover();
+    await page.mouse.down();
+    await expect(controls.first()).toHaveCSS("transform", "none");
+    await page.mouse.up();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+  }
+});
+
+test("indeterminate checkbox draws its minus stroke", async ({ page }) => {
+  await page.addInitScript(() => {
+    const samples: number[] = [];
+    Object.assign(window, { minusSamples: samples });
+    const sample = () => {
+      const path = document.querySelector(".live-stage .mf-checkbox-minus path");
+      if (path) samples.push(parseFloat(path.getAttribute("stroke-dasharray") ?? "0"));
+      if (samples.length < 30) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+  await page.goto("/#/components/checkbox");
+  await expect(page.locator(".live-stage .mf-checkbox-minus path")).toHaveAttribute("stroke-dasharray", "1 1");
+  const samples = await page.evaluate(() => (window as unknown as { minusSamples: number[] }).minusSamples);
+  expect(samples.some(value => value > 0 && value < 1)).toBe(true);
+});
+
+test("Free slider wheel glides and pointer press animates while reduced motion stays immediate", async ({ page }) => {
+  await page.goto("/#/components/slider");
+  const slider = page.locator(".live-stage .mf-slider").first();
+  const thumb = slider.getByRole("slider");
+  await expect(slider).toHaveAttribute("data-position-ready", "true");
+  await expect(thumb.locator("..")).toHaveCSS("transition-duration", "0s");
+  const frames = await thumb.evaluate(async element => {
+    const positions = [element.getBoundingClientRect().x];
+    element.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    for (let i = 0; i < 14; i++) {
+      await new Promise(requestAnimationFrame);
+      positions.push(element.getBoundingClientRect().x);
+    }
+    return positions;
+  });
+  await expect(thumb).toHaveAttribute("aria-valuenow", "65");
+  expect(new Set(frames.map(x => x.toFixed(2))).size).toBeGreaterThan(3);
+  expect(frames.some(x => x > frames[0] + .1 && x < frames.at(-1)! - .1)).toBe(true);
+  await expect(thumb.locator("..")).toHaveCSS("transition-duration", "0s");
+  await thumb.hover();
+  await page.mouse.wheel(0, -100);
+  await page.mouse.down();
+  await expect(thumb.locator("..")).toHaveCSS("transition-duration", "0s");
+  await expect.poll(() => thumb.locator(".mf-slider-handle").evaluate(el => parseFloat(getComputedStyle(el).width))).toBeLessThan(3);
+  await page.mouse.up();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(slider).not.toHaveAttribute("data-fluid", "true");
+  await thumb.hover();
+  await page.mouse.wheel(0, -100);
+  await expect(thumb.locator("..")).toHaveCSS("transition-duration", "0s");
+});
 
 test("selection controls use one preview and keep selected states visible", async ({ page }) => {
   await page.goto("/#/components/toggle");
@@ -19,8 +415,8 @@ test("selection controls use one preview and keep selected states visible", asyn
   const grid = stage.getByRole("button", { name: "Grid", exact: true });
   await grid.click();
   await expect(grid).toHaveAttribute("aria-pressed", "true");
-  await expect(grid.locator(".mf-selection")).toBeVisible();
-  const fill = await grid.locator(".mf-selection").evaluate(el => getComputedStyle(el).backgroundColor);
+  await expect(stage.locator(".mf-toggle-group").first().locator(".mf-selection")).toBeVisible();
+  const fill = await stage.locator(".mf-toggle-group").first().locator(".mf-selection").evaluate(el => getComputedStyle(el).backgroundColor);
   expect(fill).not.toBe("rgba(0, 0, 0, 0)");
   await expect(stage.locator(".mf-toggle-group").first().locator('[aria-pressed="true"]')).toHaveCount(1);
 });
@@ -109,13 +505,14 @@ test("sliders support smooth movement and navigation to Text Field stays healthy
   await page.goto("/#/components/slider");
   const slider = page.locator(".live-stage .mf-slider").first();
   const thumb = slider.getByRole("slider");
-  const handleStyle = await thumb.evaluate(el => {
+  const handleStyle = await thumb.locator(".mf-slider-handle").evaluate(el => {
     const style = getComputedStyle(el);
-    return { width: parseFloat(style.width), height: parseFloat(style.height), border: style.borderTopColor };
+    return { width: parseFloat(style.width), height: parseFloat(style.height), fill: style.backgroundColor };
   });
   expect(handleStyle.height).toBeGreaterThan(handleStyle.width * 3);
-  expect(handleStyle.width).toBeGreaterThanOrEqual(8);
-  expect(handleStyle.border).toBe(await slider.locator(".mf-slider-range").evaluate(el => getComputedStyle(el).backgroundColor));
+  expect(handleStyle.width).toBe(4);
+  expect(handleStyle.fill).toBe(await slider.locator(".mf-slider-range > .mf-slider-piece").evaluate(el => getComputedStyle(el).backgroundColor));
+  await expect(thumb).toHaveCSS("width", "44px");
   await expect(slider).toHaveAttribute("data-fluid", "true");
   await thumb.press("ArrowRight");
   await expect(thumb).toHaveAttribute("aria-valuenow", "60.01");
@@ -129,7 +526,7 @@ test("sliders support smooth movement and navigation to Text Field stays healthy
   await page.mouse.move(rect!.x + rect!.width * 0.63, rect!.y + rect!.height / 2, { steps: 12 });
   await page.mouse.up();
   expect(Number(await thumb.getAttribute("aria-valuenow"))).toBeGreaterThan(55);
-  // Pointer tracking is immediate: neither the Radix position wrapper nor range eases behind the input.
+  // The release animation completes before pointer-only easing is removed.
   await expect(thumb.locator("..")).toHaveCSS("transition-duration", "0s");
   const stepped = page.locator(".live-stage .mf-slider").nth(1);
   await expect(stepped).toHaveAttribute("data-slider-mode", "stepped");
@@ -274,7 +671,7 @@ test("slider handles appear at their initial values without load animation", asy
   expect(Math.max(...probe.frames) - Math.min(...probe.frames)).toBeLessThan(.6);
 });
 
-test("dense Advanced sliders track directly while preserving numeric increments", async ({ page }) => {
+test("dense Advanced sliders preserve numeric increments with expressive pointer motion", async ({ page }) => {
   await page.goto("/#/components/toggle");
   await page.locator(".advanced-tuning-trigger").click();
   const thumb = page.getByRole("slider", { name: "Text morph duration (ms)", exact: true });

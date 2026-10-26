@@ -165,7 +165,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
     } = useAppearanceProps({ ...rawProps, variant: "primary" });
 
     const [selected, set] = useControllable(page, defaultPage, onPageChange);
-    const { locale } = useMaterialFluid();
+    const { locale, dir } = useMaterialFluid();
     const id = useId();
     const count = Math.max(1, totalPages);
     const current = Math.min(count, Math.max(1, selected));
@@ -182,7 +182,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
           disabled={current === 1}
           onClick={() => set(current - 1)}
         >
-          <AnimatedIcon name="arrow-left" />
+          <AnimatedIcon name={dir === "rtl" ? "arrow-right" : "arrow-left"} />
         </IconButton>
         {Array.from({ length: count }, (_, i) => i + 1)
           .filter((p) => p === 1 || p === count || Math.abs(p - current) < 2)
@@ -209,7 +209,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
           disabled={current === count}
           onClick={() => set(current + 1)}
         >
-          <AnimatedIcon name="arrow-right" />
+          <AnimatedIcon name={dir === "rtl" ? "arrow-left" : "arrow-right"} />
         </IconButton>
       </nav>
     );

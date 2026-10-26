@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const stageRoot = resolve(root, ".cache", `handoff-stage-${Date.now()}`);
 const payload = join(stageRoot, "MaterialFluid");
-const zipPath = join(root, "MaterialFluid-v0.1.zip");
+const zipPath = join(root, "MaterialFluid-v0.11.zip");
 const omittedDirectories = new Set([
   ".cache",
   ".codex",
@@ -32,7 +32,7 @@ const omittedDirectories = new Set([
   "test-results",
   "__pycache__",
 ]);
-const omittedFiles = new Set(["materialfluid-0.1.0.tgz"]);
+const omittedFiles = new Set(["materialfluid-0.11.0.tgz"]);
 const omittedPath = (path) =>
   path.split(/[\\/]/).some((part) => omittedDirectories.has(part)) ||
   path === "src/kit/vendor/material" ||
@@ -95,7 +95,7 @@ const manifest = [
   "",
   "Excluded dependency folders, build outputs, caches, reviews, test reports, generated package archives, and the obsolete pre-generated Material SVG folder. The icon generator, generated icon data, complete showcase, public fonts, licenses, package lock, and Linux/Windows launchers are included.",
   "",
-  "After extracting MaterialFluid-v0.1.zip:",
+  "After extracting MaterialFluid-v0.11.zip:",
   "1. Open the MaterialFluid folder.",
   "2. Run `npm ci`.",
   "3. Run `./Open Showcase.sh` on Linux or `Open Showcase.cmd` on Windows.",

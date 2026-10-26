@@ -100,7 +100,7 @@ test("selected controls, progress and calendar use Primary fills in each theme",
     for (const [route, selector] of [
       ["checkbox", '.mf-checkbox[data-state="checked"] .mf-choice-fill'],
       ["switch", '.mf-switch[data-state="checked"]'],
-      ["slider", ".mf-slider-range"],
+      ["slider", ".mf-slider-range > .mf-slider-piece"],
       ["progress", ".mf-progress-fill"],
       ["calendar", ".rdp-selected .rdp-day_button"],
     ]) {

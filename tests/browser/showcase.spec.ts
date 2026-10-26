@@ -117,10 +117,10 @@ test("combobox, OTP, and date selection work", async ({ page }) => {
   await expect(
     page.getByRole("textbox", { name: "Verification code 2", exact: true }),
   ).toBeFocused();
+  await page.clock.setSystemTime(new Date("2026-10-14T12:00:00"));
   await page.goto("/#/components/date-picker");
-  await page.getByRole("textbox", { name: "Start date", exact: true }).fill("2026/10/14");
-  await page.getByRole("textbox", { name: "Start date", exact: true }).press("Enter");
-  await page.getByRole("button", { name: "Choose date", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Start date", exact: true })).toHaveJSProperty("tagName", "BUTTON");
+  await page.getByRole("button", { name: "Start date", exact: true }).press("Enter");
   await expect(page.locator(".mf-date-popover")).toBeVisible();
   await page
     .locator(".rdp-day_button")
@@ -128,8 +128,8 @@ test("combobox, OTP, and date selection work", async ({ page }) => {
     .first()
     .click();
   await expect(
-    page.getByRole("textbox", { name: "Start date", exact: true }),
-  ).toHaveValue("2026/10/15");
+    page.getByRole("button", { name: "Start date", exact: true }),
+  ).toHaveText("2026/10/15");
 });
 test("reduced motion and blocked storage remain usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -265,7 +265,7 @@ test("local fonts, no external requests, and accessibility on representative pag
   ).toBe(true);
 });
 
-test("selection menus share a scrollable dropdown", async ({ page }) => {
+test("selection fields expand into connected scrollable options", async ({ page }) => {
   await page.goto("/#/components/select");
   const trigger = page.locator(".demo-primary .mf-single-select-trigger");
   await trigger.click();
@@ -274,7 +274,7 @@ test("selection menus share a scrollable dropdown", async ({ page }) => {
   const field = await trigger.boundingBox();
   await expect.poll(async () => {
     const menu = await popup.boundingBox();
-    return Math.min(Math.abs(menu!.y - field!.y - field!.height - 6), Math.abs(menu!.y + menu!.height + 6 - field!.y));
+    return Math.min(Math.abs(menu!.y - field!.y - field!.height + 1), Math.abs(menu!.y + menu!.height - 1 - field!.y));
   }).toBeLessThan(2);
   const list = page.locator(".mf-options-list");
   expect(await list.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
@@ -288,7 +288,7 @@ test("selection menus share a scrollable dropdown", async ({ page }) => {
   await expect(page.getByRole("option", { name: "Project management", exact: true })).toBeInViewport();
 });
 
-test("combo menus anchor below the visible input rather than its helper text", async ({ page }) => {
+test("combo options connect to the visible input rather than its helper text", async ({ page }) => {
   await page.goto("/#/components/combobox");
   const input = page.getByRole("combobox", { name: "Find a discipline", exact: true });
   await input.click();
@@ -297,7 +297,7 @@ test("combo menus anchor below the visible input rather than its helper text", a
   const control = await input.locator("xpath=ancestor::div[contains(@class, 'mf-input-wrap')]").boundingBox();
   await expect.poll(async () => {
     const menu = await popup.boundingBox();
-    return Math.min(Math.abs(menu!.y - (control!.y + control!.height + 6)), Math.abs(menu!.y + menu!.height + 6 - control!.y));
+    return Math.min(Math.abs(menu!.y - (control!.y + control!.height - 1)), Math.abs(menu!.y + menu!.height - 1 - control!.y));
   }).toBeLessThan(2);
 });
 
@@ -305,8 +305,8 @@ test("combo menus anchor below the visible input rather than its helper text", a
 test("date picker stays anchored to its field on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/components/date-picker");
-  await page.getByRole("button", { name: "Choose date", exact: true }).click();
-  const field = await page.locator(".demo-primary .mf-input-wrap").boundingBox();
+  await page.getByRole("button", { name: "Start date", exact: true }).click();
+  const field = await page.locator(".demo-primary .mf-select-trigger").boundingBox();
   await expect.poll(async () => {
     const popup = await page.locator(".mf-date-popover").boundingBox();
     return Math.min(Math.abs(popup!.y - field!.y - field!.height - 8), Math.abs(popup!.y + popup!.height + 8 - field!.y));

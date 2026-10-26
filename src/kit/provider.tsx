@@ -25,7 +25,6 @@ import {
   type ThemeMode,
   type MotionMode,
   type Locale,
-  type Density,
 } from "./theme";
 export interface ButtonMotionSettings {
   colorDuration: number;
@@ -65,7 +64,6 @@ export interface MaterialFluidSettings {
   theme: ThemeMode;
   accentSeed: string;
   colorBehavior: ColorBehavior;
-  density: Density;
   motion: MotionMode;
   reducedMotion: boolean;
   buttonMotion: ButtonMotionSettings;
@@ -78,7 +76,6 @@ const defaults: MaterialFluidSettings = {
   theme: "system",
   accentSeed: "#eedd96",
   colorBehavior: colorBehaviorDefaults,
-  density: "comfortable",
   motion: "expressive",
   reducedMotion: false,
   buttonMotion: buttonMotionDefaults,
@@ -92,7 +89,6 @@ export interface MaterialFluidProviderProps extends HTMLAttributes<HTMLDivElemen
   theme?: ThemeMode;
   accentSeed?: string;
   colorBehavior?: Partial<ColorBehavior>;
-  density?: Density;
   motion?: MotionMode;
   buttonMotion?: Partial<ButtonMotionSettings>;
   textMorph?: Partial<TextMorphSettings>;
@@ -107,7 +103,6 @@ export const MaterialFluidProvider = forwardRef<
     theme = "system",
     accentSeed = "#eedd96",
     colorBehavior,
-    density = "comfortable",
     motion = "expressive",
     buttonMotion,
     textMorph,
@@ -176,7 +171,6 @@ export const MaterialFluidProvider = forwardRef<
       theme,
       accentSeed,
       colorBehavior: effectiveColors,
-      density,
       motion,
       reducedMotion: reduced,
       buttonMotion: effectiveButtonMotion,
@@ -189,7 +183,6 @@ export const MaterialFluidProvider = forwardRef<
       theme,
       accentSeed,
       effectiveColors,
-      density,
       motion,
       reduced,
       effectiveButtonMotion,
@@ -214,7 +207,6 @@ export const MaterialFluidProvider = forwardRef<
           lang={locale}
           dir={dir}
           data-theme={dark ? "dark" : "light"}
-          data-density={density}
           data-motion={reduced ? "reduced" : motion}
           style={{ ...tokens, ...style } as CSSProperties}
         >

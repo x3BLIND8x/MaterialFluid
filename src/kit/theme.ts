@@ -10,7 +10,6 @@ import {
 export type ThemeMode = "light" | "dark" | "system";
 export type MotionMode = "expressive" | "minimal";
 export type Locale = "en" | "fa";
-export type Density = "comfortable" | "compact";
 export interface ColorBehavior {
   primarySaturation: number;
   secondarySaturation: number;

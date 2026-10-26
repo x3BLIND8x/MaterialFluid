@@ -10,7 +10,7 @@ On Windows, double-click **Open Showcase.cmd**. It installs dependencies when ne
 
 Requires Node.js 22.12 or newer and npm. Initial dependency installation needs internet; normal local use loads fonts/icons from this project.
 
-To prepare a clean transfer archive for another computer, run `npm run handoff`. It creates `MaterialFluid-v0.1.zip` with the source project inside and excludes caches, installed dependencies, build outputs, and test artifacts.
+To prepare a clean transfer archive for another computer, run `npm run handoff`. It creates `MaterialFluid-v0.11.zip` with the source project inside and excludes caches, installed dependencies, build outputs, and test artifacts.
 
 ```sh
 npm ci --cache .cache/npm
@@ -25,7 +25,7 @@ The command above runs the development server without automatically opening a br
 npm run build
 npm pack
 # From another project:
-npm install /path/to/materialfluid-0.1.0.tgz
+npm install /path/to/materialfluid-0.11.0.tgz
 ```
 
 The library builds to `dist`; the separate showcase builds to `showcase-dist`. No package is published automatically. React and ReactDOM are peer dependencies.
@@ -61,7 +61,7 @@ export default function App() {
 
 ## Settings and styling
 
-`MaterialFluidProvider` accepts `locale: 'en' | 'fa'`, `dir: 'ltr' | 'rtl'`, `theme: 'system' | 'light' | 'dark'`, `motion: 'expressive' | 'minimal'`, `density: 'comfortable' | 'compact'`, and a six-digit hex `accentSeed`. Persian defaults to RTL. System reduced-motion preferences override movement in both modes. `useMaterialFluid()` exposes the effective context, including `reducedMotion`.
+`MaterialFluidProvider` accepts `locale: 'en' | 'fa'`, `dir: 'ltr' | 'rtl'`, `theme: 'system' | 'light' | 'dark'`, `motion: 'expressive' | 'minimal'`, and a six-digit hex `accentSeed`. Persian defaults to RTL. System reduced-motion preferences override movement in both modes. `useMaterialFluid()` exposes the effective context, including `reducedMotion`.
 
 The provider scopes CSS tokens, including `--mf-primary`, `--mf-on-primary`, `--mf-primary-container`, `--mf-on-primary-container`, `--mf-surface`, `--mf-on-surface`, `--mf-outline`, and `--mf-control-height`. Floating surfaces remain inside the corresponding provider so they inherit theme and direction. Use `className` and `style` where listed by component types; settings are application-controlled. Only the showcase persists settings in localStorage.
 
@@ -88,7 +88,7 @@ To regenerate, install Python build dependencies with `python -m pip install -r 
 
 ## Date and table contracts
 
-Dates use Gregorian **date-only strings**, `YYYY-MM-DD`, regardless of whether the display calendar is Persian or Gregorian. No UTC serialization is used. `Calendar`, `DatePicker`, and `DateRangePicker` accept `calendar: 'gregorian' | 'persian'`; display defaults to Persian for `locale="fa"`. Calendar choice is independent of locale. Date ranges are `{ from?: string; to?: string }` and may be partial while selecting. `DatePicker` is editable as `YYYY/MM/DD` in the display calendar and accepts Latin, Persian, or Arabic digits; Enter or blur validates and commits the date. Its forwarded ref points to the text input. The arrow button opens the calendar. `min` and `max` are inclusive. `parseDateOnly`, `toDateOnly`, and `formatDateOnly` are exported.
+Dates use Gregorian **date-only strings**, `YYYY-MM-DD`, regardless of whether the display calendar is Persian or Gregorian. No UTC serialization is used. `Calendar`, `DatePicker`, and `DateRangePicker` accept `calendar: 'gregorian' | 'persian'`; display defaults to Persian for `locale="fa"`. Calendar choice is independent of locale. Date ranges are `{ from?: string; to?: string }` and may be partial while selecting. `DatePicker` displays `YYYY/MM/DD` in the chosen calendar and selects dates only through its calendar overlay. Its forwarded ref points to the trigger button, matching DateRangePicker. Clicking the field or arrow, or pressing Enter, Space or Arrow Down, opens the calendar; typing and paste do not change its value. `min` and `max` are inclusive. `parseDateOnly`, `toDateOnly`, and `formatDateOnly` are exported.
 
 `DataTable<T>` accepts typed TanStack `ColumnDef<T>[]`, data supplied by the application, `caption`, optional stable `getRowId`, page size, loading state, and row-selection callback. Initial behavior is client-side sorting/filtering/pagination/selection, with all-row selection covering the filtered collection. Network fetching, editable cells, virtualization, and server-side pagination are outside this release.
 
@@ -209,8 +209,7 @@ switch the paired foreground to keep it readable.
 
 Explicit component props override group defaults; popup content retains the same
 appearance when rendered through a portal. The showcase has variant/size controls
-on each page. Density has been removed from showcase settings; the provider's
-existing density API remains available for compatibility.
+on each page. Component sizing uses Small, Medium and Large; there is no global density setting.
 
 Button variant/accent/theme changes reveal the new color in a crisp circle from
 the center. Hover does not trigger this reveal. `colorMotion={{duration: 0.55}}`
@@ -227,11 +226,11 @@ brief fades and immediate geometry; system reduced motion suppresses movement.
 Toggle, ToggleGroup, Checkbox, RadioGroup, Switch and Slider no longer expose action-color variants. Their size options remain Small, Medium and Large.
 
 - Toggle rests in Outline and becomes Primary when pressed.
-- ToggleGroup uses Ghost items with a sliding Primary selection.
-- Checkbox rests in Outline; checked state fills with Primary, while partial state keeps the outline with a minus and no fill. Checkbox and radio filling follow press depth like Toggle, with physical spring settling.
-- RadioGroup stays outlined with a centered, springing Primary dot.
+- ToggleGroup uses Ghost items with one movable Primary selection. The pill shares Button's press-depth and radius animation, stays within its resting size, and glides between snapped items while dragging. Items have no separate press fills or ripple trails. Release commits and cancellation restores the previous selection. ButtonGroup and ToggleGroup fit their contents.
+- Checkbox rests in Outline; checked state fills with Primary, while partial state keeps the outline with a minus and no fill. Both the check and minus strokes draw in. Its outer rectangle springs in scale on every press and release, including the partial state, while its corner radius stays fixed. Quick clicks complete a visible press before the return spring. Checkbox and radio filling follow press depth like Toggle.
+- RadioGroup stays outlined with a centered, springing Primary dot. The outer circle also springs on every press and release. Both controls use the shared button spring settings and respect minimal and reduced motion.
 - Switch uses an Outline track off and Primary track on; its Primary thumb swaps to Outline when enabled, with centered animated Wi-Fi/Bluetooth icons. Explicit `animated={true}` enables an AnimatedIcon while the default global pause remains in effect elsewhere.
-- Slider uses Outline with immediate Free movement, short glides for Snappy values, and press/release feedback. Use `mode="continuous"` for free movement or `mode="stepped" step={5}` for snapping. Passing `step` alone selects stepped mode; the default is continuous. Free mode has no position easing; stepped mode glides between fixed values over 140ms.
+- Slider uses split Primary/neutral tracks with continuous and stepped values, expressive movement, and press/release feedback. Use `mode="continuous"` for free movement or `mode="stepped" step={5}` for snapping. Passing `step` alone selects stepped mode; the default is continuous. Pointer movement follows a continuous physical spring with momentum and gentle overshoot, settling to the committed step on release; keyboard and wheel changes use expressive 340ms glides; held navigation keys retain press feedback throughout repeat events.
 
 Minimal mode uses restrained feedback; system reduced motion suppresses movement. The showcase renders these controls once per page. A failed example now shows an inline reload action rather than clearing the entire application.
 
@@ -239,9 +238,9 @@ All forms are Outline-only and render once per showcase page, including selects,
 
 Selection labels transition from weight 500 to 700 when active. Toggle Group supports mouse and touch scrubbing, commits the preview on release, and cancels on a vertical touch scroll or pointer cancellation. Holding enlarges only the inner selection pill with a spring; the outer group does not scale. Icon Button previews share a compact wrapping row. Reduced motion suppresses pill scaling and weight transitions.
 
-Sliders use a slim vertical rounded handle (10 × 44px at Medium), an Outline center, and Primary for both the filled track and handle border. Pressing narrows the handle. Stepped movement uses a smooth 140ms glide; Free movement remains immediate.
+Sliders use split active/inactive tracks with a gap around each handle, rounded outer caps and an end marker, following the supplied Material Design 3 Expressive reference. Track heights are 12/16/24px and solid handle widths are 3/4/6px for Small/Medium/Large; handle lengths are 32/44/52px, with at least a 44px pointer target. Press/release narrows the handle with expressive easing. The handle and split track share one continuous physical spring for track clicks, dragging and release, inspired by the supplied Image Comparison Spring demo. A damping ratio of 0.7 gives its 0.3 bounce character; changing the pointer target preserves momentum instead of restarting a fixed-duration tween. Values remain quantized while the visual spring can move between steps; release settles onto the committed step. Expressive narrowing and release rebound remain active throughout. Keyboard changes and 5%-of-range wheel changes use a 340ms expressive glide. Held navigation keys keep the pressed handle active and animate each repeated change until release. Mouse selection hides the focus outline throughout the interaction and after release; keyboard navigation restores it. Fully empty/full tracks animate their rounded caps. Range sliders apply press narrowing and gap changes only to the active handle. Values stay in the heading, with no floating tooltip, glow or shadow.
 
-Switch dragging snaps the thumb to the nearest endpoint with a short eased transition and no spring or bounce. Slider handles are wider for visibility: 8px Small, 10px Medium, 12px Large.
+Switch dragging snaps the thumb to the nearest endpoint with a short eased transition and no spring or bounce.
 
 Toggle Group labels remain stationary while the selection pill slides behind them.
 
@@ -249,7 +248,7 @@ Toggle → Advanced text morph includes Fade (0–100%). Zero keeps text fully o
 
 Checkbox ticks draw in over 180ms once the fill visibly covers the whole checkbox, without waiting for spring settling. Partial minus marks remain immediate. Radio rings and dots share one SVG coordinate system at every size. Switch thumbs anticipate a click with a small movement on press and complete the snap on release. Sliders initialize at their values without load animation.
 
-NumberField and Slider support the mouse wheel while hovered, consuming the gesture so the page stays still. Wheel up increases, wheel down decreases; sliders also support horizontal wheel movement. Range sliders adjust the handle closest to the pointer and preserve their neighbour bounds. Ctrl+wheel retains browser zoom. NumberField keeps native typing, arrow-key stepping, and explicit decrease/increase actions; its numeric overlay appears only while displaying or stepping values.
+NumberField and Slider support the mouse wheel while hovered, consuming the gesture so the page stays still. Wheel up increases, wheel down decreases; sliders also support horizontal wheel movement. Free sliders move by one twentieth of the full range per wheel step, with a short glide in expressive mode; stepped sliders use their configured step. Range sliders adjust the handle closest to the pointer and preserve their neighbour bounds. Ctrl+wheel retains browser zoom. NumberField keeps native typing, arrow-key stepping, and explicit decrease/increase actions; its numeric overlay appears only while displaying or stepping values.
 
 NumberField supports `presentation="goal"` and `unit` for large goal-setting values. Text-field focus expands only the text inset, keeping adornments fixed; invalid subtitle/error text wobbles once on validation feedback in Expressive mode. OTP digits roll in from above. FileInput uses a Primary chooser and accepts supported files via drag and drop with bounded feedback. Calendar month transitions, day feedback, and rounded date popovers follow Expressive/Minimal and reduced-motion preferences.
 
@@ -263,10 +262,14 @@ Select, Combobox, and MultiSelect share bounded, scrollable dropdown lists. Mult
 
 `TextField` and `Textarea` accept native `maxLength`; a live character counter appears when a limit is set. Use `showCount={false}` to hide the counter while retaining the limit. `Combobox allowCustom` applies `maxLength` to typed custom values and still permits longer listed options.
 
-`DatePicker` starts with a `----/--/--` numeric mask, supports digit-by-digit entry and paste, and commits on Enter or blur. Its calendar updates after the edit is committed. The calendar year editor applies a new year on Enter or Apply. `TimePicker` accepts `hourFormat={12}` or `{24}` (default); 12-hour mode includes an AM/PM toggle while emitted values remain canonical 24-hour time strings. Both picker fields keep fixed horizontal spacing on focus.
+`DatePicker` starts with a `----/--/--` mask and selects dates only through the calendar overlay. Its field uses the same button trigger and icon feedback as DateRangePicker. The calendar year editor applies a new year on Enter or Apply. `TimePicker` accepts `hourFormat={12}` or `{24}` (default); 12-hour mode includes an AM/PM toggle while emitted values remain canonical 24-hour time strings. Both picker fields keep fixed horizontal spacing on focus.
 
 DatePicker and DateRangePicker hide dates outside the displayed month. Standalone Calendar retains its existing behavior and accepts `showOutsideDays={false}` when needed.
 
-The showcase shell uses the kit’s fields, Toggle, links, top app bar, breadcrumbs, and navigation components. Selectable navigation shares Toggle Group’s moving-pill spring without its dragging behavior. Calendars hide adjacent-month dates by default; trailing field actions sit against the field edge in both text directions.
+The showcase shell uses the kit’s fields, Toggle, links, top app bar, breadcrumbs, and navigation components. Selectable navigation shares Toggle Group’s moving-pill spring without its dragging behavior. Calendars hide adjacent-month dates by default; trailing field actions retain space from the field edge in both text directions, with 20/22/24px glyphs inside separate 32/36/40px action targets at Small/Medium/Large.
 
 `TableOfContents` replaces Bottom Navigation. Its item values match document section IDs; selecting an item scrolls to that section, and scrolling updates the active heading. Tabs use a fully rounded, content-sized list. The showcase top bar is Ghost. Menu triggers use Primary and keep a stable popup anchor while pressed.
+
+Select, Combobox and MultiSelect expand the field outline into a continuous options surface without moving surrounding content. Height and corners morph over 300ms, including filtering, interrupted transitions and collapse; the chevron reverses over 400ms. Option rows rise 8px from a slight scale and 4px blur over 350ms, staggered by 50ms up to 250ms. The surface retains MaterialFluid colors and flat styling, follows upward collision placement, and skips spatial animation in Minimal or reduced-motion mode.
+
+Persian language displays Persian digits in number fields (including editing, steppers, time units and calendar year editors), date fields and both calendar systems. Native number values and date-only callbacks retain their canonical numeric/ISO data. Date ranges use `----/--/-- - ----/--/--` for empty boundaries and zero-padded `yyyy/MM/dd` dates in chronological left-to-right order.

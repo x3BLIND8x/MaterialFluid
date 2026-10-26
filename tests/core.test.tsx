@@ -16,7 +16,7 @@ import {
   hexFromArgb,
   lstarFromArgb,
 } from "@material/material-color-utilities";
-import { Calendar, DatePicker, TimePicker, parseDateOnly, toDateOnly, formatDateOnly } from "../src/kit/dates";
+import { Calendar, DatePicker, DateRangePicker, TimePicker, parseDateOnly, toDateOnly, formatDateOnly } from "../src/kit/dates";
 import { Switch, Button, Checkbox, Slider } from "../src/kit/controls";
 import { MaterialFluidProvider } from "../src/kit/provider";
 import { ComponentAppearanceProvider } from "../src/kit/appearance";
@@ -30,6 +30,24 @@ import {
 import { catalogue } from "../src/showcase/catalogue";
 import { seedFromHue, seedHue } from "../src/showcase/accent-seed";
 beforeAll(() => {
+  // jsdom has no PointerEvent constructor; Motion uses it for keyboard presses.
+  if (typeof PointerEvent === "undefined") {
+    Object.defineProperty(globalThis, "PointerEvent", {
+      configurable: true,
+      writable: true,
+      value: class extends MouseEvent {
+        readonly pointerId: number;
+        readonly pointerType: string;
+        readonly isPrimary: boolean;
+        constructor(type: string, init: PointerEventInit = {}) {
+          super(type, init);
+          this.pointerId = init.pointerId ?? 0;
+          this.pointerType = init.pointerType ?? "";
+          this.isPrimary = init.isPrimary ?? false;
+        }
+      },
+    });
+  }
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: vi.fn(() => ({
@@ -656,6 +674,24 @@ describe("numeric stepping", () => {
 });
 
 describe("wheel controls", () => {
+  it.each([[0, 100, 60, 65], [-40, 60, 10, 15], [10, 30, 20, 21]])(
+    "changes Free sliders by one twentieth of the %s to %s range",
+    (min, max, initial, increased) => {
+      vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+      try {
+        render(<MaterialFluidProvider motion="minimal"><Slider label="Volume" mode="continuous" min={min} max={max} defaultValue={[initial]} /></MaterialFluidProvider>);
+        const thumb = screen.getByRole("slider");
+        fireEvent.wheel(thumb, { deltaY: -100, cancelable: true });
+        expect(Number(thumb.getAttribute("aria-valuenow"))).toBe(increased);
+        fireEvent.wheel(thumb, { deltaY: 100, cancelable: true });
+        expect(Number(thumb.getAttribute("aria-valuenow"))).toBe(initial);
+        for (let i = 0; i < 30; i++) fireEvent.wheel(thumb, { deltaY: -100, cancelable: true });
+        expect(Number(thumb.getAttribute("aria-valuenow"))).toBe(max);
+        for (let i = 0; i < 30; i++) fireEvent.wheel(thumb, { deltaY: 100, cancelable: true });
+        expect(Number(thumb.getAttribute("aria-valuenow"))).toBe(min);
+      } finally { cleanup(); vi.unstubAllGlobals(); }
+    },
+  );
   it("steps a number field without scrolling the page and preserves browser zoom", () => {
     const { container } = render(<MaterialFluidProvider motion="minimal"><NumberField label="Count" defaultValue={5} /></MaterialFluidProvider>);
     const input = screen.getByRole("spinbutton") as HTMLInputElement;
@@ -930,31 +966,25 @@ describe("range, time, and file selection", () => {
   });
   it("hides adjacent-month dates in the date picker", async () => {
     render(<MaterialFluidProvider motion="minimal"><DatePicker label="Date" defaultValue="2026-10-14" /></MaterialFluidProvider>);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Choose date" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Date" }));
     expect(document.querySelectorAll(".mf-date-popover .rdp-outside button")).toHaveLength(0);
     expect(screen.getByRole("button", { name: "October" })).not.toBeNull();
   });
-  it("fills the date mask one digit at a time and commits only after editing", async () => {
+  it("uses only the calendar overlay for dates and retains keyboard access", async () => {
     const user = userEvent.setup();
     const changed = vi.fn();
-    render(<MaterialFluidProvider motion="minimal"><DatePicker label="Date" onValueChange={changed} /></MaterialFluidProvider>);
-    const field = screen.getByRole("textbox", { name: "Date" }) as HTMLInputElement;
-    expect(field.placeholder).toBe("----/--/--");
-    expect(field.value).toBe("");
-    await user.type(field, "20261115");
-    expect(field.value).toBe("2026/11/15");
+    render(<MaterialFluidProvider motion="minimal"><DatePicker label="Date" defaultValue="2026-10-14" onValueChange={changed} /></MaterialFluidProvider>);
+    const field = screen.getByRole("button", { name: "Date" }) as HTMLButtonElement;
+    expect(field.tagName).toBe("BUTTON");
+    expect(field.querySelector("input")).toBeNull();
+    field.focus();
+    await user.keyboard("20261115");
+    expect(field.textContent).toBe("2026/10/14");
     expect(changed).not.toHaveBeenCalled();
     await user.keyboard("{Enter}");
-    expect(changed).toHaveBeenLastCalledWith("2026-11-15");
-    field.setSelectionRange(0, 4);
-    await user.keyboard("2027");
-    expect(field.value).toBe("2027/11/15");
-    expect(changed).toHaveBeenCalledTimes(1);
-    await user.keyboard("{Enter}");
-    expect(changed).toHaveBeenLastCalledWith("2027-11-15");
-    await user.clear(field);
-    await user.tab();
-    expect(changed).toHaveBeenLastCalledWith(undefined);
+    await user.click(screen.getByRole("button", { name: /October 16/ }));
+    expect(changed).toHaveBeenLastCalledWith("2026-10-16");
+    expect(field.textContent).toBe("2026/10/16");
   });
   it.each([
     ["00:30", "12", "AM", "PM", "12:30"],
@@ -965,7 +995,7 @@ describe("range, time, and file selection", () => {
     const changed = vi.fn();
     render(<MaterialFluidProvider motion="minimal"><TimePicker label="Meeting" hourFormat={12} defaultValue={initial} onChange={event => changed(event.currentTarget.value)} /></MaterialFluidProvider>);
     await user.click(screen.getByRole("button", { name: "Choose time" }));
-    const hours = screen.getByRole("spinbutton", { name: "Hours" }) as HTMLInputElement;
+    const hours = screen.getByRole("spinbutton", { name: "Hours" }) as HTMLButtonElement;
     expect(hours.value).toBe(hour);
     expect(screen.getByRole("button", { name: period }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.change(hours, { target: { value: "13" } });
@@ -978,40 +1008,31 @@ describe("range, time, and file selection", () => {
     await user.click(screen.getByRole("button", { name: "Apply time" }));
     expect(changed).toHaveBeenLastCalledWith(expected);
   });
-  it("edits numeric dates, rejects impossible or out-of-range dates, and keeps the calendar usable", async () => {
+  it("enforces date bounds through calendar navigation", async () => {
     const changed = vi.fn();
     render(<MaterialFluidProvider motion="minimal"><DatePicker label="Start date" defaultValue="2026-10-14" min="2026-10-01" max="2026-12-31" onValueChange={changed} /></MaterialFluidProvider>);
-    const field = screen.getByRole("textbox", { name: "Start date" }) as HTMLInputElement;
-    expect(field.value).toBe("2026/10/14");
-    fireEvent.change(field, { target: { value: "2026/11/15" } });
-    fireEvent.keyDown(field, { key: "Enter" });
+    const field = screen.getByRole("button", { name: "Start date" }) as HTMLButtonElement;
+    fireEvent.click(field);
+    expect(document.querySelector(".rdp-button_previous")?.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(document.querySelector(".rdp-button_next")!);
+    await userEvent.setup().click(screen.getByRole("button", { name: /November 15/ }));
     expect(changed).toHaveBeenLastCalledWith("2026-11-15");
-    for (const value of ["2026/11/31", "2026/09/15", "2026/13/01"]) {
-      changed.mockClear();
-      fireEvent.change(field, { target: { value } });
-      fireEvent.blur(field);
-      expect(field.getAttribute("aria-invalid")).toBe("true");
-      expect(changed).not.toHaveBeenCalled();
-    }
-    fireEvent.keyDown(field, { key: "Escape" });
-    expect(field.value).toBe("2026/11/15");
-    await userEvent.setup().click(screen.getByRole("button", { name: "Choose date" }));
-    expect(screen.getByRole("button", { name: "November" })).not.toBeNull();
+    expect(field.textContent).toBe("2026/11/15");
+    fireEvent.click(field);
+    fireEvent.click(document.querySelector(".rdp-button_next")!);
+    expect(document.querySelector(".rdp-button_next")?.getAttribute("aria-disabled")).toBe("true");
   });
-  it("accepts Persian numeric dates and Persian digits while emitting Gregorian date-only values", () => {
+  it("selects a Persian calendar date while emitting a Gregorian date-only value", () => {
     const changed = vi.fn();
     render(<MaterialFluidProvider motion="minimal"><DatePicker calendar="persian" label="Date" defaultValue="2026-10-14" onValueChange={changed} /></MaterialFluidProvider>);
-    const field = screen.getByRole("textbox", { name: "Date" }) as HTMLInputElement;
-    expect(field.value).toBe("1405/07/22");
-    fireEvent.change(field, { target: { value: "۱۴۰۵/۰۷/۲۳" } });
-    fireEvent.blur(field);
+    const field = screen.getByRole("button", { name: "Date" }) as HTMLButtonElement;
+    expect(field.textContent).toBe("1405/07/22");
+    fireEvent.click(field);
+    const days = Array.from(document.querySelectorAll(".rdp-day_button"));
+    expect(days.some(day => day.textContent === "31")).toBe(false);
+    fireEvent.click(days.find(day => day.textContent === "23")!);
     expect(changed).toHaveBeenLastCalledWith("2026-10-15");
-    expect(field.value).toBe("1405/07/23");
-    changed.mockClear();
-    fireEvent.change(field, { target: { value: "1405/07/31" } });
-    fireEvent.blur(field);
-    expect(changed).not.toHaveBeenCalled();
-    expect(field.getAttribute("aria-invalid")).toBe("true");
+    expect(field.textContent).toBe("1405/07/23");
   });
   it("edits time through goal controls and preserves controlled changes and submission", async () => {
     const changed = vi.fn();
@@ -1213,5 +1234,54 @@ describe("stepper progress", () => {
     expect(account.getAttribute("aria-current")).toBe("step");
     expect(account.querySelector("[data-complete]")).toBeNull();
     expect(changed).toHaveBeenLastCalledWith("account");
+  });
+});
+
+
+describe("localized numeric fields and dates", () => {
+  it("keeps native numeric callbacks while displaying Persian digits during editing and stepping", () => {
+    const changed = vi.fn();
+    const { container, rerender } = render(<MaterialFluidProvider locale="fa" motion="minimal"><NumberField label="Count" defaultValue={12} step={.5} onChange={event => changed(event.currentTarget.valueAsNumber)} /></MaterialFluidProvider>);
+    const input = screen.getByRole("spinbutton") as HTMLInputElement;
+    expect(container.querySelector(".mf-number-value-content")?.textContent).toBe("۱۲");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "12.5" } });
+    expect(input.valueAsNumber).toBe(12.5);
+    expect(changed).toHaveBeenLastCalledWith(12.5);
+    expect(container.querySelector(".mf-number-value-content")?.textContent).toBe("۱۲.۵");
+    expect(container.querySelector("[data-overlay-active]")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "افزایش" }));
+    expect(input.valueAsNumber).toBe(13);
+    expect(container.querySelector(".mf-number-value-content")?.textContent).toBe("۱۳");
+    rerender(<MaterialFluidProvider locale="en" motion="minimal"><NumberField label="Count" defaultValue={12} step={.5} /></MaterialFluidProvider>);
+    expect(container.querySelector(".mf-number-value-content")?.textContent).toBe("13");
+  });
+  it.each(["en", "fa"] as const)("shows both date masks and a partial range in %s", locale => {
+    const { container, rerender } = render(<MaterialFluidProvider locale={locale} motion="minimal"><DateRangePicker label="Range" /></MaterialFluidProvider>);
+    expect(container.querySelector(".mf-trigger-value")?.textContent).toBe("----/--/-- - ----/--/--");
+    rerender(<MaterialFluidProvider locale={locale} motion="minimal"><DateRangePicker label="Range" value={{ from: "2024-03-20" }} /></MaterialFluidProvider>);
+    expect(container.querySelector(".mf-trigger-value")?.textContent).toBe(locale === "fa" ? "۱۴۰۳/۰۱/۰۱ - ----/--/--" : "2024/03/20 - ----/--/--");
+  });
+  it("selects Persian dates through the overlay while committing Gregorian date-only values", () => {
+    const changed = vi.fn();
+    render(<MaterialFluidProvider locale="fa" motion="minimal"><DatePicker label="Date" defaultValue="2024-03-20" onValueChange={changed} /></MaterialFluidProvider>);
+    const input = screen.getByRole("button", { name: "Date" }) as HTMLButtonElement;
+    expect(input.textContent).toBe("۱۴۰۳/۰۱/۰۱");
+    expect(document.querySelector(".mf-trigger-value")?.getAttribute("dir")).toBe("ltr");
+    expect(input.querySelector("input")).toBeNull();
+    fireEvent.click(input);
+    const day = Array.from(document.querySelectorAll(".rdp-day_button")).find(button => button.textContent === "۲")!;
+    fireEvent.click(day);
+    expect(changed).toHaveBeenLastCalledWith("2024-03-21");
+    expect(input.textContent).toBe("۱۴۰۳/۰۱/۰۲");
+  });
+  it.each(["gregorian", "persian"] as const)("localizes day and year digits for the %s calendar", calendar => {
+    const { container } = render(<MaterialFluidProvider locale="fa" motion="minimal"><Calendar calendar={calendar} value="2024-03-20" /></MaterialFluidProvider>);
+    const days = Array.from(container.querySelectorAll(".rdp-day_button"));
+    expect(days.length).toBeGreaterThan(20);
+    days.forEach(day => expect(day.textContent).toMatch(/^[۰-۹]+$/));
+    const year = screen.getByRole("button", { name: calendar === "persian" ? "۱۴۰۳" : "۲۰۲۴" });
+    fireEvent.click(year);
+    expect(container.querySelector(".mf-number-value-content")?.textContent).toBe(calendar === "persian" ? "۱۴۰۳" : "۲۰۲۴");
   });
 });

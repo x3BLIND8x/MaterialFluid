@@ -1,28 +1,23 @@
-# MaterialFluid v0.1 validation
+# MaterialFluid 0.11 validation
 
-Current release verification uses Linux, Node.js 26.12.0, and the repository lockfile. Package support requires Node.js 22.12 or newer.
+Verified on 2026-10-26 using Windows, Node.js 22.14.0, npm 10.9.2 and the repository lockfile. The package version is 0.11.0 and the Git release tag is v0.11.
 
 ## Completed
 
-- All 130 unit and component tests pass, including palette contrast/defaults, forms, notifications, responsive navigation, pointer interactions, and the bounded table-resize regression.
-- ESLint passes.
-- TypeScript strict checks, the production showcase, library bundles, declarations, and asset copy all build successfully.
-- The source ZIP passes independent CRC and file-list verification. It excludes installed dependencies, builds, caches, local configuration, credentials, and reports, and preserves the Linux launcher's executable permission.
+- All 139 unit/component tests pass across five test files.
+- All 89 browser regression scenarios pass across the full sweep and focused reruns: 85 passed the full sweep; four passed after updating obsolete selectors, waiting for keyboard focus before Escape, and recording the slider spring from pointer-down. These checks use system Microsoft Edge through Playwright.
+- Browser coverage includes all 56 routes, keyboard/touch interaction, English/Persian, mobile viewports, calendar selection, RTL arrows and playback order, page-ratio order, connected options expansion, sliders and selection controls.
+- ESLint and strict TypeScript checks pass.
+- The full production build passes, including showcase and library bundles, declarations and asset copying.
+- The packed 0.11.0 library installs into the consumer fixture. Its 58 exports, server rendering, optional icon registration, complete icon pack, fonts and styles pass smoke checks. All 56 default and 56 size examples typecheck against the installed package.
+- Desktop/mobile visual checks confirm the date picker uses the same native button trigger as the range picker, with no text input/caret. Empty range boundaries use `----/--/-- - ----/--/--`; Persian displays retain Persian digits.
 
-## Package and browser verification
+## Persian calendar profile
 
-- Isolated installation of the packed library passes: 58 exports, server rendering, the optional icon pack, styles, fonts, and all 56 default plus 56 size examples.
-- All 61 Chromium browser regressions pass across the final suite and focused rerun. Coverage includes all 56 routes, keyboard/touch interactions, English/Persian, mobile layout, navigation motion, anchored dropdowns, menu holds, and trailing field alignment at every size.
-- Automated accessibility checks pass on seven representative component pages.
-- Impeccable review includes 24 desktop/mobile English/Persian captures across light/dark themes, plus open-overlay and navigation inspections. No page overflow or runtime exceptions were found in those captures.
-- The portable launcher prints its URL, keeps serving after the browser closes, and stops its server when its terminal process exits.
+A local development-browser comparison measured ten month navigations with the same two-frame sampling method. Persian navigation averaged 90.84 ms before the change and 40.77 ms afterward; Gregorian navigation afterward averaged 36.13 ms. Repeated number-formatter construction during those Persian navigations fell from 3,744 instances to zero. The adapter caches date labels and localizes digits once; expressive navigation remains enabled in the component.
 
-The optional icon catalogue is loaded separately. Vite reports a large-chunk warning for that catalogue and the main showcase bundle; this is documented rather than suppressed.
+## Boundaries
 
-## Acceptance boundaries
+The browser results establish local automated behavior and viewport checks, not physical-phone, Safari, Firefox or manual screen-reader acceptance. Automated accessibility checks support the WCAG 2.2 AA target without certifying conformance.
 
-Automated checks support the WCAG 2.2 AA target; they do not certify conformance. Manual screen-reader output, physical phones, Safari, and Firefox are not verified by this run.
-
-The optional Material Symbols pack contains 4,301 source symbols plus 21 compatibility aliases. Generated animation classification is heuristic; tests of paths, registration, and representative glyphs do not establish individual visual approval of every symbol.
-
-The showcase contains illustrative people and data, runs without an account or backend, and uses local font and icon assets. The complete icon catalogue is loaded separately and is substantially larger than the core library.
+Vite still reports the existing large-chunk warning for the icon catalogue and main showcase bundle. The showcase uses local font/icon assets and illustrative data, with no account or backend.

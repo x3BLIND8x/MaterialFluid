@@ -1,10 +1,8 @@
-import { AnimatePresence, motion } from "motion/react";
 import { useAppearanceProps, type AppearanceProps } from "./appearance";
 import {
   forwardRef,
   memo,
   useCallback,
-  useLayoutEffect,
   createContext,
   useContext,
   useEffect,
@@ -19,7 +17,6 @@ import {
 } from "react";
 import { DateLib, DayPicker, type MonthCaptionProps } from "react-day-picker";
 import {
-  DayPicker as PersianDayPicker,
   getDateLib as getPersianDateLib,
   faIR as jalaliFa,
   enUS as jalaliEn,
@@ -33,6 +30,8 @@ import { AnimatedIcon } from "./icons";
 import { AutoHeight } from "./auto-height";
 import { Button, IconButton, ToggleGroup } from "./controls";
 import { Portal } from "./portal";
+import { FieldTriggerIcon } from "./field-trigger-icon";
+import { localizeDigits } from "./numerals";
 function CalendarNavButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
   return <IconButton {...props} label={props["aria-label"] ?? "Change month"} variant="ghost" size="sm" />;
 }
@@ -49,6 +48,33 @@ function CalendarCaption({ calendarMonth, displayIndex: _displayIndex, children:
     <Button ref={navigation.yearButton} variant="ghost" size="sm" disabled={navigation.disabled} aria-expanded={navigation.view === "year"} onClick={() => navigation.openView("year")}>{navigation.library.format(calendarMonth.date, "yyyy")}</Button>
   </div>;
 }
+function CalendarChevron({ orientation = "left" }: { orientation?: "up" | "down" | "left" | "right" }) {
+  const { dir } = useMaterialFluid();
+  const direction = dir === "rtl" ? orientation === "left" ? "right" : orientation === "right" ? "left" : orientation : orientation;
+  return <AnimatedIcon name={`chevron-${direction}`} size={20} animated={false} />;
+}
+const calendarComponents = { MonthCaption: CalendarCaption, PreviousMonthButton: CalendarNavButton, NextMonthButton: CalendarNavButton, Chevron: CalendarChevron };
+
+/** Format and localize once; DayPicker must not wrap the Jalali formatter again. */
+function createCalendarLibrary(calendar: CalendarSystem, locale: "en" | "fa") {
+  const library = calendar === "persian"
+    ? getPersianDateLib({ locale: locale === "fa" ? jalaliFa : jalaliEn, numerals: "latn" })
+    : new DateLib({ locale: locale === "fa" ? faIR : enUS, numerals: "latn" });
+  const format = library.format;
+  const labels = new Map<string, string>();
+  library.format = (...args: Parameters<typeof format>) => {
+    const key = `${args[0].getTime()}:${args[1]}`;
+    const cached = labels.get(key);
+    if (cached !== undefined) return cached;
+    const text = localizeDigits(format(...args), locale);
+    if (labels.size >= 512) labels.delete(labels.keys().next().value!);
+    labels.set(key, text);
+    return text;
+  };
+  library.formatNumber = value => localizeDigits(String(value), locale);
+  return library;
+}
+
 export type CalendarSystem = "gregorian" | "persian";
 export type DateOnly = string;
 export interface DateRangeValue {
@@ -138,7 +164,6 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
       defaultValue,
       onValueChange,
     );
-    const Component = calendar === "persian" ? PersianDayPicker : DayPicker;
     const selectedDate = parseDateOnly(selected);
     const selectedRange = {
       from: parseDateOnly(range?.from),
@@ -146,21 +171,19 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
     };
     const minimum = parseDateOnly(min),
       maximum = parseDateOnly(max);
-    const library = useMemo(() => calendar === "persian"
-      ? getPersianDateLib({ locale: locale === "fa" ? jalaliFa : jalaliEn, numerals: locale === "fa" ? "arabext" : "latn" })
-      : new DateLib({ locale: locale === "fa" ? faIR : enUS, numerals: locale === "fa" ? "arabext" : "latn" }), [calendar, locale]);
+    const library = useMemo(() => createCalendarLibrary(calendar, locale), [calendar, locale]);
     const [month, setMonth] = useState(() => library.startOfMonth(selectedDate ?? selectedRange.from ?? new Date()));
     const [view, setView] = useState<CalendarView>("days");
     const container = useRef<HTMLDivElement | null>(null);
     const monthButton = useRef<HTMLButtonElement | null>(null);
     const yearButton = useRef<HTMLButtonElement | null>(null);
     const wheelDelta = useRef(0);
-    useEffect(() => { setMonth(current => library.startOfMonth(current)); setView("days"); }, [library]);
+    useEffect(() => { setMonth(current => { const next = library.startOfMonth(current); return next.getTime() === current.getTime() ? current : next; }); setView("days"); }, [library]);
     const navigate = (date: Date) => {
       let next = library.startOfMonth(date);
       if (minimum && next < library.startOfMonth(minimum)) next = library.startOfMonth(minimum);
       if (maximum && next > library.startOfMonth(maximum)) next = library.startOfMonth(maximum);
-      setMonth(next);
+      setMonth(current => current.getTime() === next.getTime() ? current : next);
     };
     const openView = (next: CalendarView) => {
       if (view === "days" && container.current) {
@@ -190,6 +213,9 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
     });
     const minimumYear = minimum ? library.getYear(minimum) : 1;
     const maximumYear = maximum ? library.getYear(maximum) : calendar === "persian" ? 3000 : 9999;
+    const formatters = useMemo(() => ({
+      formatWeekdayName: (date: Date) => library.format(date, calendar === "persian" && locale === "fa" ? "ccccc" : "cccccc"),
+    }), [library, calendar, locale]);
     const common = {
       dir,
       animate: mode === "expressive" && !reducedMotion,
@@ -202,7 +228,9 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
           : locale === "fa"
             ? faIR
             : enUS,
-      numerals: locale === "fa" ? ("arabext" as const) : ("latn" as const),
+      numerals: "latn" as const,
+      dateLib: library,
+      formatters,
       month,
       onMonthChange: navigate,
       startMonth: minimum ? library.startOfMonth(minimum) : undefined,
@@ -215,22 +243,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
           ],
       className: "mf-calendar",
       showOutsideDays,
-      components: {
-        MonthCaption: CalendarCaption,
-        PreviousMonthButton: CalendarNavButton,
-        NextMonthButton: CalendarNavButton,
-        Chevron: ({
-          orientation = "left",
-        }: {
-          orientation?: "up" | "down" | "left" | "right";
-        }) => (
-          <AnimatedIcon
-            name={`chevron-${orientation}`}
-            size={20}
-            animated={false}
-          />
-        ),
-      },
+      components: calendarComponents,
     };
     return (
       <CalendarNavigation.Provider value={{ library, view, openView, monthButton, yearButton, disabled }}>
@@ -238,14 +251,14 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
         onKeyDown={event => { props.onKeyDown?.(event); if (event.key === "Escape" && view !== "days") { event.preventDefault(); event.stopPropagation(); closeView(); } }}>
         <AutoHeight className="mf-calendar-size">
         {selection === "single" ? (
-          <Component
+          <DayPicker
             {...common}
             mode="single"
             selected={selectedDate}
             onSelect={(date) => set(date ? toDateOnly(date) : undefined)}
           />
         ) : (
-          <Component
+          <DayPicker
             {...common}
             mode="range"
             selected={selectedRange}
@@ -263,7 +276,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
           {Array.from({ length: 12 }, (_, i) => {
             const date = library.startOfMonth(library.setMonth(month, i));
             const unavailable = !!((minimum && library.endOfMonth(date) < minimum) || (maximum && date > maximum));
-            return <button type="button" key={i} className={cx("mf-button mf-scale--sm mf-calendar-month", library.getMonth(month) === i ? "mf-button--filled mf-variant--primary" : "mf-variant--ghost")} aria-label={`${library.format(date, "LLLL")}, ${i + 1}`} disabled={disabled || unavailable} aria-pressed={library.getMonth(month) === i} onClick={() => { navigate(date); closeView(); }}>
+            return <button type="button" key={i} className={cx("mf-button mf-scale--sm mf-calendar-month", library.getMonth(month) === i ? "mf-button--filled mf-variant--primary" : "mf-variant--ghost")} aria-label={`${library.format(date, "LLLL")}, ${localizeDigits(String(i + 1), locale)}`} disabled={disabled || unavailable} aria-pressed={library.getMonth(month) === i} onClick={() => { navigate(date); closeView(); }}>
               <span>{library.format(date, "LLLL")}<small>{new Intl.NumberFormat(locale === "fa" ? "fa-IR" : "en-US").format(i + 1)}</small></span>
             </button>;
           })}
@@ -290,111 +303,38 @@ export interface DatePickerProps extends Omit<AppearanceProps, "variant"> {
   className?: string;
 }
 const PickerCalendar = memo(Calendar);
-const datePositions = [0, 1, 2, 3, 5, 6, 8, 9];
 const emptyDateMask = "----/--/--";
-function latinDigits(value: string) { return value.replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776)).replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632)); }
-function dateMask(value: string) {
-  const normalized = latinDigits(value);
-  if (/^[\d-]{4}\/[\d-]{2}\/[\d-]{2}$/.test(normalized)) return normalized;
-  const complete = /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/.exec(normalized);
-  if (complete) return `${complete[1]}/${complete[2].padStart(2, "0")}/${complete[3].padStart(2, "0")}`;
-  const digits = normalized.replace(/\D/g, "").slice(0, 8);
-  const characters = emptyDateMask.split("");
-  datePositions.forEach((position, index) => { if (digits[index]) characters[position] = digits[index]; });
-  return characters.join("");
-}
-function DateDigits({ value }: { value: string }) {
-  const { motion: mode, reducedMotion } = useMaterialFluid();
-  const animated = mode === "expressive" && !reducedMotion;
-  return <span className="mf-date-digits" aria-hidden="true">{Array.from(value).map((character, index) => character === "/" ? <span key={index}>/</span> :
-    <span className="mf-date-digit" key={index}>{animated ? <AnimatePresence initial={false}>
-      <motion.span key={character} initial={{ y: "-100%" }} animate={{ y: "0%" }} exit={{ y: "100%" }} transition={{ duration: .14, ease: [.2, .65, .3, 1] }}>{character}</motion.span>
-    </AnimatePresence> : <span>{character}</span>}</span>)}</span>;
-}
-export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
+export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
   function DatePicker(rawProps, ref) {
     const { label, value, defaultValue, onValueChange, calendar: givenCalendar, min, max, disabled, hint, error, className } =
       useAppearanceProps({ ...rawProps, variant: "outline" });
     const [selected, set] = useControllable<DateOnly | undefined>(value, defaultValue, onValueChange);
     const [open, setOpen] = useState(false);
-    const [draft, setDraft] = useState<string | null>(null);
-    const [invalid, setInvalid] = useState(false);
     const { locale } = useMaterialFluid();
     const calendar = givenCalendar ?? (locale === "fa" ? "persian" : "gregorian");
-    const library = useMemo(() => calendar === "persian"
-      ? getPersianDateLib({ locale: locale === "fa" ? jalaliFa : jalaliEn, numerals: locale === "fa" ? "arabext" : "latn" })
-      : new DateLib({ locale: locale === "fa" ? faIR : enUS, numerals: locale === "fa" ? "arabext" : "latn" }), [calendar, locale]);
-    const anchor = useRef<HTMLDivElement>(null);
-    const input = useRef<HTMLInputElement | null>(null);
+    const library = useMemo(() => createCalendarLibrary(calendar, locale), [calendar, locale]);
+    const trigger = useRef<HTMLButtonElement | null>(null);
+    const id = useId();
     const latestSet = useLatest(set);
-    const chooseDate = useCallback((date: DateOnly | undefined) => { latestSet.current(date); setDraft(null); setInvalid(false); setOpen(false); }, [latestSet]);
-    const pendingCaret = useRef<number | null>(null);
-    useLayoutEffect(() => { if (pendingCaret.current !== null) { input.current?.setSelectionRange(pendingCaret.current, pendingCaret.current); pendingCaret.current = null; } }, [draft]);
+    const chooseDate = useCallback((date: DateOnly | undefined) => { latestSet.current(date); setOpen(false); }, [latestSet]);
     const selectedDate = parseDateOnly(selected);
-    const formatted = selectedDate ? library.format(selectedDate, "yyyy/MM/dd") : "";
-    const displayed = draft ?? (formatted ? latinDigits(formatted) : "");
-    const edit = (next: string, caret: number) => { pendingCaret.current = caret; setDraft(next); setInvalid(false); input.current?.setSelectionRange(caret, caret); };
-    const parse = (text: string) => {
-      const normalized = text.replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776)).replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632));
-      const match = /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/.exec(normalized);
-      if (!match) return;
-      const [, year, month, day] = match.map(Number);
-      if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) return;
-      const date = library.newDate(year, month - 1, day);
-      if (library.getYear(date) !== year || library.getMonth(date) !== month - 1 || library.differenceInCalendarDays(date, library.startOfMonth(date)) + 1 !== day) return;
-      const result = toDateOnly(date);
-      if ((min && result < min) || (max && result > max)) return;
-      return result;
-    };
-    const commit = () => {
-      if (draft === null) return;
-      if (!/\d/.test(draft)) { set(undefined); setDraft(null); setInvalid(false); return; }
-      const date = parse(draft);
-      if (date) { set(date); setDraft(null); setInvalid(false); }
-      else setInvalid(true);
-    };
-    return <Pop.Root open={open} onOpenChange={setOpen}>
-      <Pop.Anchor virtualRef={anchor} /><div>
-        <TextField controlRef={anchor} ref={node => { input.current = node; setRef(ref, node); }} label={label} disabled={disabled} hint={hint} className={cx(className, "mf-choice-field mf-date-field")}
-          error={error || (invalid ? (locale === "fa" ? "یک تاریخ معتبر به صورت سال/ماه/روز وارد کنید." : "Enter a valid date as YYYY/MM/DD.") : undefined)}
-          inputMode="numeric" dir="ltr" placeholder={emptyDateMask} value={displayed}
-          valueOverlay={<DateDigits value={displayed || emptyDateMask} />} valueOverlayActive
-          aria-haspopup="dialog" aria-expanded={open}
-          onChange={event => { const next = dateMask(event.currentTarget.value); edit(next, next.indexOf("-") >= 0 ? next.indexOf("-") : 10); }}
-          onPaste={event => { event.preventDefault(); const next = dateMask(event.clipboardData.getData("text")); edit(next, next.indexOf("-") >= 0 ? next.indexOf("-") : 10); }}
-          onBlur={commit}
-          onKeyDown={event => {
-            const digit = latinDigits(event.key);
-            if (!event.ctrlKey && !event.metaKey && !event.altKey && (/^\d$/.test(digit) || event.key === "Backspace" || event.key === "Delete")) {
-              event.preventDefault();
-              const start = event.currentTarget.selectionStart ?? 0, end = event.currentTarget.selectionEnd ?? start;
-              const characters = (displayed || emptyDateMask).split("");
-              if (end > start) datePositions.filter(position => position >= start && position < end).forEach(position => { characters[position] = "-"; });
-              if (/^\d$/.test(digit)) {
-                const position = datePositions.find(position => position >= start);
-                if (position !== undefined) { characters[position] = digit; edit(characters.join(""), datePositions.find(next => next > position) ?? 10); }
-              } else {
-                const position = end > start ? start : event.key === "Backspace" ? [...datePositions].reverse().find(position => position < start) : datePositions.find(position => position >= start);
-                if (position !== undefined && datePositions.includes(position)) characters[position] = "-";
-                edit(characters.join(""), position ?? 0);
-              }
-              return;
-            }
-            if (event.key === "Enter") { event.preventDefault(); commit(); }
-            if (event.key === "ArrowDown" && !disabled) { event.preventDefault(); commit(); setOpen(true); }
-            if (event.key === "Escape") { setDraft(null); setInvalid(false); setOpen(false); }
-          }}
-          trailing={<IconButton label={locale === "fa" ? "انتخاب تاریخ" : "Choose date"} variant="ghost" size="sm" disabled={disabled} aria-expanded={open} aria-haspopup="dialog" onClick={() => { commit(); setOpen(value => !value); }}><AnimatedIcon name="chevron-down" size={16} /></IconButton>}
-        />
-      </div>
+    const displayed = selectedDate ? library.format(selectedDate, "yyyy/MM/dd") : "";
+    return <FormField label={label} htmlFor={id} hint={hint} error={error} descriptionId={`${id}-help`} className={cx(className, "mf-choice-field mf-date-field")}>
+      <Pop.Root open={open} onOpenChange={setOpen}>
+        <Pop.Trigger ref={node => { trigger.current = node; setRef(ref, node); }} id={id} disabled={disabled} className="mf-select-trigger"
+          aria-invalid={!!error || undefined} aria-describedby={hint || error ? `${id}-help` : undefined}
+          onKeyDown={event => { if (event.key === "ArrowDown" && !disabled) { event.preventDefault(); setOpen(true); } }}>
+          <span className="mf-trigger-value" dir="ltr">{displayed || emptyDateMask}</span>
+          <FieldTriggerIcon />
+        </Pop.Trigger>
       <Portal className={className}>
         <Pop.Content aria-label={label} className="mf-floating mf-date-popover" sideOffset={8} align="start"
-          onInteractOutside={event => { if (anchor.current?.contains(event.target as Node)) event.preventDefault(); }}
-          onCloseAutoFocus={event => { event.preventDefault(); input.current?.focus(); }}>
+          onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }}>
           <PickerCalendar showOutsideDays={false} key={`${calendar}-${selected?.slice(0, 7) ?? "empty"}`} calendar={calendar} min={min} max={max} disabled={disabled} value={selected} onValueChange={chooseDate} />
         </Pop.Content>
       </Portal>
-    </Pop.Root>;
+      </Pop.Root>
+    </FormField>;
   },
 );
 export interface DateRangePickerProps extends Omit<
@@ -426,6 +366,11 @@ export const DateRangePicker = forwardRef<
   const [range, set] = useControllable(value, defaultValue, onValueChange);
   const { locale } = useMaterialFluid();
   const calendar = givenCalendar ?? (locale === "fa" ? "persian" : "gregorian");
+  const library = useMemo(() => createCalendarLibrary(calendar, locale), [calendar, locale]);
+  const rangeDate = (value?: DateOnly) => {
+    const date = parseDateOnly(value);
+    return date ? localizeDigits(library.format(date, "yyyy/MM/dd"), locale) : emptyDateMask;
+  };
   const id = useId();
   return (
     <FormField
@@ -445,12 +390,8 @@ export const DateRangePicker = forwardRef<
           aria-invalid={!!error || undefined}
           aria-describedby={hint || error ? `${id}-help` : undefined}
         >
-          <span className="mf-trigger-value">{range.from
-            ? `${formatDateOnly(range.from, locale, calendar)} – ${range.to ? formatDateOnly(range.to, locale, calendar) : "…"}`
-            : locale === "fa"
-              ? "انتخاب بازه"
-              : "Choose a range"}</span>
-          <span className="mf-field-adornment"><AnimatedIcon name="chevron-down" size={16} /></span>
+          <span className="mf-trigger-value" dir="ltr">{`${rangeDate(range.from)} - ${rangeDate(range.to)}`}</span>
+          <FieldTriggerIcon />
         </Pop.Trigger>
         <Portal className={className}>
           <Pop.Content
@@ -514,12 +455,12 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
     return <Pop.Root open={open} onOpenChange={changeOpen}>
       <Pop.Anchor virtualRef={anchor} /><div>
         <TextField {...props} controlRef={anchor} className={cx(props.className, "mf-time-field mf-choice-field")} ref={node => { input.current = node; setRef(ref, node); }} type="time" value={value} defaultValue={undefined}
-          valueOverlay={<span className="mf-time-display">{displayValue}</span>} valueOverlayActive={!!value}
+          valueOverlay={<span className="mf-time-display">{localizeDigits(displayValue, locale)}</span>} valueOverlayActive={!!value}
           aria-haspopup="dialog" aria-expanded={open} aria-controls={panelId}
           onChange={event => { setInternal(event.currentTarget.value); props.onChange?.(event); }}
           onClick={event => { props.onClick?.(event); if (!event.defaultPrevented && !props.disabled && !props.readOnly) { event.preventDefault(); changeOpen(true); } }}
           onKeyDown={event => { props.onKeyDown?.(event); if (!event.defaultPrevented && ["Enter", " ", "ArrowDown"].includes(event.key)) { event.preventDefault(); changeOpen(true); } }}
-          trailing={<IconButton variant="ghost" size="sm" label={t("Choose time", "انتخاب زمان")} disabled={props.disabled || props.readOnly} onClick={() => changeOpen(!open)}><AnimatedIcon name="chevron-down" size={16} /></IconButton>} />
+          trailing={<IconButton variant="ghost" size="sm" label={t("Choose time", "انتخاب زمان")} disabled={props.disabled || props.readOnly} onClick={() => changeOpen(!open)}><AnimatedIcon name="chevron-down" size={28} /></IconButton>} />
       </div>
       <Portal className={props.className}>
         <Pop.Content id={panelId} role="dialog" aria-label={t("Set time", "تنظیم زمان")} className="mf-floating mf-time-popover" sideOffset={8} align="start"

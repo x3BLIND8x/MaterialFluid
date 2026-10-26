@@ -1,4 +1,5 @@
 import { ButtonRipple } from "./button-ripple";
+import { useButtonPressAnimation } from "./button-press";
 import {
   useAppearanceProps,
   useComponentAppearance,
@@ -24,6 +25,7 @@ import {
   animate,
   motion,
   useMotionValue,
+  useSpring,
   useTransform,
   useMotionValueEvent,
   type MotionValue,
@@ -263,33 +265,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const [pressed, setPressed] = useState(false);
     const successRippleEnabled = useRef(effectiveRipple !== false);
     successRippleEnabled.current = effectiveRipple !== false;
-    useEffect(() => {
-      const targetScale =
-        expressive && pressed ? (effectivePressMotion?.scale ?? 0.94) : 1;
-      const animation = animate(
-        pressScale,
-        targetScale,
-        expressive
-          ? {
-              type: "spring",
-              stiffness: effectivePressMotion?.stiffness ?? 460,
-              damping: effectivePressMotion?.damping ?? 12,
-              mass: effectivePressMotion?.mass ?? 1,
-              restDelta: 0.0001,
-              restSpeed: 0.001,
-            }
-          : { duration: 0 },
-      );
-      return () => animation.stop();
-    }, [
-      pressScale,
-      expressive,
-      pressed,
-      effectivePressMotion?.scale,
-      effectivePressMotion?.stiffness,
-      effectivePressMotion?.damping,
-      effectivePressMotion?.mass,
-    ]);
+    useButtonPressAnimation(pressScale, pressed, expressive, effectivePressMotion);
     const rippleId = useRef(0);
     const [ripples, setRipples] = useState<
       {
@@ -614,18 +590,63 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       onValueChange,
       label,
       className,
+      size,
     } = useAppearanceProps({
       ...rawProps,
       variant: "primary",
-    });
+    }, { preserveSize: true });
 
     const [selected, set] = useControllable(value, defaultValue, onValueChange);
-    const { motion: mode, reducedMotion, dir } = useMaterialFluid();
+    const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
     const [preview, setPreview] = useState<string | null>(null);
     const [held, setHeld] = useState(false);
+    const pillPress = useMotionValue(1);
+    const pillScale = useTransform(pillPress, value => Math.min(1, value));
+    const pillRadius = useMotionValue(999);
+    const pressedRadius = useTransform(() => {
+      const radius = pillRadius.get();
+      const depth = Math.max(0, Math.min(1, (1 - pillPress.get()) * buttonMotion.radiusDepthRatio));
+      return `${Math.max(Math.min(6, radius), radius * (1 - depth))}px`;
+    });
+    useEffect(() => {
+      const animation = animate(pillPress,
+        held && mode === "expressive" && !reducedMotion ? 1 - buttonMotion.pressDepth / 100 : 1,
+        mode === "expressive" && !reducedMotion
+          ? { type: "spring", stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass }
+          : { duration: 0 });
+      return () => animation.stop();
+    }, [held, mode, reducedMotion, buttonMotion, pillPress]);
     const pointer = useRef<{ id: number; startX: number; startY: number } | null>(null);
     const suppressClickUntil = useRef(0);
     const displayed = preview ?? selected;
+    const groupElement = useRef<HTMLDivElement | null>(null);
+    const attachGroup = useCallback((element: HTMLDivElement | null) => {
+      groupElement.current = element;
+      setRef(ref, element);
+    }, [ref]);
+    const [pillBounds, setPillBounds] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+    useLayoutEffect(() => {
+      if (pillBounds) pillRadius.set(Math.min(pillBounds.width, pillBounds.height) / 2);
+    }, [pillBounds, pillRadius]);
+    useLayoutEffect(() => {
+      const group = groupElement.current;
+      if (!group) return;
+      const items = Array.from(group.querySelectorAll<HTMLButtonElement>(".mf-segment"));
+      const measure = () => {
+        const item = items.find(button => button.dataset.value === displayed);
+        const next = item ? { x: item.offsetLeft, y: item.offsetTop, width: item.offsetWidth, height: item.offsetHeight } : null;
+        setPillBounds(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
+      };
+      measure();
+      if (typeof ResizeObserver === "undefined") {
+        window.addEventListener("resize", measure);
+        return () => window.removeEventListener("resize", measure);
+      }
+      const observer = new ResizeObserver(measure);
+      observer.observe(group);
+      items.forEach(item => observer.observe(item));
+      return () => observer.disconnect();
+    }, [displayed, options, size]);
     const optionAt = (group: HTMLDivElement, x: number, y: number) =>
       Array.from(group.querySelectorAll<HTMLButtonElement>(".mf-segment")).find(button => {
         const bounds = button.getBoundingClientRect();
@@ -644,15 +665,15 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       setHeld(false);
       if (group.hasPointerCapture(active.id)) group.releasePointerCapture(active.id);
     };
-    const groupId = useRef(`tg-${Math.random().toString(36).slice(2)}`);
     return (
       <motion.div
-        ref={ref}
+        ref={attachGroup}
         role="group"
         aria-label={label}
         className={cx("mf-toggle-group", className)}
         onPointerDown={event => {
-          if (!event.isPrimary || event.button !== 0) return;
+          // Button's keyboard press animation emits pointer events without a pointer type.
+          if (!event.pointerType || !event.isPrimary || event.button !== 0) return;
           const next = optionAt(event.currentTarget, event.clientX, event.clientY);
           if (next === undefined) return;
           pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
@@ -675,9 +696,24 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
         onLostPointerCapture={event => finish(event.currentTarget, true)}
         onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setHeld(false); }}
       >
-        {options.map((option, index) => (
-          <button
+        {pillBounds && <motion.span
+          className="mf-selection mf-toggle-group-selection"
+          aria-hidden="true"
+          initial={false}
+          animate={pillBounds}
+          style={{ borderRadius: pressedRadius, scale: pillScale, transformOrigin: "center" }}
+          transition={mode === "expressive" && !reducedMotion
+            ? { type: "spring", stiffness: 620, damping: 42, mass: .65 }
+            : { duration: 0 }}
+        />}
+        {options.map(option => (
+          <Button
             key={option.value}
+            variant="ghost"
+            size={size}
+            colorMotion={false}
+            pressMotion={{ scale: 1 }}
+            ripple={false}
             type="button"
             disabled={option.disabled}
             aria-pressed={displayed === option.value}
@@ -690,47 +726,43 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
             onKeyUp={event => { if (event.key === " " || event.key === "Enter") setHeld(false); }}
             className="mf-segment"
           >
-            {displayed === option.value && (
-              <motion.span
-                className="mf-selection"
-                aria-hidden="true"
-                initial={false}
-                animate={{
-                  scaleX: held && mode === "expressive" && !reducedMotion ? 1.025 : 1,
-                  scaleY: held && mode === "expressive" && !reducedMotion ? 1.05 : 1,
-                }}
-                style={{ transformOrigin: index === 0
-                  ? `${dir === "rtl" ? "right" : "left"} center`
-                  : index === options.length - 1
-                    ? `${dir === "rtl" ? "left" : "right"} center`
-                    : "center" }}
-                transition={{ type: "spring", stiffness: 420, damping: 28, mass: .8 }}
-                layoutId={
-                  mode === "expressive" && !reducedMotion
-                    ? groupId.current
-                    : undefined
-                }
-              />
-            )}
-            <span>{option.label}</span>
-          </button>
+            <span className="mf-segment-label">{option.label}</span>
+          </Button>
         ))}
       </motion.div>
     );
   },
 );
 /** Selection fill blends selected state and physical press depth, like Toggle. */
-function ChoiceFill({ active, partial = false, radio = false, onReadyChange }: { active: boolean; partial?: boolean; radio?: boolean; onReadyChange?: (ready: boolean) => void }) {
+function ChoiceFill({ active, partial = false, radio = false, radioPreview, onReadyChange }: { active: boolean; partial?: boolean; radio?: boolean; radioPreview?: "incoming" | "outgoing"; onReadyChange?: (ready: boolean) => void }) {
   const element = useRef<Element | null>(null);
   const selected = useMotionValue(active ? 1 : 0);
   const pressed = useMotionValue(0);
-  const { motion: mode, reducedMotion } = useMaterialFluid();
+  const outerScale = useMotionValue(1);
+  const radioEmphasis = useMotionValue(1);
+  const partialRef = useRef(partial);
+  partialRef.current = partial;
+  const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
   const fluid = mode === "expressive" && !reducedMotion;
   const radius = useTransform([selected, pressed], ([value, depth]: number[]) =>
     Math.max(0, Math.min(75, 75 * (value * (1 - depth * .75) + (1 - value) * depth * .25))),
   );
   const clipPath = useTransform(radius, value => `circle(${value}% at 50% 50%)`);
-  const dotRadius = useTransform(radius, value => value * 6 / 75);
+  const dotRadius = useTransform([selected, pressed, radioEmphasis], ([value, depth, emphasis]: number[]) => Math.min(6, Math.max(0, value * 6 * emphasis * (1 - depth * .3))));
+  useEffect(() => {
+    const animation = animate(radioEmphasis, fluid && radioPreview === "outgoing" ? .9 : 1,
+      fluid ? { type: "spring", stiffness: 420, damping: 28, mass: .8 } : { duration: 0 });
+    return () => animation.stop();
+  }, [radioPreview, fluid, radioEmphasis]);
+  const previousPreview = useRef(radioPreview);
+  useEffect(() => {
+    const wasOutgoing = previousPreview.current === "outgoing";
+    previousPreview.current = radioPreview;
+    if (!radio || (radioPreview !== "outgoing" && !wasOutgoing)) return;
+    const animation = animate(outerScale, fluid && radioPreview === "outgoing" ? .96 : 1,
+      fluid ? { type: "spring", stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass } : { duration: 0 });
+    return () => animation.stop();
+  }, [radioPreview, radio, fluid, outerScale, buttonMotion]);
   useMotionValueEvent(radius, "change", value => {
     onReadyChange?.(active && value >= Math.SQRT1_2 * 100);
   });
@@ -745,24 +777,56 @@ function ChoiceFill({ active, partial = false, radio = false, onReadyChange }: {
       ? { type: "spring", stiffness: 420, damping: 28, mass: .8 }
       : { duration: 0 });
     return () => animation.stop();
-  }, [active, fluid, partial, selected, pressed, radius, onReadyChange]);
+  }, [active, fluid, partial, selected, pressed, radius, onReadyChange, radio]);
   useEffect(() => {
     const button = element.current?.closest<HTMLButtonElement>("button");
     if (!button) return;
+    const pressTarget = button.closest("label.mf-choice") ?? button;
     let animation: ReturnType<typeof animate> | undefined;
+    let outerAnimation: ReturnType<typeof animate> | undefined;
+    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
+    let pressedAt = 0;
+    let holding = false;
+    let pointerHeld = false;
+    const originalTransform = button.style.transform;
+    const spring = { type: "spring" as const, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass };
+    outerScale.set(1);
+    const unsubscribeOuter = outerScale.on("change", value => {
+      button.style.transform = `${originalTransform} scale(${radio ? Math.min(1, value) : value})`.trim();
+    });
+    const outerPress = (down: boolean) => {
+      outerAnimation?.stop();
+      const depth = Math.min(.18, buttonMotion.pressDepth / 50);
+      const target = down ? 1 - depth : 1;
+      outerAnimation = animate(outerScale, target, spring);
+    };
     pressed.set(0);
     const down = (event: Event) => {
-      if (!fluid || button.disabled || partial) return;
+      if (!fluid || button.disabled) return;
       if (event instanceof KeyboardEvent && (event.repeat || ![" ", "Enter"].includes(event.key))) return;
       if (event instanceof PointerEvent && event.button !== 0) return;
+      clearTimeout(releaseTimer);
+      pressedAt = performance.now();
+      holding = true;
+      pointerHeld = event instanceof PointerEvent;
+      outerPress(true);
+      if (partialRef.current) return;
       animation?.stop();
       animation = animate(pressed, 1, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
     };
-    const up = () => {
+    const up = (event: Event) => {
+      // Clicking label text can blur its button while the pointer is still held.
+      if (event.type === "blur" && pointerHeld) return;
+      if (event instanceof KeyboardEvent && ![" ", "Enter"].includes(event.key)) return;
+      if (!holding) return;
+      holding = false;
+      pointerHeld = false;
+      // A quick click still completes a visible press before the return spring.
+      releaseTimer = setTimeout(() => outerPress(false), Math.max(0, 120 - (performance.now() - pressedAt)));
       animation?.stop();
       animation = animate(pressed, 0, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
     };
-    button.addEventListener("pointerdown", down);
+    pressTarget.addEventListener("pointerdown", down);
     button.addEventListener("keydown", down);
     button.addEventListener("blur", up);
     window.addEventListener("pointerup", up);
@@ -770,14 +834,19 @@ function ChoiceFill({ active, partial = false, radio = false, onReadyChange }: {
     window.addEventListener("keyup", up);
     return () => {
       animation?.stop();
-      button.removeEventListener("pointerdown", down);
+      outerAnimation?.stop();
+      clearTimeout(releaseTimer);
+      unsubscribeOuter();
+      outerScale.set(1);
+      button.style.transform = originalTransform;
+      pressTarget.removeEventListener("pointerdown", down);
       button.removeEventListener("keydown", down);
       button.removeEventListener("blur", up);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
       window.removeEventListener("keyup", up);
     };
-  }, [fluid, partial, pressed]);
+  }, [fluid, pressed, radio, buttonMotion, outerScale]);
   if (radio) return <svg ref={node => { element.current = node; }} className="mf-radio-artwork" viewBox="0 0 24 24" aria-hidden="true">
     <circle className="mf-radio-ring" cx="12" cy="12" r="11" strokeWidth="2" />
     <motion.circle className="mf-radio-center" cx="12" cy="12" r={dotRadius} />
@@ -819,7 +888,10 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
             )}
             {current === "indeterminate" && (
               <svg className="mf-checkbox-minus" data-icon-name="minus" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                <path d="M6 12h12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <motion.path d="M6 12h12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"
+                  initial={animated ? { pathLength: 0, opacity: 0 } : false}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: animated ? .18 : 0, ease: "easeOut" }} />
               </svg>
             )}
           </Check.Indicator>
@@ -858,16 +930,18 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         className={cx("mf-radio-group", className)}
       >
         {options.map((o) => (
-          <label key={o.value} className="mf-choice">
+          <label key={o.value} className="mf-choice"
+            onPointerDown={event => { if (event.button === 0 && !o.disabled && !props.disabled) setPreview(o.value); }}
+            onPointerUp={event => { if (event.button === 0 && preview === o.value) { setSelected(o.value); setPreview(null); } }}
+            onPointerCancel={() => setPreview(null)}>
             <Radio.Item
               className="mf-radio"
               value={o.value}
               disabled={o.disabled}
-              onPointerDown={event => { if (event.button === 0 && !o.disabled && !props.disabled) setPreview(o.value); }}
-              onPointerUp={event => { if (event.button === 0 && preview === o.value) { setSelected(o.value); setPreview(null); } }}
-              onPointerCancel={() => setPreview(null)}
             >
-              <Radio.Indicator forceMount className="mf-radio-dot"><ChoiceFill radio active={(preview ?? selected) === o.value} /></Radio.Indicator>
+              <Radio.Indicator forceMount className="mf-radio-dot"><ChoiceFill radio
+                active={selected === o.value || preview === o.value}
+                radioPreview={preview !== null && preview !== selected ? preview === o.value ? "incoming" : selected === o.value ? "outgoing" : undefined : undefined} /></Radio.Indicator>
             </Radio.Item>
             <span>{o.label}</span>
           </label>
@@ -1133,10 +1207,112 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
       return () => observer.disconnect();
     }, [props.orientation, current.length]);
     const intervals = Math.ceil(((props.max ?? 100) - (props.min ?? 0)) / step);
-    const snapMotion = sliderMode === "stepped" && intervals > 0 && Number.isFinite(intervals) && usableLength / intervals >= 16;
+    const snapMotion = sliderMode === "stepped" && intervals > 0 && Number.isFinite(intervals) && usableLength / intervals >= 14;
     const [dragging, setDragging] = useState(false);
+    const [pointerFocused, setPointerFocused] = useState(false);
+    const [wheelMotion, setWheelMotion] = useState(false);
+    const [keyboardHeld, setKeyboardHeld] = useState(false);
+    const [keyboardMotion, setKeyboardMotion] = useState(false);
+    const [pointerMotion, setPointerMotion] = useState(false);
+    const [pointerDisplay, setPointerDisplay] = useState<{ index: number; value: number } | null>(null);
+    const pointerVisual = useRef<{ index: number; value: number } | null>(null);
+    const showPointer = useCallback((display: { index: number; value: number } | null) => {
+      pointerVisual.current = display;
+      setPointerDisplay(display);
+    }, []);
+    // Damping ratio .7 gives the reference demo's .3 bounce, with physical
+    // parameters so retargeting preserves velocity instead of restarting a tween.
+    const pointerSpring = useSpring(0, { stiffness: 360, damping: 26.56, mass: 1, restDelta: .0001 });
+    const pointerSpringRange = useRef<{ index: number; low: number; high: number; target: number } | null>(null);
+    const wheelMotionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const keyboardMotionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    useEffect(() => () => {
+      clearTimeout(wheelMotionTimer.current);
+      clearTimeout(keyboardMotionTimer.current);
+      pointerSpring.stop();
+    }, [pointerSpring]);
+    const clearPointerAnimation = () => {
+      pointerSpringRange.current = null;
+      pointerSpring.jump(pointerSpring.get());
+      showPointer(null);
+      setPointerMotion(false);
+    };
+    useEffect(() => {
+      if (!fluid) {
+        pointerSpringRange.current = null;
+        pointerSpring.jump(pointerSpring.get());
+        showPointer(null);
+        setPointerMotion(false);
+      }
+    }, [fluid, showPointer, pointerSpring]);
     const wheelDelta = useRef(0);
     const activeThumb = useRef(0);
+    const minimum = props.min ?? 0;
+    const maximum = props.max ?? 100;
+    // Values stay quantized for consumers; the held handle follows the pointer freely.
+    const displayValues = current.map((value, index) => pointerDisplay?.index === index ? pointerDisplay.value : value);
+    const orderedPositions = displayValues.map(value => maximum === minimum ? 0 : Math.max(0, Math.min(100, (value - minimum) / (maximum - minimum) * 100)));
+    const positions = props.inverted ? orderedPositions.map(position => 100 - position).reverse() : orderedPositions;
+    const stops = [0, ...positions, 100];
+    const vertical = props.orientation === "vertical";
+    const pointerDrag = useRef<{ id: number; index: number; values: number[]; initial: number[]; display: number } | null>(null);
+    useMotionValueEvent(pointerSpring, "change", value => {
+      const range = pointerSpringRange.current;
+      if (range) showPointer({ index: range.index, value: Math.max(range.low, Math.min(range.high, value)) });
+    });
+    useMotionValueEvent(pointerSpring, "animationComplete", () => {
+      const range = pointerSpringRange.current;
+      if (!pointerDrag.current && range && Math.abs(pointerSpring.get() - range.target) < .001) {
+        pointerSpringRange.current = null;
+        showPointer(null);
+        setPointerMotion(false);
+      }
+    });
+    const pressedIndex = dragging ? pointerDrag.current?.index : keyboardHeld ? activeThumb.current : undefined;
+    const pressedPosition = pressedIndex === undefined ? undefined : props.inverted ? current.length - 1 - pressedIndex : pressedIndex;
+    const updatePointer = (x: number, y: number, follow = true) => {
+      const drag = pointerDrag.current;
+      const track = sliderElement.current?.querySelector(".mf-slider-track");
+      if (!drag || !track) return;
+      const rect = track.getBoundingClientRect();
+      let fraction = vertical ? (rect.bottom - y) / rect.height : (x - rect.left) / rect.width;
+      if (!vertical && (props.dir ?? dir) === "rtl") fraction = 1 - fraction;
+      if (props.inverted) fraction = 1 - fraction;
+      const gap = step * (props.minStepsBetweenThumbs ?? 0);
+      const low = drag.index > 0 ? drag.values[drag.index - 1] + gap : minimum;
+      const high = drag.index < drag.values.length - 1 ? drag.values[drag.index + 1] - gap : maximum;
+      const raw = minimum + Math.max(0, Math.min(1, fraction)) * (maximum - minimum);
+      const snapped = minimum + Math.round((raw - minimum) / step) * step;
+      const allowedLow = minimum + Math.ceil((low - minimum) / step - 1e-8) * step;
+      const allowedHigh = minimum + Math.floor((high - minimum) / step + 1e-8) * step;
+      const next = Number(Math.min(high, allowedHigh, Math.max(low, allowedLow, snapped)).toFixed(8));
+      if (!Number.isFinite(next)) return;
+      drag.display = fluid ? Math.min(high, Math.max(low, raw)) : next;
+      if (follow && fluid) springPointer(drag, drag.display);
+      if (next === drag.values[drag.index]) return;
+      drag.values = drag.values.map((value, index) => index === drag.index ? next : value);
+      set(drag.values);
+    };
+    const springPointer = (drag: NonNullable<typeof pointerDrag.current>, target: number) => {
+      const gap = step * (props.minStepsBetweenThumbs ?? 0);
+      const low = drag.index > 0 ? drag.values[drag.index - 1] + gap : minimum;
+      const high = drag.index < drag.values.length - 1 ? drag.values[drag.index + 1] - gap : maximum;
+      pointerSpringRange.current = { index: drag.index, low, high, target };
+      pointerSpring.set(target);
+    };
+    const finishPointer = (element: HTMLSpanElement, commit: boolean) => {
+      const drag = pointerDrag.current;
+      if (!drag) return;
+      pointerDrag.current = null;
+      setDragging(false);
+      const target = drag.values[drag.index];
+      const from = pointerVisual.current?.index === drag.index ? pointerVisual.current.value : target;
+      if (fluid && (Math.abs(from - target) > 1e-8 || pointerSpring.isAnimating())) {
+        springPointer(drag, target);
+      } else clearPointerAnimation();
+      if (element.hasPointerCapture(drag.id)) element.releasePointerCapture(drag.id);
+      if (commit && String(drag.initial) !== String(drag.values)) props.onValueCommit?.(drag.values);
+    };
     useEffect(() => {
       const element = sliderElement.current;
       if (!element || props.disabled || !current.length) return;
@@ -1168,7 +1344,7 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
           return best;
         }, { index: activeThumb.current, distance: Infinity });
         const index = Math.min(current.length - 1, targetIndex < 0 ? nearest.index : targetIndex);
-        const increment = sliderMode === "stepped" ? step : ((props.max ?? 100) - (props.min ?? 0)) / 100;
+        const increment = sliderMode === "stepped" ? step : Math.abs((props.max ?? 100) - (props.min ?? 0)) / 20;
         const gap = step * (props.minStepsBetweenThumbs ?? 0);
         const low = index > 0 ? current[index - 1] + gap : props.min ?? 0;
         const high = index < current.length - 1 ? current[index + 1] - gap : props.max ?? 100;
@@ -1177,8 +1353,12 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
         const allowedHigh = sliderMode === "stepped" ? base + Math.floor((high - base) / step + 1e-8) * step : high;
         const next = Math.min(allowedHigh, Math.max(allowedLow, Number((current[index] + direction * increment).toFixed(8))));
         if (next === current[index]) return;
+        clearPointerAnimation();
         const values = current.map((value, i) => i === index ? next : value);
         activeThumb.current = index;
+        clearTimeout(wheelMotionTimer.current);
+        setWheelMotion(true);
+        wheelMotionTimer.current = setTimeout(() => setWheelMotion(false), 420);
         set(values);
         props.onValueCommit?.(values);
       };
@@ -1197,26 +1377,99 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
           step={step}
           data-slider-mode={sliderMode}
           data-snap-motion={snapMotion ? "true" : "false"}
+          data-wheel-motion={wheelMotion || undefined}
+          data-key-held={keyboardHeld || undefined}
+          data-keyboard-motion={keyboardMotion || undefined}
+          data-pointer-motion={pointerMotion || undefined}
           data-fluid={fluid || undefined}
           data-position-ready={positionReady || undefined}
           data-dragging={dragging || undefined}
+          data-pointer-focus={pointerFocused || undefined}
           onFocusCapture={event => {
             props.onFocusCapture?.(event);
             const thumbs = Array.from(event.currentTarget.querySelectorAll(".mf-slider-thumb"));
             const index = thumbs.indexOf(event.target);
             if (index >= 0) activeThumb.current = index;
           }}
+          onKeyDownCapture={event => {
+            props.onKeyDownCapture?.(event);
+            if (!event.defaultPrevented && ["Tab", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(event.key)) setPointerFocused(false);
+            if (event.defaultPrevented || props.disabled || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(event.key)) return;
+            clearPointerAnimation();
+            clearTimeout(keyboardMotionTimer.current);
+            setKeyboardHeld(true);
+            setKeyboardMotion(true);
+          }}
+          onKeyUpCapture={event => {
+            props.onKeyUpCapture?.(event);
+            if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(event.key)) return;
+            setKeyboardHeld(false);
+            clearTimeout(keyboardMotionTimer.current);
+            keyboardMotionTimer.current = setTimeout(() => setKeyboardMotion(false), 420);
+          }}
+          onBlurCapture={event => {
+            props.onBlurCapture?.(event);
+            if (event.currentTarget.contains(event.relatedTarget)) return;
+            setPointerFocused(false);
+            setKeyboardHeld(false);
+            setKeyboardMotion(false);
+            clearTimeout(keyboardMotionTimer.current);
+          }}
           onPointerDownCapture={(event) => {
             props.onPointerDownCapture?.(event);
-            if (!props.disabled) setDragging(true);
+            if (event.defaultPrevented || props.disabled || !event.isPrimary || event.button !== 0 || !current.length) return;
+            event.preventDefault();
+            setPointerFocused(true);
+            const thumbs = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(".mf-slider-thumb"));
+            const target = (event.target as HTMLElement).closest(".mf-slider-thumb");
+            let index = target ? thumbs.indexOf(target as HTMLElement) : -1;
+            if (index < 0) {
+              const pointer = vertical ? event.clientY : event.clientX;
+              index = thumbs.reduce((nearest, thumb, i) => {
+                const rect = thumb.getBoundingClientRect();
+                const center = vertical ? rect.top + rect.height / 2 : rect.left + rect.width / 2;
+                return Math.abs(center - pointer) < nearest.distance ? { index: i, distance: Math.abs(center - pointer) } : nearest;
+              }, { index: 0, distance: Infinity }).index;
+            }
+            activeThumb.current = index;
+            const from = pointerVisual.current?.index === index ? pointerVisual.current.value : current[index];
+            if (pointerSpringRange.current?.index !== index) {
+              pointerSpringRange.current = null;
+              pointerSpring.jump(from);
+            }
+            if (fluid) showPointer({ index, value: from });
+            pointerDrag.current = { id: event.pointerId, index, values: [...current], initial: [...current], display: current[index] };
+            event.currentTarget.setPointerCapture(event.pointerId);
+            thumbs[index]?.focus({ preventScroll: true });
+            clearTimeout(wheelMotionTimer.current);
+            clearTimeout(keyboardMotionTimer.current);
+            setWheelMotion(false);
+            setKeyboardHeld(false);
+            setKeyboardMotion(false);
+            setPointerMotion(true);
+            setDragging(true);
+            updatePointer(event.clientX, event.clientY);
+          }}
+          onPointerMoveCapture={(event) => {
+            props.onPointerMoveCapture?.(event);
+            if (pointerDrag.current?.id !== event.pointerId || event.defaultPrevented) return;
+            event.preventDefault();
+            updatePointer(event.clientX, event.clientY);
           }}
           onPointerUpCapture={(event) => {
             props.onPointerUpCapture?.(event);
-            setDragging(false);
+            if (pointerDrag.current?.id !== event.pointerId) return;
+            event.preventDefault();
+            updatePointer(event.clientX, event.clientY, false);
+            finishPointer(event.currentTarget, true);
           }}
           onPointerCancel={(event) => {
             props.onPointerCancel?.(event);
-            setDragging(false);
+            finishPointer(event.currentTarget, false);
+          }}
+          onLostPointerCapture={(event) => {
+            props.onLostPointerCapture?.(event);
+            finishPointer(event.currentTarget, false);
           }}
           ref={attachSlider}
           value={current}
@@ -1228,19 +1481,46 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
           className="mf-slider"
         >
           <Slide.Track className="mf-slider-track">
-            <Slide.Range className="mf-slider-range" />
+            {stops.slice(0, -1).map((start, index) => {
+              const end = stops[index + 1];
+              const active = current.length === 1 ? index === (props.inverted ? 1 : 0) : index > 0 && index < current.length;
+              return <span key={index} aria-hidden="true"
+                className={cx("mf-slider-segment", active && "mf-slider-range")}
+                data-edge-start={index === 0 || undefined}
+                data-edge-end={index === current.length || undefined}
+                data-round-start={start === 0 || undefined}
+                data-round-end={end === 100 || undefined}
+                data-pressed-start={pressedPosition === index - 1 || undefined}
+                data-pressed-end={pressedPosition === index || undefined}
+                style={vertical ? { bottom: `${start}%`, height: `${end - start}%` } : { insetInlineStart: `${start}%`, width: `${end - start}%` }}>
+                <span className="mf-slider-piece" />
+              </span>;
+            })}
           </Slide.Track>
-          {current.map((_, i) => (
+          {current.map((value, i) => (
             <Slide.Thumb
               key={i}
               className="mf-slider-thumb"
+              style={pointerDisplay?.index === i && maximum !== minimum ? {
+                translate: (() => {
+                  let offset = (pointerDisplay.value - value) / (maximum - minimum) * usableLength;
+                  if (props.inverted) offset *= -1;
+                  if (vertical) return `0 ${-offset}px`;
+                  if ((props.dir ?? dir) === "rtl") offset *= -1;
+                  return `${offset}px 0`;
+                })(),
+              } : undefined}
+              data-active={activeThumb.current === i || undefined}
+              data-pressed={pressedIndex === i || undefined}
               aria-valuetext={ariaValueText}
               aria-label={
                 current.length > 1
                   ? `${label} ${i === 0 ? "minimum" : "maximum"}`
                   : label
               }
-            />
+            >
+              <span className="mf-slider-handle" aria-hidden="true" />
+            </Slide.Thumb>
           ))}
         </Slide.Root>
       </div>

@@ -1,9 +1,58 @@
 import { selectSize } from "./helpers";
 import { test, expect } from "@playwright/test";
 
+test("icon-only toggle groups follow component size", async ({ page }) => {
+  await page.goto("/#/components/toggle-group");
+  const item = page.locator(".live-stage .mf-segment[data-icon-only]").first();
+  for (const [size, pixels] of [["sm", 28], ["md", 48], ["lg", 58]] as const) {
+    await selectSize(page, size);
+    await expect(item).toHaveCSS("width", `${pixels}px`);
+    await expect(item).toHaveCSS("height", `${pixels}px`);
+  }
+});
+
+test("dragged selection keeps one pill and glides between snapped items", async ({ page }) => {
+  await page.goto("/#/components/toggle-group");
+  const group = page.locator(".live-stage .mf-toggle-group").first();
+  const first = group.getByRole("button", { name: "List", exact: true });
+  const last = group.getByRole("button", { name: "Board", exact: true });
+  const pill = group.locator(".mf-selection");
+  const restRadius = await pill.evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius));
+  await first.hover();
+  await page.mouse.down();
+  await expect(group.locator(".mf-button-ripple")).toHaveCount(0);
+  await expect.poll(() => pill.evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeLessThan(restRadius - 2);
+  const probe = await group.evaluate(async element => {
+    const pill = element.querySelector(".mf-selection")!;
+    const target = element.querySelectorAll(".mf-segment")[2].getBoundingClientRect();
+    const positions = [pill.getBoundingClientRect().x];
+    const scales: number[] = [];
+    element.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, isPrimary: true, pointerType: "mouse", clientX: target.x + target.width / 2, clientY: target.y + target.height / 2, bubbles: true }));
+    for (let i = 0; i < 18; i++) {
+      await new Promise(requestAnimationFrame);
+      positions.push(pill.getBoundingClientRect().x);
+      scales.push(new DOMMatrixReadOnly(getComputedStyle(pill).transform).a);
+    }
+    return { samePill: pill === element.querySelector(".mf-selection"), positions, scales };
+  });
+  expect(probe.samePill).toBe(true);
+  expect(Math.max(...probe.scales)).toBeLessThanOrEqual(1);
+  expect(new Set(probe.positions.map(x => x.toFixed(1))).size).toBeGreaterThan(3);
+  expect(probe.positions.at(-1)!).toBeGreaterThan(probe.positions[0] + 80);
+  await expect(last).toHaveAttribute("aria-pressed", "true");
+  await expect(group.locator(".mf-selection")).toHaveCount(1);
+  await expect.poll(() => last.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
+  await expect.poll(() => first.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeGreaterThan(.99);
+  await last.hover();
+  await expect(last).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await page.mouse.up();
+  await expect(last).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => pill.evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeCloseTo(restRadius, 0);
+});
+
 test("icon variants share a compact row", async ({ page }) => {
   await page.goto("/#/components/icon-button");
-  const buttons = page.locator(".live-stage .mf-icon-button");
+  const buttons = page.locator(".demo-primary .mf-icon-button");
   await expect(buttons).toHaveCount(6);
   const bounds = await buttons.evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
@@ -31,7 +80,7 @@ test("selected labels interpolate to 700", async ({ page }) => {
   await expect(label).toHaveCSS("font-weight", "700");
 });
 
-test("mouse dragging selects a segment and only the inner pill enlarges", async ({ page }) => {
+test("mouse dragging selects a segment without growing the pill or group", async ({ page }) => {
   await page.goto("/#/components/toggle-group");
   const group = page.locator(".live-stage .mf-toggle-group").first();
   await expect(group.locator(".mf-selection")).toHaveText("");
@@ -40,7 +89,7 @@ test("mouse dragging selects a segment and only the inner pill enlarges", async 
   const before = await group.boundingBox();
   await first.hover();
   await page.mouse.down();
-  await expect.poll(() => group.locator(".mf-selection").evaluate(el => Number(getComputedStyle(el).transform.split(",")[0].replace("matrix(", "")))).toBeGreaterThan(1.01);
+  await expect.poll(() => group.locator(".mf-selection").evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeLessThan(1);
   const held = await group.boundingBox();
   expect(held!.width).toBeCloseTo(before!.width, 0);
   expect(held!.height).toBeCloseTo(before!.height, 0);
@@ -50,7 +99,7 @@ test("mouse dragging selects a segment and only the inner pill enlarges", async 
   await page.mouse.up();
   await expect(last).toHaveAttribute("aria-pressed", "true");
   await expect(last).toHaveCSS("font-weight", "700");
-  await expect.poll(() => group.locator(".mf-selection").evaluate(el => getComputedStyle(el).transform)).toBe("none");
+  await expect.poll(() => group.locator(".mf-selection").evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
   await first.press("Space");
   await expect(first).toHaveAttribute("aria-pressed", "true");
 });
