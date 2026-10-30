@@ -1,5 +1,5 @@
 import { ButtonRipple } from "./button-ripple";
-import { useButtonPressAnimation } from "./button-press";
+import { QUICK_PRESS_DURATION_MS, QUICK_PRESS_THRESHOLD_MS, useButtonPressAnimation } from "./button-press";
 import {
   useAppearanceProps,
   useComponentAppearance,
@@ -263,10 +263,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       );
       return `${Math.max(Math.min(6, radius), radius * (1 - reduction))}px`;
     });
-    const [pressed, setPressed] = useState(false);
     const successRippleEnabled = useRef(effectiveRipple !== false);
     successRippleEnabled.current = effectiveRipple !== false;
-    useButtonPressAnimation(pressScale, pressed, expressive, effectivePressMotion);
+    const { press: startPressMotion, release: releasePressMotion } = useButtonPressAnimation(pressScale, expressive, effectivePressMotion);
     const rippleId = useRef(0);
     const [ripples, setRipples] = useState<
       {
@@ -281,8 +280,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       if (!success || loading) return;
       const button = node.current;
       if (!button) return;
-      setPressed(true);
-      const releaseTimer = window.setTimeout(() => setPressed(false), 80);
+      startPressMotion();
+      const releaseTimer = window.setTimeout(releasePressMotion, 80);
       if (successRippleEnabled.current) {
         const x = button.offsetWidth / 2;
         const y = button.offsetHeight / 2;
@@ -298,7 +297,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ]);
       }
       return () => window.clearTimeout(releaseTimer);
-    }, [success, loading]);
+    }, [success, loading, startPressMotion, releasePressMotion]);
     useLayoutEffect(() => {
       const button = node.current;
       if (!button) return;
@@ -326,7 +325,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       return () => observer.disconnect();
     }, [restRadius, linkedRadius]);
     const release = () => {
-      setPressed(false);
+      releasePressMotion();
       setRipples((current) =>
         current.map((ripple) =>
           ripple.released ? ripple : { ...ripple, released: true },
@@ -372,7 +371,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         }}
         onTapStart={(event) => {
           if (props.disabled || loading) return;
-          setPressed(true);
+          startPressMotion();
           if (!node.current) return;
           const box = node.current.getBoundingClientRect();
           const trustedPointer = event.isTrusted && "clientX" in event;
@@ -603,7 +602,6 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
     const [selected, set] = useControllable(value, defaultValue, onValueChange);
     const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
     const [preview, setPreview] = useState<string | null>(null);
-    const [held, setHeld] = useState(false);
     const pillPress = useMotionValue(1);
     const pillScale = useTransform(pillPress, value => Math.min(1, value));
     const pillRadius = useMotionValue(999);
@@ -612,7 +610,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       const depth = Math.max(0, Math.min(1, (1 - pillPress.get()) * buttonMotion.radiusDepthRatio));
       return `${Math.max(Math.min(6, radius), radius * (1 - depth))}px`;
     });
-    useButtonPressAnimation(pillPress, held, mode === "expressive" && !reducedMotion, {
+    const { press: startPillPress, release: releasePillPress } = useButtonPressAnimation(pillPress, mode === "expressive" && !reducedMotion, {
       scale: 1 - buttonMotion.pressDepth / 100,
       stiffness: buttonMotion.stiffness,
       damping: buttonMotion.damping,
@@ -664,7 +662,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       }
       suppressClickUntil.current = performance.now() + 400;
       setPreview(null);
-      setHeld(false);
+      releasePillPress();
       if (group.hasPointerCapture(active.id)) group.releasePointerCapture(active.id);
     };
     return (
@@ -681,7 +679,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
           pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
           event.currentTarget.setPointerCapture(event.pointerId);
           setPreview(next);
-          setHeld(true);
+          startPillPress();
         }}
         onPointerMove={event => {
           const active = pointer.current;
@@ -696,7 +694,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
         onPointerUp={event => finish(event.currentTarget, false, event.clientX, event.clientY)}
         onPointerCancel={event => finish(event.currentTarget, true)}
         onLostPointerCapture={event => finish(event.currentTarget, true)}
-        onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setHeld(false); }}
+        onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) releasePillPress(); }}
       >
         {pillBounds && <motion.span
           className="mf-selection mf-toggle-group-selection"
@@ -724,8 +722,8 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
             data-icon-only={iconOnly || undefined}
             data-value={option.value}
             onClick={event => { if (event.detail === 0 || performance.now() >= suppressClickUntil.current) set(option.value); }}
-            onKeyDown={event => { if (!event.repeat && (event.key === " " || event.key === "Enter")) setHeld(true); }}
-            onKeyUp={event => { if (event.key === " " || event.key === "Enter") setHeld(false); }}
+            onKeyDown={event => { if (!event.repeat && (event.key === " " || event.key === "Enter")) startPillPress(); }}
+            onKeyUp={event => { if (event.key === " " || event.key === "Enter") releasePillPress(); }}
             className="mf-segment"
           >
             <span className="mf-segment-label">{option.label}</span>
@@ -787,6 +785,8 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     let animation: ReturnType<typeof animate> | undefined;
     let outerAnimation: ReturnType<typeof animate> | undefined;
     let sequence = 0;
+    let pressedAt = 0;
+    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
     let holding = false;
     let pointerHeld = false;
     const originalTransform = button.style.transform;
@@ -802,13 +802,21 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
       if (event instanceof KeyboardEvent && (event.repeat || ![" ", "Enter"].includes(event.key))) return;
       if (event instanceof PointerEvent && event.button !== 0) return;
       sequence++;
+      clearTimeout(releaseTimer);
+      pressedAt = performance.now();
       holding = true;
       pointerHeld = event instanceof PointerEvent;
+      const outerFrom = outerScale.get();
       outerAnimation?.stop();
-      outerAnimation = animate(outerScale, 1 - depth, spring);
+      outerAnimation = outerFrom < .98
+        ? animate(outerScale, [outerFrom, 1, 1 - depth], { duration: .08, times: [0, .25, 1], ease: "easeOut" })
+        : animate(outerScale, 1 - depth, spring);
       if (partialRef.current) return;
+      const fillFrom = pressed.get();
       animation?.stop();
-      animation = animate(pressed, 1, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
+      animation = fillFrom > .1
+        ? animate(pressed, [fillFrom, 0, 1], { duration: .08, times: [0, .25, 1], ease: "easeOut" })
+        : animate(pressed, 1, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
     };
     const up = (event: Event) => {
       // Clicking label text can blur its button while the pointer is still held.
@@ -818,18 +826,19 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
       holding = false;
       pointerHeld = false;
       const current = sequence;
-      const inward = outerAnimation;
-      const fillInward = animation;
-      // Let both contours reach their pressed shape quickly before the release.
-      if (inward) inward.speed = 2.5;
-      if (fillInward) fillInward.speed = 2.5;
-      void Promise.all([inward, fillInward].filter(Boolean)).then(() => {
+      const elapsed = performance.now() - pressedAt;
+      const release = () => {
         if (sequence !== current) return;
+        outerAnimation?.stop();
         outerAnimation = animate(outerScale, 1, spring);
         if (!partialRef.current) {
+          animation?.stop();
           animation = animate(pressed, 0, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
         }
-      });
+      };
+      if (elapsed < QUICK_PRESS_THRESHOLD_MS) {
+        releaseTimer = setTimeout(release, Math.max(0, QUICK_PRESS_DURATION_MS - elapsed));
+      } else release();
     };
     pressTarget.addEventListener("pointerdown", down);
     button.addEventListener("keydown", down);
@@ -840,6 +849,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     return () => {
       animation?.stop();
       outerAnimation?.stop();
+      clearTimeout(releaseTimer);
       sequence++;
       unsubscribeOuter();
       outerScale.set(1);

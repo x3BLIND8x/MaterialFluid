@@ -18,13 +18,36 @@ import { Button, IconButton } from "./controls";
 import { GhostLink } from "./ghost-link";
 import { useButtonPressAnimation } from "./button-press";
 import { AnimatedIcon } from "./icons";
-function NavigationSelection({ id, held = false, className, keepPill = false }: { id: string; held?: boolean; className?: string; keepPill?: boolean }) {
+function NavigationSelection({ id, className, keepPill = false }: { id: string; className?: string; keepPill?: boolean }) {
   const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
   const animated = mode === "expressive" && !reducedMotion;
   const element = useRef<HTMLSpanElement>(null);
   const scale = useMotionValue(1);
   const radius = useMotionValue(24);
-  useButtonPressAnimation(scale, held, animated, { scale: 1 - buttonMotion.pressDepth / 100, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass });
+  const { press, release } = useButtonPressAnimation(scale, animated, { scale: 1 - buttonMotion.pressDepth / 100, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass });
+  useEffect(() => {
+    const trigger = element.current?.parentElement;
+    if (!trigger) return;
+    const down = (event: PointerEvent) => { if (event.button === 0) press(); };
+    const keyDown = (event: KeyboardEvent) => { if (!event.repeat && ["Enter", " "].includes(event.key)) press(); };
+    const keyUp = (event: KeyboardEvent) => { if (["Enter", " "].includes(event.key)) release(); };
+    trigger.addEventListener("pointerdown", down);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    trigger.addEventListener("pointerleave", release);
+    trigger.addEventListener("keydown", keyDown);
+    trigger.addEventListener("keyup", keyUp);
+    trigger.addEventListener("blur", release);
+    return () => {
+      trigger.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+      trigger.removeEventListener("pointerleave", release);
+      trigger.removeEventListener("keydown", keyDown);
+      trigger.removeEventListener("keyup", keyUp);
+      trigger.removeEventListener("blur", release);
+    };
+  }, [press, release]);
   const boundedScale = useTransform(scale, value => Math.min(1, value));
   const pressedRadius = useTransform(() => Math.max(6, radius.get() * (1 - Math.max(0, 1 - scale.get()) * buttonMotion.radiusDepthRatio)));
   useLayoutEffect(() => {
@@ -83,7 +106,6 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
       onValueChange,
     );
     const { dir } = useMaterialFluid();
-    const [held, setHeld] = useState<string | null>(null);
     const id = useId();
     return (
       <TabsPrimitive.Root
@@ -101,11 +123,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
               value={item.value}
               disabled={item.disabled}
               className="mf-tab"
-              onPointerDown={() => setHeld(item.value)} onPointerUp={() => setHeld(null)} onPointerCancel={() => setHeld(null)} onPointerLeave={() => setHeld(null)}
-              onKeyDown={event => { if (["Enter", " "].includes(event.key)) setHeld(item.value); }} onKeyUp={() => setHeld(null)} onBlur={() => setHeld(null)}
             >
               {selected === item.value && (
-                <NavigationSelection id={selectionId ?? id} held={held === item.value} />
+                <NavigationSelection id={selectionId ?? id} />
               )}
               <span>
                 {item.icon}
@@ -276,7 +296,6 @@ function NavBase(rawProps: NavigationProps & { kind: string }) {
     onValueChange,
   );
   const id = useId();
-  const [held, setHeld] = useState<string | null>(null);
   return (
     <nav
       {...props}
@@ -285,17 +304,10 @@ function NavBase(rawProps: NavigationProps & { kind: string }) {
     >
       {items.map(item => {
         const selectedItem = item.value === selected;
-        const content = <>{selectedItem && <NavigationSelection id={selectionId ?? id} held={held === item.value} keepPill />}<span className="mf-nav-item-label">{item.icon}{item.label}</span></>;
+        const content = <>{selectedItem && <NavigationSelection id={selectionId ?? id} keepPill />}<span className="mf-nav-item-label">{item.icon}{item.label}</span></>;
         const shared = {
           className: cx("mf-nav-item", item.className),
           "aria-current": selectedItem ? "page" as const : undefined,
-          onPointerDown: () => setHeld(item.value),
-          onPointerUp: () => setHeld(null),
-          onPointerCancel: () => setHeld(null),
-          onPointerLeave: () => setHeld(null),
-          onKeyDown: (event: React.KeyboardEvent) => { if (["Enter", " "].includes(event.key)) setHeld(item.value); },
-          onKeyUp: () => setHeld(null),
-          onBlur: () => setHeld(null),
           onClick: () => { if (!item.disabled) set(item.value); },
         };
         return item.href && !item.disabled

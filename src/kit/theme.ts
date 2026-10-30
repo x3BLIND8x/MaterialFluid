@@ -350,6 +350,38 @@ export function createTheme(
         : TonalPalette.fromHueAndChroma((border.hue + hueOffset + 360) % 360, border.chroma * saturation / 100).tone(tone(border.tone + borderOffset));
     }
   }
+  // Keep semantic role names for consumers, but share actual colors wherever a
+  // separate tone adds no distinction to MaterialFluid's components. The previous
+  // color design remains available through createPreviousTheme.
+  scheme.surface = neutralSurfaces[1];
+  scheme.surfaceContainer = neutralSurfaces[2];
+  scheme.surfaceContainerHigh = neutralSurfaces[3];
+  const sharedRoles: Record<string, string> = {
+    onBackground: "onSurface",
+    surfaceDim: "surfaceContainerHigh", surfaceBright: "surface",
+    surfaceContainerLowest: "surface", surfaceContainerLow: "surfaceContainer",
+    surfaceContainerHighest: "surfaceContainerHigh", surfaceVariant: "surfaceContainerHigh",
+    surfaceTint: "primary", shadow: "scrim",
+    inverseSurface: "onSurface", inverseOnSurface: "surface", inversePrimary: "onPrimary",
+    primaryDim: "primary", primaryFixed: "primaryContainer", primaryFixedDim: "primaryFill",
+    onPrimaryFixed: "onPrimaryContainer", onPrimaryFixedVariant: "onPrimaryContainer",
+    primaryInk: "primary", primaryPlainInk: "primary",
+    secondaryDim: "secondary", secondaryFixed: "secondaryContainer", secondaryFixedDim: "secondaryFill",
+    onSecondaryFixed: "onSecondaryContainer", onSecondaryFixedVariant: "onSecondaryContainer",
+    secondaryInk: "secondary", secondaryPlainInk: "secondary",
+    tertiary: "secondary", onTertiary: "onSecondary",
+    tertiaryContainer: "secondaryContainer", onTertiaryContainer: "onSecondaryContainer",
+    tertiaryDim: "secondary", tertiaryFixed: "secondaryContainer", tertiaryFixedDim: "secondaryFill",
+    onTertiaryFixed: "onSecondaryContainer", onTertiaryFixedVariant: "onSecondaryContainer",
+    tertiaryInk: "secondary", tertiaryPlainInk: "secondary",
+    tertiaryFill: "secondaryFill", onTertiaryFill: "onSecondaryFill",
+    tertiaryFillHover: "secondaryFill", onTertiaryFillHover: "onSecondaryFill",
+    errorDim: "error", errorInk: "error", errorPlainInk: "error",
+    primaryFillHover: "primaryFill", onPrimaryFillHover: "onPrimaryFill",
+    secondaryFillHover: "secondaryFill", onSecondaryFillHover: "onSecondaryFill",
+    errorFillHover: "errorFill", onErrorFillHover: "onErrorFill",
+  };
+  for (const [role, source] of Object.entries(sharedRoles)) scheme[role] = scheme[source];
   const tokens: Record<string, string> = {};
   for (const [key, value] of Object.entries(scheme))
     tokens[`--mf-${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`] =

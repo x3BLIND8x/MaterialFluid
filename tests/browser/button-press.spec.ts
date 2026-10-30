@@ -1,6 +1,70 @@
 import { selectSize } from "./helpers";
 import { test, expect } from "@playwright/test";
 
+test("rapid taps restart the press feedback on every click", async ({ page }) => {
+  await page.goto("/#/components/button");
+  const button = page.getByRole("button", { name: "Filled", exact: true });
+  await button.hover();
+  const samplesPromise = button.evaluate(async element => {
+    const samples: { time: number; scale: number }[] = [];
+    const until = performance.now() + 650;
+    while (performance.now() < until) {
+      samples.push({ time: performance.now(), scale: new DOMMatrixReadOnly(getComputedStyle(element).transform).a });
+      await new Promise(requestAnimationFrame);
+    }
+    return samples;
+  });
+  const starts: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    starts.push(await page.evaluate(() => performance.now()));
+    await page.mouse.down();
+    await page.waitForTimeout(10);
+    await page.mouse.up();
+    if (i < 2) await page.waitForTimeout(45);
+  }
+  const samples = await samplesPromise;
+  for (const start of starts.slice(1)) {
+    const after = samples.filter(sample => sample.time >= start + 10 && sample.time <= start + 100);
+    expect(Math.max(...after.map(sample => sample.scale))).toBeGreaterThan(.975);
+    expect(Math.min(...after.map(sample => sample.scale))).toBeLessThan(.97);
+  }
+});
+
+test("toggle pill and checkbox also restart on repeated quick clicks", async ({ page }) => {
+  for (const target of [
+    { route: "toggle-group", press: ".live-stage .mf-segment", artwork: ".live-stage .mf-toggle-group .mf-selection", floor: .95 },
+    { route: "checkbox", press: ".live-stage .mf-checkbox", artwork: ".live-stage .mf-checkbox", floor: .94 },
+  ]) {
+    await page.goto(`/#/components/${target.route}`);
+    const control = page.locator(target.press).first();
+    const artwork = page.locator(target.artwork).first();
+    await control.hover();
+    const samplesPromise = artwork.evaluate(async element => {
+      const samples: { time: number; scale: number }[] = [];
+      const until = performance.now() + 650;
+      while (performance.now() < until) {
+        samples.push({ time: performance.now(), scale: new DOMMatrixReadOnly(getComputedStyle(element).transform).a });
+        await new Promise(requestAnimationFrame);
+      }
+      return samples;
+    });
+    const starts: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      starts.push(await page.evaluate(() => performance.now()));
+      await page.mouse.down();
+      await page.waitForTimeout(10);
+      await page.mouse.up();
+      if (i < 2) await page.waitForTimeout(45);
+    }
+    const samples = await samplesPromise;
+    for (const start of starts.slice(1)) {
+      const after = samples.filter(sample => sample.time >= start + 10 && sample.time <= start + 100);
+      expect(Math.max(...after.map(sample => sample.scale)), target.route).toBeGreaterThan(.975);
+      expect(Math.min(...after.map(sample => sample.scale)), target.route).toBeLessThan(target.floor);
+    }
+  }
+});
+
 test("resize springs real dimensions and surrounding layout", async ({page}) => {
   await page.goto("/#/components/button");
   const button = page.getByRole("button", {name:"Primary",exact:true});

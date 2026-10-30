@@ -1,15 +1,15 @@
 .mf-root {
   --mf-primary: #705d0e;
-  --mf-on-primary: #fff;
+  --mf-on-primary: var(--mf-surface);
   --mf-primary-container: #f6e49b;
-  --mf-on-primary-container: #231b00;
+  --mf-on-primary-container: var(--mf-on-surface);
   --mf-secondary: #665e40;
-  --mf-on-secondary-container: #211b08;
+  --mf-on-secondary-container: var(--mf-on-surface);
   --mf-secondary-container: #eee2bc;
   --mf-error: #ba1a1a;
-  --mf-on-error: #fff;
+  --mf-on-error: var(--mf-surface);
   --mf-error-container: #ffdad6;
-  --mf-on-error-container: #410002;
+  --mf-on-error-container: var(--mf-on-surface);
   --mf-outline: #7c7767;
   --mf-outline-variant: #cec7b5;
   --mf-on-surface: #1e1c16;

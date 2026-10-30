@@ -60,6 +60,14 @@ const descriptions: Record<string, [string, string]> = {
   "on-error-container": ["Text and icons on the error container.", "متن و آیکن روی زمینه خطا."],
 };
 function roleFormula(token: string, previous: boolean): string {
+  const shared = ({
+    "surface-container-lowest": "surface", "surface-container-low": "surface-container",
+    "surface-container-highest": "surface-high", "surface-dim": "surface-high",
+    "surface-bright": "surface", background: "canvas", "on-background": "on-surface",
+    "inverse-surface": "on-surface", "inverse-on-surface": "surface",
+    "inverse-primary": "on-primary", "surface-tint": "primary",
+  } as Record<string, string>)[token];
+  if (!previous && shared) return `Shared color · --mf-${shared}`;
   const role = ({ canvas: "background", "surface-high": "surface-container-high" } as Record<string, string>)[token] ?? token;
   const camel = role.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
   if (previous) {
@@ -99,7 +107,7 @@ export function ColorPage({ seed, onSeedChange, onSchemeChange, heading }: { see
   const fa = locale === "fa";
   const t = (en: string, persian: string) => fa ? persian : en;
   return <div className="palette-page">
-    <div className="component-intro"><div><h1 ref={heading} tabIndex={-1}>{t("Color system", "سیستم رنگ")}</h1><p>{t("Explore the colors generated for your current theme and seed.", "رنگ‌های ساخته‌شده برای پوسته و رنگ پایه فعلی را ببینید.")}</p></div></div>
+    <div className="component-intro"><div><h1 ref={heading} tabIndex={-1}>{t("Color system", "سیستم رنگ")}</h1><p>{t("Explore the colors generated for your current theme and seed. Related roles share one color wherever possible.", "رنگ‌های ساخته‌شده برای پوسته و رنگ پایه فعلی را ببینید. نقش‌های مرتبط تا جای ممکن از یک رنگ مشترک استفاده می‌کنند.")}</p></div></div>
     <section className="palette-seed"><div><h2>{t("Seed hue", "فام پایه")}</h2><p>{t("The hue control uses HSV degrees; the palette is generated using Material color roles.", "کنترل فام بر حسب درجه HSV است؛ پالت با نقش‌های رنگی متریال ساخته می‌شود.")}</p></div><AccentSeed value={seed} onChange={onSeedChange} fa={fa} /></section>
     <section className="palette-section palette-scheme"><h2>{t("Theme color scheme", "گونه رنگ پوسته")}</h2><ColorSchemeControl value={colorScheme} onChange={onSchemeChange} locale={locale} disabled={colorDesign === "previous"} /></section>
     <section className="palette-section"><h2>{t("Action variants", "گونه‌های دکمه")}</h2><p>{t("These treatments use the primary, secondary, neutral and error roles. Their colors can be adjusted in settings.", "این گونه‌ها از نقش‌های اصلی، ثانویه، خنثی و خطا استفاده می‌کنند و رنگشان در تنظیمات قابل تغییر است.")}</p><div className="palette-actions">{actions.map(action => <div className="palette-action" key={action.variant}><Button variant={action.variant}>{t(action.en, action.fa)}</Button><span>{action.description[fa ? 1 : 0]}</span><code dir="ltr">{colorDesign === "previous" ? action.previous : action.material}</code></div>)}</div></section>

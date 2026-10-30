@@ -8,7 +8,6 @@ import { ButtonRipple } from "./button-ripple";
 /** IconButton feedback for an icon inside a field that is already a button. */
 export function FieldTriggerIcon() {
   const element = useRef<HTMLSpanElement>(null);
-  const [pressed, setPressed] = useState(false);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number; diameter: number; released: boolean }[]>([]);
   const sequence = useRef(0);
   const levels = useRef(new Map<number, number>());
@@ -17,7 +16,7 @@ export function FieldTriggerIcon() {
   const scale = useMotionValue(1);
   const rippleProgress = useMotionValue(0);
   const restRadius = useMotionValue(20);
-  useButtonPressAnimation(scale, pressed, expressive, {
+  const { press: startPressMotion, release: releasePressMotion } = useButtonPressAnimation(scale, expressive, {
     scale: 1 - buttonMotion.pressDepth / 100,
     stiffness: buttonMotion.stiffness,
     damping: buttonMotion.damping,
@@ -47,7 +46,7 @@ export function FieldTriggerIcon() {
     let frame = 0;
     const settle = () => {
       if (paintedAt === null) return;
-      setPressed(false);
+      releasePressMotion();
       setRipples(current => current.map(ripple => ({ ...ripple, released: true })));
     };
     const press = (event?: PointerEvent) => {
@@ -55,7 +54,7 @@ export function FieldTriggerIcon() {
       cancelAnimationFrame(frame);
       held = true;
       paintedAt = null;
-      setPressed(true);
+      startPressMotion();
       const node = element.current!;
       const box = node.getBoundingClientRect();
       const inside = event && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
@@ -94,7 +93,7 @@ export function FieldTriggerIcon() {
       document.removeEventListener("pointercancel", release, true);
       document.removeEventListener("keyup", release, true);
     };
-  }, []);
+  }, [startPressMotion, releasePressMotion]);
   return <motion.span ref={element} className="mf-field-adornment mf-field-trigger-icon mf-button mf-button--ghost mf-size--sm mf-scale--sm mf-icon-button mf-variant--ghost" aria-hidden="true" style={{ scale, borderRadius: radius }}>
     {ripples.map(ripple => <ButtonRipple key={ripple.id} {...ripple} animated={!reducedMotion}
       options={{ duration: buttonMotion.rippleDuration / 1000, opacity: buttonMotion.rippleOpacity / 100, easeOutStrength: buttonMotion.rippleFastStart / 100, releaseSpeed: buttonMotion.rippleReleaseSpeed }}

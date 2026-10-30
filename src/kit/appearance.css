@@ -6,22 +6,22 @@
   --mf-on-outline-surface: var(--mf-on-surface);
   --mf-outline-stroke: var(--mf-outline-variant);
   --mf-icon-ink: var(--mf-primary-plain-ink, var(--mf-primary));
-  --mf-palette-primary: #6d5e00;
-  --mf-palette-on-primary: #fff;
-  --mf-palette-primary-container: #fde265;
-  --mf-palette-on-primary-container: #211b00;
+  --mf-palette-primary: #705d0e;
+  --mf-palette-on-primary: #fffaf0;
+  --mf-palette-primary-container: #f6e49b;
+  --mf-palette-on-primary-container: #1e1c16;
   --mf-palette-secondary: #665e40;
-  --mf-palette-on-secondary: #fff;
-  --mf-palette-secondary-container: #ede2bc;
-  --mf-palette-on-secondary-container: #201b04;
-  --mf-palette-tertiary: #43664f;
-  --mf-palette-on-tertiary: #fff;
-  --mf-palette-tertiary-container: #c4eccf;
-  --mf-palette-on-tertiary-container: #002110;
+  --mf-palette-on-secondary: #fffaf0;
+  --mf-palette-secondary-container: #eee2bc;
+  --mf-palette-on-secondary-container: #1e1c16;
+  --mf-palette-tertiary: var(--mf-palette-secondary);
+  --mf-palette-on-tertiary: var(--mf-palette-on-secondary);
+  --mf-palette-tertiary-container: var(--mf-palette-secondary-container);
+  --mf-palette-on-tertiary-container: var(--mf-palette-on-secondary-container);
   --mf-palette-error: #ba1a1a;
-  --mf-palette-on-error: #fff;
+  --mf-palette-on-error: #fffaf0;
   --mf-palette-error-container: #ffdad6;
-  --mf-palette-on-error-container: #410002;
+  --mf-palette-on-error-container: #1e1c16;
 }
 .mf-variant--primary {
   --mf-icon-ink: var(--mf-palette-primary-ink, var(--mf-palette-primary));
