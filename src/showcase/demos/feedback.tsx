@@ -10,7 +10,7 @@ import {
   Skeleton,
   EmptyState,
 } from "../../kit/feedback";
-import { Button, Slider } from "../../kit/controls";
+import { Button, Slider, ToggleGroup } from "../../kit/controls";
 import { type DemoProps, translate } from "./shared";
 export default function FeedbackDemo({ id, states, locale }: DemoProps) {
   const t = translate(locale);
@@ -19,6 +19,7 @@ export default function FeedbackDemo({ id, states, locale }: DemoProps) {
   const notify = (notification: NotificationInput) => publish({ ...notification, size });
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState([65]);
+  const [progressPresentation, setProgressPresentation] = useState<"wavy" | "segmented" | "status">("wavy");
   const [message, setMessage] = useState("");
   let demo;
   switch (id) {
@@ -71,9 +72,15 @@ export default function FeedbackDemo({ id, states, locale }: DemoProps) {
     case "progress":
       demo = (
         <div className="demo-fields">
+          <ToggleGroup label={t("Progress style", "ظاهر پیشرفت")} size="sm" value={progressPresentation} onValueChange={value => setProgressPresentation(value as "wavy" | "segmented" | "status")} options={[
+            {value:"wavy",label:t("Wave", "موجی")}, {value:"segmented",label:t("Segmented", "بخش‌بندی")}, {value:"status",label:t("With status", "با وضعیت")},
+          ]} />
           <Progress
             label={t("Upload progress", "پیشرفت بارگذاری")}
             value={states.loading ? undefined : value[0]}
+            presentation={progressPresentation}
+            status={t("Update in progress…", "به‌روزرسانی در حال انجام…")}
+            remaining={states.loading ? undefined : value[0] >= 100 ? t("Complete", "کامل شد") : t(`${Math.ceil((100-value[0])/4)}s left`, `${Math.ceil((100-value[0])/4).toLocaleString("fa")} ثانیه باقی‌مانده`)}
           />
           <Slider
             label={t("Progress", "پیشرفت")}

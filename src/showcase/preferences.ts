@@ -53,7 +53,7 @@ export function loadPreferences(
       colorBehavior.lightPlainInkBrightness = 40;
     }
     // Update former defaults while preserving values the user tuned differently.
-    if (data?.colorBehavior?.surfaceTint === 100) colorBehavior.surfaceTint = 75;
+    if (data?.colorSystemVersion !== 2 && [75, 100].includes(data?.colorBehavior?.surfaceTint)) colorBehavior.surfaceTint = 25;
     if (data?.colorBehavior?.lightSurfaceBrightness === 97) colorBehavior.lightSurfaceBrightness = 90;
     return {
       locale: data?.locale === "fa" ? "fa" : "en",
@@ -79,7 +79,7 @@ export function savePreferences(
   try {
     (storage ?? window.localStorage).setItem(
       "materialfluid.preferences",
-      JSON.stringify({ ...preferences, actionColorVersion: 1 }),
+      JSON.stringify({ ...preferences, actionColorVersion: 1, colorSystemVersion: 2 }),
     );
   } catch {
     /* Browsing remains usable when storage is blocked. */

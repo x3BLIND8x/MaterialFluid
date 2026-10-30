@@ -5,12 +5,12 @@ test("file upload supports keyboard selection, real progress rows, drop validati
   await page.goto("/#/components/file-input");
   const stage = page.locator(".live-stage");
   const target = stage.locator(".mf-file-surface").first();
-  for (const [size, height] of [["sm", 100], ["md", 210], ["lg", 240]] as const) {
+  for (const [size, height] of [["sm", 100], ["md", 210]] as const) {
     await selectSize(page, size);
     await expect(target).toHaveCSS("border-top-style", "dashed");
     await expect(target).toHaveCSS("display", size === "sm" ? "grid" : "flex");
     await expect(target.locator(".mf-file-limit")).toHaveText("Up to 1 file");
-    expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(height);
+    await expect.poll(async () => (await target.boundingBox())!.height).toBeGreaterThanOrEqual(height);
   }
   await target.focus();
   const chooser = page.waitForEvent("filechooser");

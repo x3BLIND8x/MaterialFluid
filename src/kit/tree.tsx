@@ -24,6 +24,10 @@ export interface TreeProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChang
   expanded?: string[];
   defaultExpanded?: string[];
   onExpandedChange?: (expanded: string[]) => void;
+  /** Also activate branch headings (for nested document navigation). */
+  selectBranches?: boolean;
+  /** Show supplied icons everywhere, nowhere, or on top-level parents only. */
+  iconMode?: "all" | "none" | "parents";
   showExpandControls?: boolean;
   expandAllLabel?: string;
   collapseAllLabel?: string;
@@ -36,7 +40,7 @@ function branches(items: TreeItem[]): string[] {
 /** A nested selection tree with controlled or uncontrolled selection and expansion. */
 export const Tree = forwardRef<HTMLDivElement, TreeProps>(function Tree(rawProps, ref) {
   const { label, items, value, defaultValue, onValueChange, expanded, defaultExpanded = [], onExpandedChange,
-    showExpandControls = true, expandAllLabel, collapseAllLabel, className, ...props } = useAppearanceProps(rawProps);
+    iconMode = "all", selectBranches = false, showExpandControls = true, expandAllLabel, collapseAllLabel, className, ...props } = useAppearanceProps(rawProps);
   const [selected, setSelected] = useControllable(value, defaultValue ?? "", onValueChange);
   const [open, setOpen] = useControllable(expanded, defaultExpanded, onExpandedChange);
   const { motion: mode, reducedMotion, dir, locale } = useMaterialFluid();
@@ -69,28 +73,30 @@ export const Tree = forwardRef<HTMLDivElement, TreeProps>(function Tree(rawProps
     event.preventDefault();
     next?.focus();
   };
-  const renderItems = (nodes: TreeItem[]): ReactNode => nodes.map(item => {
+  const renderItems = (nodes: TreeItem[], depth = 0): ReactNode => nodes.map(item => {
+    const showIcon = iconMode === "all" || (iconMode === "parents" && depth === 0);
     const branch = !!item.children?.length;
     const isOpen = branch && open.includes(item.value);
-    const isSelected = !branch && selected === item.value;
+    const isSelected = (!branch || selectBranches) && selected === item.value;
     const common = {
       role: "treeitem" as const,
       "aria-expanded": branch ? isOpen : undefined,
       "aria-owns": isOpen ? `${treeId}-${encodeURIComponent(item.value)}` : undefined,
-      "aria-selected": branch ? undefined : isSelected,
+      "aria-selected": branch && !selectBranches ? undefined : isSelected,
       "aria-disabled": item.disabled || undefined,
       tabIndex: item.disabled ? -1 : (focused === item.value || (focused === null && item.value === items[0]?.value) ? 0 : -1),
       className: cx("mf-tree-item", branch && "mf-tree-branch", isSelected && "mf-tree-item--selected"),
       onFocus: () => setFocused(item.value),
       onClick: (event: MouseEvent<HTMLElement>) => {
         if (item.disabled) { event.preventDefault(); return; }
-        if (branch) toggle(item.value); else setSelected(item.value);
+        if (branch) toggle(item.value);
+        if (!branch || selectBranches) setSelected(item.value);
       },
     };
-    const content = <>{isSelected && <motion.span className="mf-tree-selection" aria-hidden="true" layoutId={animated ? `${treeId}-selection` : undefined} transition={animated ? { type: "spring", stiffness: 620, damping: 42, mass: .65 } : { duration: 0 }} />}<span className="mf-tree-chevron" aria-hidden="true">{branch && <motion.span animate={{ rotate: isOpen ? 90 : (dir === "rtl" ? 180 : 0) }} transition={animated ? { type: "spring", stiffness: 420, damping: 30 } : { duration: 0 }}><AnimatedIcon name="chevron-right" size={18} /></motion.span>}</span>{item.icon}<span className="mf-tree-label">{item.label}</span>{branch && <span className="mf-tree-count" aria-hidden="true">{item.children!.length.toLocaleString(locale)}</span>}</>;
+    const content = <>{isSelected && <motion.span className="mf-tree-selection" aria-hidden="true" layoutId={animated ? `${treeId}-selection` : undefined} transition={animated ? { type: "spring", stiffness: 620, damping: 42, mass: .65 } : { duration: 0 }} />}{branch && <span className="mf-tree-chevron" aria-hidden="true"><motion.span animate={{ rotate: isOpen ? 90 : (dir === "rtl" ? 180 : 0) }} transition={animated ? { type: "spring", stiffness: 420, damping: 30 } : { duration: 0 }}><AnimatedIcon name="chevron-right" size={18} /></motion.span></span>}{showIcon && item.icon && <span className="mf-tree-icon" aria-hidden="true">{item.icon}</span>}<span className="mf-tree-label">{item.label}</span>{branch && <span className="mf-tree-count" aria-hidden="true">{item.children!.length.toLocaleString(locale)}</span>}</>;
     return <div className="mf-tree-node" key={item.value}>
       {item.href && !branch ? <a {...common} href={item.disabled ? undefined : item.href}>{content}</a> : <button {...common} type="button" disabled={item.disabled}>{content}</button>}
-      {branch && <AnimatePresence initial={false}>{isOpen && <motion.div id={`${treeId}-${encodeURIComponent(item.value)}`} role="group" className="mf-tree-group" initial={animated ? { height: 0, opacity: 0 } : false} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={animated ? { type: "spring", stiffness: 420, damping: 38 } : { duration: 0 }}>{renderItems(item.children!)}</motion.div>}</AnimatePresence>}
+      {branch && <AnimatePresence initial={false}>{isOpen && <motion.div id={`${treeId}-${encodeURIComponent(item.value)}`} role="group" className="mf-tree-group" initial={animated ? { height: 0, opacity: 0 } : false} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={animated ? { type: "spring", stiffness: 420, damping: 38 } : { duration: 0 }}>{renderItems(item.children!, depth + 1)}</motion.div>}</AnimatePresence>}
     </div>;
   });
   return <div {...props} ref={ref} className={cx("mf-tree", className)}>

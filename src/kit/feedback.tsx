@@ -1,14 +1,33 @@
+import { useSizePolicy } from "./appearance";
+import {
+  LinearWave,
+  CircularWave,
+  type ProgressWaveOptions,
+} from "./wavy-progress";
+export type { ProgressWaveOptions } from "./wavy-progress";
+import { useSizeDimensions } from "./size-motion";
 import {
   useAppearanceProps,
   type AppearanceProps,
   type ComponentSize,
 } from "./appearance";
-import { forwardRef, useEffect, useId, useRef, type HTMLAttributes, type ReactNode } from "react";
-import { motion } from "motion/react";
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useRef,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import { useNotifications, type NotificationInput } from "./notifications";
 export { NotificationCenter, useNotifications } from "./notifications";
-export type { NotificationInput, NotificationAction, NotificationRecord, NotificationCenterProps } from "./notifications";
-import { cx, useControllable } from "./utils";
+export type {
+  NotificationInput,
+  NotificationAction,
+  NotificationRecord,
+  NotificationCenterProps,
+} from "./notifications";
+import { cx, setRef, useControllable } from "./utils";
 import { AnimatedIcon } from "./icons";
 import { useMaterialFluid } from "./provider";
 export interface AlertProps
@@ -49,21 +68,90 @@ export interface ToastProps extends AppearanceProps, NotificationInput {
   action?: ReactNode;
   className?: string;
 }
-export const Toast = forwardRef<HTMLLIElement, ToastProps>(function Toast(rawProps, ref) {
-  const { open, defaultOpen = true, onOpenChange, className, title, description, duration = 5000, action, image, actions, onReply } = useAppearanceProps({ ...rawProps, variant: "outline" });
-  const [visible, setVisible] = useControllable(open, defaultOpen, onOpenChange);
-  const id = useId();
-  const { publish, close, update } = useNotifications();
-  const latest = useRef({ title, description, duration, action, image, actions, onReply, className, setVisible, ref });
-  latest.current = { title, description, duration, action, image, actions, onReply, className, setVisible, ref };
-  useEffect(() => {
-    if (visible) { const current = latest.current; publish({ id, ...current, rootRef: current.ref, onDismiss: () => latest.current.setVisible(false) }); }
-    else close(id);
-    return () => close(id);
-  }, [visible, id, publish, close]);
-  useEffect(() => { update(id, { title, description, duration, action, image, actions, onReply, className }); }, [id, title, description, duration, action, image, actions, onReply, className, update]);
-  return null;
-});
+export const Toast = forwardRef<HTMLLIElement, ToastProps>(
+  function Toast(rawProps, ref) {
+    const {
+      open,
+      defaultOpen = true,
+      onOpenChange,
+      className,
+      title,
+      description,
+      duration = 5000,
+      action,
+      image,
+      actions,
+      onReply,
+    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    const [visible, setVisible] = useControllable(
+      open,
+      defaultOpen,
+      onOpenChange,
+    );
+    const id = useId();
+    const { publish, close, update } = useNotifications();
+    const latest = useRef({
+      title,
+      description,
+      duration,
+      action,
+      image,
+      actions,
+      onReply,
+      className,
+      setVisible,
+      ref,
+    });
+    latest.current = {
+      title,
+      description,
+      duration,
+      action,
+      image,
+      actions,
+      onReply,
+      className,
+      setVisible,
+      ref,
+    };
+    useEffect(() => {
+      if (visible) {
+        const current = latest.current;
+        publish({
+          id,
+          ...current,
+          rootRef: current.ref,
+          onDismiss: () => latest.current.setVisible(false),
+        });
+      } else close(id);
+      return () => close(id);
+    }, [visible, id, publish, close]);
+    useEffect(() => {
+      update(id, {
+        title,
+        description,
+        duration,
+        action,
+        image,
+        actions,
+        onReply,
+        className,
+      });
+    }, [
+      id,
+      title,
+      description,
+      duration,
+      action,
+      image,
+      actions,
+      onReply,
+      className,
+      update,
+    ]);
+    return null;
+  },
+);
 /** Compatibility alias. Snackbar actions now use the shared Toast treatment and queue. */
 export const Snackbar = Toast;
 export interface ProgressProps
@@ -71,6 +159,11 @@ export interface ProgressProps
   value?: number;
   max?: number;
   label: string;
+  presentation?: "wavy" | "segmented" | "status";
+  segments?: number;
+  status?: ReactNode;
+  remaining?: ReactNode;
+  wave?: ProgressWaveOptions;
 }
 export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
   function Progress(rawProps, ref) {
@@ -78,16 +171,35 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
       value,
       max = 100,
       label,
+      presentation = "wavy",
+      segments = 8,
+      status,
+      remaining,
+      wave,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    } = useAppearanceProps(
+      useSizePolicy("progress", { ...rawProps, variant: "outline" }),
+    );
 
-    const { motion: mode, reducedMotion } = useMaterialFluid();
+    const { motion: mode, reducedMotion, locale } = useMaterialFluid();
     const expressive = mode === "expressive" && !reducedMotion;
     const bounded =
       value === undefined
         ? undefined
         : Math.min(Math.max(value, 0), Math.max(1, max));
+    const ratio =
+      bounded === undefined ? undefined : bounded / Math.max(1, max);
+    const percentage =
+      ratio === undefined
+        ? "…"
+        : new Intl.NumberFormat(locale, {
+            style: "percent",
+            maximumFractionDigits: 0,
+          }).format(ratio);
+    const count = Number.isFinite(segments)
+      ? Math.min(100, Math.max(1, Math.floor(segments)))
+      : 8;
     return (
       <div
         {...props}
@@ -97,15 +209,54 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
         aria-valuemin={0}
         aria-valuemax={Math.max(1, max)}
         aria-valuenow={bounded}
+        aria-busy={bounded === undefined || undefined}
+        aria-valuetext={
+          props["aria-valuetext"] ??
+          (presentation === "status"
+            ? [
+                percentage,
+                typeof status === "string" ? status : label,
+                typeof remaining === "string" ? remaining : undefined,
+              ]
+                .filter(Boolean)
+                .join(", ")
+            : undefined)
+        }
         className={cx(
           "mf-progress",
+          `mf-progress--${presentation}`,
           bounded === undefined && "mf-progress--indeterminate",
           className,
         )}
       >
-        <motion.span className="mf-progress-fill" initial={false} animate={{ width: bounded === undefined ? "35%" : `${(bounded / Math.max(1, max)) * 100}%` }} transition={{ duration: expressive ? .38 : 0, ease: [.2, 0, 0, 1] }} />
-        {expressive && bounded !== undefined && bounded > 0 && bounded < max && <span className="mf-progress-droplet" aria-hidden="true" />}
-
+        {presentation === "wavy" ? (
+          <LinearWave ratio={ratio} animated={expressive} options={wave} />
+        ) : presentation === "segmented" ? (
+          <div className="mf-progress-segments" aria-hidden="true">
+            {Array.from({ length: count }, (_, index) => (
+              <span key={index} className="mf-progress-segment">
+                <span
+                  style={{
+                    width: `${ratio === undefined ? 0 : Math.min(1, Math.max(0, ratio * count - index)) * 100}%`,
+                  }}
+                />
+              </span>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="mf-progress-status-row" aria-hidden="true">
+              <span className="mf-progress-percent">{percentage}</span>
+              <span className="mf-progress-status-text">{status ?? label}</span>
+              {remaining != null && (
+                <span className="mf-progress-remaining">{remaining}</span>
+              )}
+            </div>
+            <div className="mf-progress-status-track" aria-hidden="true">
+              <span style={{ width: `${(ratio ?? 0) * 100}%` }} />
+            </div>
+          </>
+        )}
       </div>
     );
   },
@@ -127,16 +278,29 @@ export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(
       typeof requestedSize === "number"
         ? requestedSize
         : { sm: 16, md: 28, lg: 40 }[requestedSize];
+    const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
+    const node = useRef<HTMLSpanElement>(null);
+    const diameter = useSizeDimensions(node, size, {
+      expressive: mode === "expressive" && !reducedMotion,
+      stiffness: buttonMotion.stiffness,
+      damping: buttonMotion.sizeDamping,
+      mass: buttonMotion.mass,
+      style: props.style,
+    });
 
     return (
       <span
         {...props}
-        ref={ref}
+        ref={(element) => {
+          node.current = element;
+          setRef(ref, element);
+        }}
         role="status"
         aria-label={label}
         className={cx("mf-spinner", className)}
-        style={{ width: size, height: size, ...props.style }}
+        style={{ width: diameter, height: diameter, ...props.style }}
       >
+        <CircularWave animated={mode === "expressive" && !reducedMotion} />
         <span className="mf-sr">{label}</span>
       </span>
     );
@@ -156,7 +320,9 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
       rounded = false,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    } = useAppearanceProps(
+      useSizePolicy("skeleton", { ...rawProps, variant: "outline" }),
+    );
 
     return (
       <div
@@ -183,7 +349,9 @@ export interface EmptyStateProps
 export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
   function EmptyState(rawProps, ref) {
     const { title, description, icon, action, className, ...props } =
-      useAppearanceProps({ ...rawProps, variant: "outline" });
+      useAppearanceProps(
+        useSizePolicy("empty-state", { ...rawProps, variant: "outline" }),
+      );
 
     return (
       <div {...props} ref={ref} className={cx("mf-empty", className)}>

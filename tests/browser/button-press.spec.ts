@@ -67,7 +67,7 @@ test("toggle pill and checkbox also restart on repeated quick clicks", async ({ 
 
 test("resize springs real dimensions and surrounding layout", async ({page}) => {
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", {name:"Primary",exact:true});
+  const button = page.getByRole("button", {name:"Filled",exact:true});
   await expect(button).toHaveAttribute("data-mf-sized", "true");
   await page.evaluate(() => document.fonts.ready);
   const samplesPromise = button.evaluate(async element => {
@@ -85,12 +85,12 @@ test("resize springs real dimensions and surrounding layout", async ({page}) => 
   expect(new Set(samples.map(s => s.height.toFixed(2))).size).toBeGreaterThan(5);
   expect(new Set(samples.map(s => s.container.toFixed(2))).size).toBeGreaterThan(5);
   expect(Math.min(...samples.map(s=>s.height))).toBeGreaterThanOrEqual(27.9);
-  expect(samples.at(-1)!.height).toBeCloseTo(28, 1);
+  await expect.poll(async () => (await button.boundingBox())!.height).toBeCloseTo(28, 1);
 });
 
 test("hover fades in both modes without replaying the center color reveal", async ({page}) => {
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", {name:"Primary",exact:true});
+  const button = page.getByRole("button", {name:"Filled",exact:true});
   await button.hover();
   await expect(button).toHaveCSS("transition-property", "background-color, color, border-color");
   await expect(button.locator(".mf-button-color-reveal")).toHaveCount(0);
@@ -105,7 +105,7 @@ test("button spring timing stays symmetric and preserves corners on long holds",
 }) => {
   await page.goto("/#/components/button");
   const button = page.getByRole("button", {
-    name: "Primary",
+    name: "Filled",
     exact: true,
   });
   const measure = () =>
@@ -250,7 +250,7 @@ test("temporary tuning updates the actual button and reset restores defaults", a
   await page.keyboard.press("End");
   await expect(depth).toHaveAttribute("aria-valuenow", "20");
   const button = page.getByRole("button", {
-    name: "Primary",
+    name: "Filled",
     exact: true,
   });
   const initial = (await button.boundingBox())!;
@@ -294,7 +294,7 @@ test("quick release finishes the ripple before fading it out", async ({
   await ease.focus();
   await page.keyboard.press("Home");
   const button = page.getByRole("button", {
-    name: "Primary",
+    name: "Filled",
     exact: true,
   });
   await button.hover();
@@ -318,7 +318,7 @@ test("minimal rapid clicks preserve the existing radius progress", async ({
   await page.goto("/#/components/button");
   await page.getByRole("button", { name: "Fluid", exact: true }).click();
   const button = page.getByRole("button", {
-    name: "Primary",
+    name: "Filled",
     exact: true,
   });
   const radius = () =>
@@ -363,7 +363,7 @@ for (const minimal of [false, true]) {
     if (minimal)
       await page.getByRole("button", { name: "Fluid", exact: true }).click();
     const button = page.getByRole("button", {
-      name: "Primary",
+      name: "Filled",
       exact: true,
     });
     await button.evaluate((el) => {
@@ -414,7 +414,7 @@ test.describe("touch press", () => {
   }) => {
     await page.goto("/#/components/button");
     const button = page.getByRole("button", {
-      name: "Primary",
+      name: "Filled",
       exact: true,
     });
     await button.scrollIntoViewIfNeeded();

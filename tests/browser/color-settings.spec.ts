@@ -1,137 +1,45 @@
 import { test, expect } from "@playwright/test";
 
-test("palette sliders update fills, preserve readable ink and survive reload", async ({
-  page,
-}) => {
+test("action color adjustments persist and reset without changing other roles", async ({page}) => {
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", {
-    name: "Primary",
-    exact: true,
-  });
-  await button.waitFor();
-  const read = async () =>
-    button.evaluate((el) => {
-      const css = getComputedStyle(el);
-      return { background: css.backgroundColor, text: css.color };
-    });
+  const button = page.locator(".demo-primary .mf-button.mf-variant--filled");
+  const read = () => button.evaluate(el => getComputedStyle(el).backgroundColor);
   const original = await read();
-  const ink = await page
-    .locator(".mf-root")
-    .evaluate((el) => getComputedStyle(el).getPropertyValue("--mf-primary"));
-  await page
-    .getByRole("button", { name: "Showcase preferences", exact: true })
-    .click();
-  await expect(page.getByRole("slider")).toHaveCount(10);
-  const brightness = page.getByRole("slider", {
-    name: "Light action brightness",
-    exact: true,
-  });
-  await expect(brightness).toHaveAttribute("aria-valuenow", "85");
-  await expect(
-    page.getByRole("slider", { name: "Dark action brightness", exact: true }),
-  ).toHaveAttribute("aria-valuenow", "90");
-  await brightness.focus();
-  await page.keyboard.press("End");
-  await expect(brightness).toHaveAttribute("aria-valuenow", "95");
-  await expect.poll(read).not.toEqual(original);
-  expect(
-    await page
-      .locator(".mf-root")
-      .evaluate((el) => getComputedStyle(el).getPropertyValue("--mf-primary")),
-  ).toBe(ink);
-  await page.reload();
-  await page
-    .getByRole("button", { name: "Showcase preferences", exact: true })
-    .click();
-  await expect(
-    page.getByRole("slider", { name: "Light action brightness", exact: true }),
-  ).toHaveAttribute("aria-valuenow", "95");
-  await page.getByRole("button", { name: "Reset colors", exact: true }).click();
-  await expect.poll(read).toEqual(original);
-  const hue = page.getByRole("slider", {
-    name: "Secondary hue shift",
-    exact: true,
-  });
-  await hue.focus();
-  await page.keyboard.press("Home");
-  await expect(hue).toHaveAttribute("aria-valuetext", "-180°");
+  await page.getByRole("button", {name:"Showcase preferences", exact:true}).click();
+  await page.locator(".action-color-settings > summary").click();
+  const group = page.locator(".action-color-group").filter({has:page.locator("summary", {hasText:/^Filled$/})});
+  await group.locator(":scope > summary").click();
+  const adjustment = group.getByRole("slider", {name:"Light brightness adjustment",exact:true});
+  await adjustment.focus();await page.keyboard.press("End");
+  await expect.poll(read).not.toBe(original);
+  const tuned = await button.evaluate(el => { const probe=document.createElement("span");probe.style.background="var(--mf-variant-fill)";el.append(probe);const color=getComputedStyle(probe).backgroundColor;probe.remove();return color; });
+  await expect.poll(read).toBe(tuned);await page.reload();await expect.poll(read).toBe(tuned);
+  await page.getByRole("button", {name:"Showcase preferences",exact:true}).click();
+  await page.getByRole("button", {name:"Reset colors",exact:true}).click();
+  await expect.poll(read).toBe(original);
 });
 
-test("accent selection is hue-only and persists without black or white shifts", async ({
-  page,
-}) => {
+test("accent selection is hue-only, persists, and resets to the original gold", async ({page}) => {
   await page.goto("/#/components/button");
-  await page
-    .getByRole("button", { name: "Showcase preferences", exact: true })
-    .click();
-  const hue = page.getByRole("slider", { name: "Accent hue", exact: true });
-  await hue.focus();
-  await page.keyboard.press("Home");
-  await expect(page.locator(".accent-control code")).toHaveText("#FF0000");
-  await page.keyboard.press("ArrowRight");
-  await expect(page.locator(".accent-control code")).toHaveText("#FF0400");
-  await page.reload();
-  await page
-    .getByRole("button", { name: "Showcase preferences", exact: true })
-    .click();
-  await expect(page.locator(".accent-control code")).toHaveText("#FF0400");
-  await page
-    .locator(".accent-control")
-    .getByRole("button", { name: "Reset", exact: true })
-    .click();
-  await expect(page.locator(".accent-control code")).toHaveText("#EEDD96");
+  const seed=()=>page.locator(".mf-root").evaluate(el=>getComputedStyle(el).getPropertyValue("--mf-accent-seed").trim());
+  await page.getByRole("button", {name:"Showcase preferences",exact:true}).click();
+  const hue=page.getByRole("slider",{name:"Accent hue",exact:true});
+  await hue.focus();await page.keyboard.press("Home");await expect.poll(seed).toBe("#ff0000");
+  await page.keyboard.press("ArrowRight");await expect.poll(seed).toBe("#ff0400");
+  await page.reload();await expect.poll(seed).toBe("#ff0400");
+  await page.getByRole("button", {name:"Showcase preferences",exact:true}).click();
+  await page.locator(".accent-control").getByRole("button",{name:"Reset",exact:true}).click();
+  await expect.poll(seed).toBe("#eedd96");
 });
 
-test("selected controls, progress and calendar use Primary fills in each theme", async ({
-  page,
-}) => {
-  for (const theme of ["light", "dark"]) {
-    await page.goto("/");
-    await page.evaluate(
-      ({ theme }) =>
-        localStorage.setItem(
-          "materialfluid.preferences",
-          JSON.stringify({ theme, accentSeed: "#ff0000" }),
-        ),
-      { theme },
-    );
-    await page.reload();
-    await expect(page.locator(".mf-root")).toHaveAttribute("data-theme", theme);
-    for (const [route, selector] of [
-      ["checkbox", '.mf-checkbox[data-state="checked"] .mf-choice-fill'],
-      ["switch", '.mf-switch[data-state="checked"]'],
-      ["slider", ".mf-slider-range > .mf-slider-piece"],
-      ["progress", ".mf-progress-fill"],
-      ["calendar", ".rdp-selected .rdp-day_button"],
-    ]) {
-      await page.goto(`/#/components/${route}`);
-      const demo = page.locator(".demo-primary");
-      if (route === "checkbox")
-        await demo.getByRole("checkbox").first().click();
-      if (route === "switch") await demo.getByRole("switch").first().click();
-      await expect(demo.locator(selector).first()).toBeVisible();
-      for (const [, role] of [
-        ["Primary", "primary"],
-      ]) {
-        await expect
-          .poll(() =>
-            demo
-              .locator(selector)
-              .first()
-              .evaluate((el, role) => {
-                const expected = document.createElement("span");
-                expected.style.backgroundColor = `var(--mf-palette-${role}-fill)`;
-                el.appendChild(expected);
-                const matches =
-                  getComputedStyle(el).backgroundColor ===
-                  getComputedStyle(expected).backgroundColor;
-                expected.remove();
-                return matches;
-              }, role),
-          )
-          .toBe(true);
-      }
-    }
+for(const theme of ["light","dark"]) test(`Material selections use shared primary roles (${theme})`,async({page})=>{
+  await page.goto("/");await page.evaluate(theme=>localStorage.setItem("materialfluid.preferences",JSON.stringify({theme})),theme);await page.reload();
+  for(const [route,selector] of [["checkbox",'.mf-checkbox[data-state="checked"] .mf-choice-fill'],["switch",'.mf-switch[data-state="checked"]'],["slider",'.mf-slider-range > .mf-slider-piece'],["progress",'.mf-progress-fill'],["calendar",'.rdp-selected .rdp-day_button']]){
+    await page.goto(`/#/components/${route}`);const demo=page.locator(".demo-primary");
+    if(route==="checkbox")await demo.getByRole("checkbox").first().click();
+    if(route==="switch")await demo.getByRole("switch").first().click();
+    const component=demo.locator(selector).first();await expect(component).toBeVisible();
+    await expect.poll(()=>component.evaluate(el=>{const probe=document.createElement("span");probe.style.background="var(--mf-primary)";el.append(probe);const matches=(el instanceof SVGElement ? getComputedStyle(el).stroke : getComputedStyle(el).backgroundColor)===getComputedStyle(probe).backgroundColor;probe.remove();return matches;})).toBe(true);
   }
 });
 
@@ -148,12 +56,12 @@ test("mobile Persian palette controls scroll, mirror and keep values clear of la
     .getByRole("button", { name: "ترجیحات نمایش", exact: true })
     .click();
   const brightness = page.getByRole("slider", {
-    name: "روشنایی دکمه‌ها در حالت روشن",
+    name: "اشباع رنگ اصلی",
     exact: true,
   });
   await brightness.focus();
   await page.keyboard.press("End");
-  await expect(brightness).toHaveAttribute("aria-valuenow", "95");
+  await expect(brightness).toHaveAttribute("aria-valuenow", "200");
   const contrast = page.getByRole("slider", { name: "کنتراست", exact: true });
   await contrast.focus();
   await page.keyboard.press("End");
@@ -185,163 +93,6 @@ test("mobile Persian palette controls scroll, mirror and keep values clear of la
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);
-});
-
-for (const theme of ["light", "dark"] as const) {
-  test(`advanced roles change icons, active navigation and neutrals independently (${theme})`, async ({
-    page,
-  }) => {
-    await page.addInitScript((theme) => {
-      if (!localStorage.getItem("materialfluid.preferences"))
-        localStorage.setItem(
-          "materialfluid.preferences",
-          JSON.stringify({ theme }),
-        );
-    }, theme);
-    await page.goto("/#/components/button");
-    const read = () =>
-      page.evaluate(() => {
-        const css = getComputedStyle(document.querySelector(".mf-root")!);
-        return Object.fromEntries(
-          [
-            "primary-fill",
-            "primary",
-            "primary-container",
-            "canvas",
-            "on-surface",
-            "outline",
-          ].map((role) => [role, css.getPropertyValue(`--mf-${role}`)]),
-        );
-      });
-    const initial = await read();
-    const iconBefore = await page
-      .locator(".brand-mark .mf-animated-icon")
-      .evaluate((el) => getComputedStyle(el).color);
-    const navBefore = await page
-      .locator('.catalogue-link[aria-current="page"] .mf-selection')
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
-    await page
-      .getByRole("button", { name: "Showcase preferences", exact: true })
-      .click();
-    await page.getByText("Advanced color roles", { exact: true }).click();
-    await expect(page.getByRole("slider")).toHaveCount(24);
-    const prefix = theme === "light" ? "Light" : "Dark";
-    for (const [label, key, end] of [
-      ["icon & accent ink", "primary", theme === "dark"],
-      ["selection & containers", "primary-container", theme === "light"],
-      ["neutral backgrounds", "canvas", theme === "dark"],
-      ["neutral text", "on-surface", theme === "dark"],
-      ["borders", "outline", theme !== "dark"],
-    ] as const) {
-      const before = await read();
-      const slider = page.getByRole("slider", {
-        name: `${prefix} ${label}`,
-        exact: true,
-      });
-      await slider.focus();
-      await page.keyboard.press(end ? "End" : "Home");
-      await expect.poll(async () => (await read())[key]).not.toBe(before[key]);
-      expect((await read())["primary-fill"]).toBe(initial["primary-fill"]);
-    }
-    expect(
-      await page
-        .locator(".brand-mark .mf-animated-icon")
-        .evaluate((el) => getComputedStyle(el).color),
-    ).toBe(iconBefore);
-    expect(
-      await page
-        .locator('.catalogue-link[aria-current="page"] .mf-selection')
-        .evaluate((el) => getComputedStyle(el).backgroundColor),
-    ).toBe(navBefore);
-    const tuned = await read();
-    await page.reload();
-    expect(await read()).toEqual(tuned);
-    await page
-      .getByRole("button", { name: "Showcase preferences", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "Reset colors", exact: true })
-      .click();
-    expect(await read()).toEqual(initial);
-  });
-}
-
-test("colored icons and Outline/Ghost toolbar icons use independent brightness roles", async ({
-  page,
-}) => {
-  for (const theme of ["light", "dark"]) {
-    await page.goto("/#/components/icon-button");
-    await page.evaluate(
-      (theme) =>
-        localStorage.setItem(
-          "materialfluid.preferences",
-          JSON.stringify({ theme }),
-        ),
-      theme,
-    );
-    await page.reload();
-    await expect(page.locator(".mf-root")).toHaveAttribute("data-theme", theme);
-    const top = page.locator(".showcase-topbar .mf-animated-icon").first();
-    const search = page.locator(".nav-search .mf-animated-icon").first();
-    const colored = page
-      .locator(".demo-primary .mf-icon-button .mf-animated-icon")
-      .first();
-    const plainColor = await top.evaluate((el) => getComputedStyle(el).color);
-    const coloredColor = await colored.evaluate(
-      (el) => getComputedStyle(el).color,
-    );
-    if (theme === "dark") expect(plainColor).not.toBe(coloredColor);
-    const searchColor = await search.evaluate(el => getComputedStyle(el).color);
-    await expect(search).toHaveCSS("color", searchColor);
-    for (const variant of ["outline", "ghost"]) {
-      const action = page.locator(`.demo-primary .mf-icon-button.mf-variant--${variant}`);
-      const expected = variant === "outline" && theme === "dark" ? await action.evaluate(el => getComputedStyle(el).color) : plainColor;
-      await expect(action.locator(".mf-animated-icon")).toHaveCSS("color", expected);
-    }
-    await page
-      .getByRole("button", { name: "Showcase preferences", exact: true })
-      .click();
-    await page.getByText("Advanced color roles", { exact: true }).click();
-    const prefix = theme === "light" ? "Light" : "Dark";
-    const ink = page.getByRole("slider", {
-      name: `${prefix} icon & accent ink`,
-      exact: true,
-    });
-    const plain = page.getByRole("slider", {
-      name: `${prefix} Outline / Ghost ink`,
-      exact: true,
-    });
-    await expect(ink).toHaveAttribute(
-      "aria-valuenow",
-      theme === "light" ? "40" : "50",
-    );
-    await expect(plain).toHaveAttribute(
-      "aria-valuenow",
-      theme === "light" ? "40" : "90",
-    );
-    await ink.focus();
-    await page.keyboard.press("Home");
-    await expect(colored).toHaveCSS("color", "rgb(0, 0, 0)");
-    await expect(top).toHaveCSS("color", plainColor);
-    await plain.focus();
-    await page.keyboard.press("End");
-    await expect(top).toHaveCSS("color", "rgb(255, 255, 255)");
-    await expect(search).toHaveCSS("color", searchColor);
-    await expect(colored).toHaveCSS("color", "rgb(0, 0, 0)");
-    await page
-      .getByRole("button", { name: "Reset colors", exact: true })
-      .click();
-    await expect(colored).toHaveCSS("color", coloredColor);
-    await expect(top).toHaveCSS("color", plainColor);
-    await page.keyboard.press("Escape");
-    await page.goto("/#/components/animated-icon");
-    const tile = page.locator(".icon-gallery-tile").first();
-    const tileInk = theme === "dark" ? await tile.evaluate(el => getComputedStyle(el).color) : plainColor;
-    await expect(tile.locator(".mf-animated-icon")).toHaveCSS("color", tileInk);
-    await expect(
-      page.locator(".icon-preview-button .mf-animated-icon").first(),
-    ).toHaveCSS("color", coloredColor);
-  }
 });
 
 test("danger uses solid red and white foregrounds in actions and surfaces", async ({

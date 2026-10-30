@@ -15,6 +15,7 @@ import {
 } from "react";
 import { motion } from "motion/react";
 import { useMaterialFluid } from "./provider";
+import { useSizeDimensions } from "./size-motion";
 import { cx, setRef } from "./utils";
 import { connectionStrokes, isStrokeIcon } from "./icon-strokes";
 import { getMaterialIcon, type IconName } from "./icon-registry";
@@ -62,9 +63,10 @@ export const AnimatedIcon = forwardRef<HTMLSpanElement, AnimatedIconProps>(
       typeof requestedSize === "number"
         ? requestedSize
         : { sm: 16, md: 22, lg: 32 }[requestedSize];
-    const { motion: mode, reducedMotion } = useMaterialFluid();
+    const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
     const expressive = (ICON_ANIMATIONS_ENABLED || rawProps.animated === true) && animated && mode === "expressive" && !reducedMotion;
     const element = useRef<HTMLSpanElement | null>(null);
+    const diameter = useSizeDimensions(element, size, { expressive: mode === "expressive" && !reducedMotion, stiffness: buttonMotion.stiffness, damping: buttonMotion.sizeDamping, mass: buttonMotion.mass, style });
     const off =
       name.endsWith("-off") ||
       name === "wifi_off" ||
@@ -166,8 +168,8 @@ export const AnimatedIcon = forwardRef<HTMLSpanElement, AnimatedIconProps>(
         data-icon-animation={strokeBased ? "stroke" : "center-fill"}
         style={
           {
-            width: size,
-            height: size,
+            width: diameter,
+            height: diameter,
             "--mf-icon-stroke": strokeWidth,
             ...style,
           } as CSSProperties

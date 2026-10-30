@@ -1,3 +1,5 @@
+import { useSizePolicy } from "./appearance";
+import { identityColor, miscColorStyle, statusColors, type MiscColor } from "./misc-colors";
 import { Tooltip } from "./overlays";
 import { TableColumnFilter, type TableFilterValue } from "./table-filter";
 import { IconSwap } from "./icon-swap";
@@ -178,6 +180,7 @@ export const List = forwardRef<HTMLUListElement, ListProps>(
 export interface AvatarProps
   extends HTMLAttributes<HTMLSpanElement>, AppearanceProps {
   name: string;
+  color?: MiscColor;
   src?: string;
   size?: "sm" | "md" | "lg";
 }
@@ -185,6 +188,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
   function Avatar(rawProps, ref) {
     const {
       name,
+      color = identityColor(rawProps.name),
       src,
       size = "md",
       className,
@@ -202,6 +206,8 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
         role="img"
         aria-label={name}
         draggable={false}
+        data-color={color}
+        style={{ ...miscColorStyle(color), ...props.style }}
         className={cx("mf-avatar", `mf-avatar--${size}`, className)}
       >
         {src && !failed ? (
@@ -236,20 +242,24 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function
 
 export interface BadgeProps
   extends HTMLAttributes<HTMLSpanElement>, AppearanceProps {
+  color?: MiscColor;
   tone?: "neutral" | "primary" | "success" | "error" | "warning" | "info";
 }
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   function Badge(rawProps, ref) {
     const {
       tone = "primary",
+      color,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    } = useAppearanceProps(useSizePolicy("badge", { ...rawProps, variant: "outline" }));
 
     return (
       <span
         {...props}
         ref={ref}
+        data-color={color ?? (tone in statusColors ? statusColors[tone as keyof typeof statusColors] : undefined)}
+        style={{ ...((color || tone in statusColors) ? miscColorStyle(color ?? statusColors[tone as keyof typeof statusColors]) : {}), ...props.style }}
         className={cx("mf-badge", `mf-tone--${tone}`, className)}
       />
     );
@@ -308,7 +318,7 @@ export const Divider = forwardRef<
   HTMLHRElement,
   HTMLAttributes<HTMLHRElement> & AppearanceProps
 >(function Divider(rawProps, ref) {
-  const { className, ...props } = useAppearanceProps({ ...rawProps, variant: "outline" });
+  const { className, ...props } = useAppearanceProps(useSizePolicy("divider", { ...rawProps, variant: "outline" }));
 
   return <hr {...props} ref={ref} className={cx("mf-divider", className)} />;
 });

@@ -10,11 +10,12 @@ import {
   Stepper,
   Link,
 } from "../../kit/navigation";
-import { Button, IconButton } from "../../kit/controls";
+import { Button, IconButton, ToggleGroup } from "../../kit/controls";
 import { AnimatedIcon } from "../../kit/icons";
 import { Tree } from "../../kit/tree";
 import { type DemoProps, translate } from "./shared";
 export default function NavigationDemo({ id, states, locale }: DemoProps) {
+  const [treeIcons, setTreeIcons] = useState<"all" | "none" | "parents">("none");
   const t = translate(locale);
   const [message, setMessage] = useState("");
   const items = [
@@ -141,27 +142,36 @@ export default function NavigationDemo({ id, states, locale }: DemoProps) {
       );
       break;
     case "tree":
-      demo = <div style={{ width: "min(100%, 360px)" }}><Tree label={t("Workspace", "فضای کاری")}
+      demo = <div className="demo-stack" style={{ width: "min(100%, 420px)" }}><ToggleGroup size="sm" label={t("Tree icons", "آیکن‌های درخت")} value={treeIcons} onValueChange={value => setTreeIcons(value as "all" | "none" | "parents")} options={[{ value:"none", label:t("Iconless", "بدون آیکن") },{ value:"all", label:t("With icons", "با آیکن") },{ value:"parents", label:t("Parent icons", "آیکن والد") }]} /><Tree iconMode={treeIcons} label={t("Workspace", "فضای کاری")}
         defaultExpanded={["projects", "design"]} defaultValue="components"
         items={[
-          { value: "projects", label: t("Projects", "پروژه‌ها"), children: [
-            { value: "design", label: t("Design system", "سیستم طراحی"), children: [
-              { value: "components", label: t("Components", "کامپوننت‌ها") },
-              { value: "tokens", label: t("Tokens", "توکن‌ها") },
-              { value: "guidelines", label: t("Guidelines", "راهنما") },
+          { value: "projects", icon: <AnimatedIcon name="layers" size={18} />, label: t("Projects", "پروژه‌ها"), children: [
+            { value: "design", icon: <AnimatedIcon name="settings" size={18} />, label: t("Design system", "سیستم طراحی"), children: [
+              { value: "components", icon: <AnimatedIcon name="category" size={18} />, label: t("Components", "کامپوننت‌ها") },
+              { value: "tokens", icon: <AnimatedIcon name="dashboard" size={18} />, label: t("Tokens", "توکن‌ها") },
+              { value: "guidelines", icon: <AnimatedIcon name="edit_note" size={18} />, label: t("Guidelines", "راهنما") },
             ] },
-            { value: "website", label: t("Website", "وب‌سایت") },
+            { value: "website", icon: <AnimatedIcon name="dashboard" size={18} />, label: t("Website", "وب‌سایت") },
           ] },
-          { value: "team", label: t("Team", "تیم"), children: [
-            { value: "people", label: t("People", "اعضا") },
-            { value: "settings", label: t("Settings", "تنظیمات") },
+          { value: "team", icon: <AnimatedIcon name="category" size={18} />, label: t("Team", "تیم"), children: [
+            { value: "people", icon: <AnimatedIcon name="category" size={18} />, label: t("People", "اعضا") },
+            { value: "settings", icon: <AnimatedIcon name="settings" size={18} />, label: t("Settings", "تنظیمات") },
           ] },
         ]} /></div>;
       break;
     case "table-of-contents":
       demo = (
-        <div className="demo-stack"><TableOfContents label={t("On this page", "در این صفحه")} items={items.map(item => ({ ...item, value: `toc-demo-${item.value}` }))} />
-          {items.map(item => <section key={item.value} id={`toc-demo-${item.value}`} style={{ scrollMarginTop: 96 }}><h3>{item.label}</h3><p>{t("A section of your document. Choose a heading above to jump here.", "بخشی از سند شما. برای رفتن به این بخش، عنوان بالا را انتخاب کنید.")}</p></section>)}
+        <div className="demo-stack"><TableOfContents label={t("On this page", "در این صفحه")} items={[
+          { value: "toc-demo-introduction", label: t("Introduction", "مقدمه"), children: [
+            { value: "toc-demo-overview", label: t("Overview", "نمای کلی") },
+            { value: "toc-demo-principles", label: t("Principles", "اصول") },
+          ] },
+          { value: "toc-demo-details", label: t("Details", "جزئیات"), children: [
+            { value: "toc-demo-structure", label: t("Structure", "ساختار") },
+          ] },
+        ]} />
+          <section id="toc-demo-introduction"><h3>{t("Introduction", "مقدمه")}</h3><h4 id="toc-demo-overview">{t("Overview", "نمای کلی")}</h4><p>{t("A document can contain several levels of headings.", "یک سند می‌تواند چند سطح عنوان داشته باشد.")}</p><h4 id="toc-demo-principles">{t("Principles", "اصول")}</h4><p>{t("Nested headings use the same Tree interaction as the component catalogue.", "عنوان‌های تو در تو از همان درخت فهرست کامپوننت‌ها استفاده می‌کنند.")}</p></section>
+          <section id="toc-demo-details"><h3>{t("Details", "جزئیات")}</h3><h4 id="toc-demo-structure">{t("Structure", "ساختار")}</h4><p>{t("Choose a heading to navigate to its section.", "برای رفتن به بخش، عنوان را انتخاب کنید.")}</p></section>
         </div>
       );
       break;

@@ -1,20 +1,20 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("all 56 pages render without runtime errors or overflow", async ({
+test("all 58 pages render without runtime errors or overflow", async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   const links = await page
-    .locator(".catalogue-link")
+    .locator('.catalogue-tree a[role=treeitem]')
     .evaluateAll((links) =>
       links.map((link) => ({
         href: link.getAttribute("href")!,
         title: link.textContent!.trim(),
       })),
     );
-  expect(links).toHaveLength(56);
+  expect(links).toHaveLength(58);
   for (const link of links) {
     await page.goto("/" + link.href);
     await expect(page.locator("h1")).toHaveText(link.title);
@@ -33,7 +33,7 @@ test("all 56 pages render without runtime errors or overflow", async ({
 test("bilingual search, settings and local persistence", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("searchbox", { name: "Search components" }).fill("کلید");
-  await expect(page.locator(".catalogue-link")).toHaveCount(1);
+  await expect(page.locator('.catalogue-tree a[role=treeitem]')).toHaveCount(1);
   await page.getByRole("button", { name: "Switch to Persian" }).click();
   await expect(page.locator(".mf-root")).toHaveAttribute("dir", "rtl");
   await page.getByRole("button", { name: "تغییر ظاهر" }).click();
@@ -165,7 +165,7 @@ test("mobile navigation, touch switch dragging, cancellation, and RTL", async ({
   await page.getByRole("button", { name: "Open component navigation" }).tap();
   await page
     .getByRole("dialog")
-    .getByRole("link", { name: "Switch", exact: true })
+    .getByRole("treeitem", { name: "Switch", exact: true })
     .tap();
   const control = page.getByRole("switch", { name: "Wi-Fi", exact: true });
   await expect(control).toBeVisible();

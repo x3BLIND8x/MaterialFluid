@@ -1,3 +1,4 @@
+import { sizesForComponent } from "../kit/component-policy.ts";
 export type Family =
   | "controls"
   | "forms"
@@ -39,7 +40,7 @@ const prop = (name: string, type: string, en: string, fa: string): PropDoc => ({
   description: [en, fa],
 });
 const fieldProps = [
-  prop("labelPosition", "top | start", "Visible label placement (default top); start follows reading direction. Goal-style numbers always use top.", "جای برچسب بالا یا ابتدا است؛ مقدار هدف همیشه برچسب بالا دارد."),
+  prop("labelPosition", "top | start | none", "Visible label placement (default top); none hides the label while preserving its accessible name.", "جای برچسب بالا یا ابتدا است؛ مقدار هدف همیشه برچسب بالا دارد."),
   prop("label", "string", "Visible field label.", "برچسب قابل مشاهده."),
   prop(
     "error",
@@ -133,7 +134,7 @@ function entry(
       )]),
       ...(name === "NotificationCenter" ? [] : [prop(
         "size",
-        "'sm' | 'md' | 'lg'",
+        sizesForComponent(name.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()).map(size => `'${size}'`).join(" | "),
         "Small is compact; Medium is the default; Large adds room. Icons and spinners also accept pixel sizes.",
         "کوچک فشرده، متوسط پیش‌فرض و بزرگ جادار است. آیکون و نشانگر چرخان اندازه پیکسلی هم می‌پذیرند.",
       )]),
@@ -684,6 +685,7 @@ export const catalogue: Entry[] = [
     "مرور موارد تو در تو با شاخه‌های بازشونده و انتخاب روان.",
     '<Tree label="Workspace" items={[{ value: "projects", label: "Projects", children: [{ value: "design", label: "Design" }] }]} defaultExpanded={["projects"]} />',
     [
+      prop("iconMode", "all | none | parents", "Show supplied icons on every row, hide them, or show them only on top-level rows. Iconless rows reserve no empty space.", "آیکن همه ردیف‌ها، بدون آیکن یا فقط ردیف‌های والد؛ بدون جای خالی برای آیکن."),
       prop("items", "TreeItem[]", "Nested items with labels, optional links, icons and children.", "موارد تو در تو با برچسب، پیوند، آیکون و زیرشاخه اختیاری."),
       prop("expanded / defaultExpanded", "string[]", "Controlled or initial open branches.", "شاخه‌های باز کنترل‌شده یا اولیه."),
       prop("onExpandedChange", "(values: string[]) => void", "Called when open branches change.", "هنگام تغییر شاخه‌های باز فراخوانی می‌شود."),
@@ -700,7 +702,8 @@ export const catalogue: Entry[] = [
     "رفتن به بخش‌ها و دنبال کردن موقعیت مطالعه.",
     '<TableOfContents label="On this page" items={destinations} />',
     [
-      prop("items", "NavItem[]", "Primary destinations.", "مقصدهای اصلی."),
+      prop("items", "TreeItem[]", "Nested headings with section links and optional children.", "عنوان‌های تو در تو با پیوند بخش و زیرشاخه اختیاری."),
+      prop("iconMode", "all | none | parents", "Show all supplied icons, none, or only top-level icons.", "نمایش همه آیکن‌ها، بدون آیکن یا فقط آیکن والدها."),
       ...selectionProps,
     ],
     [],
@@ -789,6 +792,7 @@ export const catalogue: Entry[] = [
         "نام دسترس‌پذیر و حروف جایگزین.",
       ),
       prop("src", "string", "Optional image URL.", "نشانی اختیاری تصویر."),
+      prop("color", "MiscColor", "Optional identity color; otherwise chosen from the name, independently of the accent seed.", "رنگ اختیاری نمایه؛ در حالت پیش‌فرض از نام و مستقل از رنگ اصلی انتخاب می‌شود."),
     ],
     [],
   ),
@@ -802,10 +806,11 @@ export const catalogue: Entry[] = [
     [
       prop(
         "tone",
-        "'neutral' | 'primary' | 'success' | 'error'",
+        "'neutral' | 'primary' | 'success' | 'warning' | 'info' | 'error'",
         "Semantic treatment.",
         "ظاهر معنایی.",
       ),
+      prop("color", "MiscColor", "Optional paired color from the shared miscellaneous palette.", "رنگ اختیاری از جفت‌رنگ‌های پالت مشترک متفرقه."),
     ],
     [],
   ),
@@ -921,6 +926,10 @@ export const catalogue: Entry[] = [
     "مقدار معلوم یا وضعیت نامعین روشن.",
     '<Progress label="Uploading" value={65} />',
     [
+      prop("presentation", "wavy | segmented | status", "Moving wave, separated segments, or a status row with percentage and optional remaining time.", "موج متحرک، بخش‌بندی یا ردیف وضعیت با درصد و زمان باقی‌مانده اختیاری."),
+      prop("segments", "number", "Number of segments for segmented progress; default 8.", "تعداد بخش‌ها؛ پیش‌فرض ۸."),
+      prop("status / remaining", "ReactNode", "Status-row content; remaining time comes from your application.", "محتوای ردیف وضعیت؛ زمان باقی‌مانده را برنامه شما تعیین می‌کند."),
+      prop("wave", "ProgressWaveOptions", "Wave length, height, speed, direction, stroke and track thickness, and incremental amplitude. Default: 60px / 20px / 31px per second toward the tail / 5px / 20px / incremental.", "تنظیم طول، ارتفاع، سرعت، جهت و ضخامت موج و مسیر، با دامنه افزایشی."),
       prop(
         "value",
         "number | undefined",

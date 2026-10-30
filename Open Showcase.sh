@@ -16,8 +16,8 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -f node_modules/vite/bin/vite.js ]]; then
-  echo "Installing MaterialFluid dependencies..."
+if [[ ! -f node_modules/vite/bin/vite.js ]] || ! npm ls --depth=0 --silent >/dev/null 2>&1; then
+  echo "Installing or updating MaterialFluid dependencies..."
   npm ci --cache .cache/npm
 fi
 

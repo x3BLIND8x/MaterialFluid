@@ -1,13 +1,11 @@
 import { Button, Slider, ToggleGroup } from "../kit/controls";
 import { AnimatedIcon } from "../kit/icons";
 import { localizeDigits } from "../kit/numerals";
-import { ColorSchemeControl } from "./color-scheme-control";
 import {
   colorBehaviorDefaults,
   colorBehaviorRanges,
   type ColorBehavior,
   type Locale,
-  type ColorScheme,
 } from "../kit/theme";
 
 const controls: {
@@ -172,16 +170,12 @@ export function ColorSettings({
   locale,
   colorDesign,
   onColorDesignChange,
-  colorScheme,
-  onColorSchemeChange,
 }: {
   value: ColorBehavior;
   onChange: (value: ColorBehavior) => void;
   locale: Locale;
   colorDesign: "material" | "previous";
   onColorDesignChange: (design: "material" | "previous") => void;
-  colorScheme: ColorScheme;
-  onColorSchemeChange: (scheme: ColorScheme) => void;
 }) {
   const fa = locale === "fa";
   const renderControl = ({
@@ -229,7 +223,6 @@ export function ColorSettings({
           value={colorDesign} onValueChange={value => onColorDesignChange(value as "material" | "previous")}
           options={[{ value: "material", label: fa ? "متریال" : "Material" }, { value: "previous", label: fa ? "قبلی" : "Previous" }]} />
       </div>
-      <ColorSchemeControl value={colorScheme} onChange={onColorSchemeChange} locale={locale} disabled={colorDesign === "previous"} />
       <div
         className="color-preview"
         aria-label={fa ? "پیش‌نمایش پالت" : "Palette preview"}
@@ -257,7 +250,7 @@ export function ColorSettings({
           ? "تغییرات زنده‌اند. کنتراست بیشتر، نوشته‌ها و سطوح را از هم متمایزتر می‌کند."
           : "Changes apply live. More contrast increases separation between text and surfaces."}
       </p>
-      {controls.slice(0, 9).map(renderControl)}
+      {controls.slice(0, 9).filter(control => colorDesign === "previous" || !["lightBrightness", "darkBrightness"].includes(control.key)).map(renderControl)}
       <details className="color-role-settings action-color-settings">
         <summary className="mf-variant--outline">
           <span>{fa ? "رنگ دکمه‌ها" : "Action colors"}</span>

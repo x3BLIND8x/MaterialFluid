@@ -5,6 +5,10 @@ export function usageFor(entry: Entry, appearance?: AppearanceProps) {
   for (const match of entry.code.matchAll(/<([A-Z][A-Za-z]+)/g))
     names.add(match[1]);
   const declarations: string[] = [];
+  if (/\buploadFile\b/.test(entry.code)) {
+    names.add("type FileUploadOptions");
+    declarations.push('const uploadFile = async (file: File, { signal, onProgress }: FileUploadOptions) => {\n    const body = new FormData();\n    body.append("file", file);\n    // Replace this URL with your upload endpoint.\n    const response = await fetch("/api/upload", { method: "POST", body, signal });\n    if (!response.ok) throw new Error("Upload failed");\n    onProgress(100);\n  };');
+  }
   const fixedAppearance = ["forms", "navigation", "surfaces", "feedback", "overlays"].includes(entry.family) || ["toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider"].includes(entry.id);
   const variantAttribute = fixedAppearance ? "" : ` variant="${appearance?.variant ?? "filled"}"`;
   const code = appearance

@@ -1,3 +1,4 @@
+import { normalizeComponentSize } from "./component-policy";
 import { createContext, useContext, type ReactNode } from "react";
 import { cx } from "./utils";
 
@@ -12,7 +13,7 @@ export const componentSizes = ["sm", "md", "lg"] as const;
 /** Previous color names remain available for existing consumers. */
 export type ComponentVariant = (typeof componentVariants)[number] | "primary" | "secondary" | "tertiary" | "outline" | "danger";
 export type ComponentSize = (typeof componentSizes)[number];
-export type LabelPosition = "top" | "bottom" | "start" | "end";
+export type LabelPosition = "top" | "bottom" | "start" | "end" | "none";
 export interface AppearanceProps {
   labelPosition?: LabelPosition;
   variant?: ComponentVariant;
@@ -70,12 +71,13 @@ export function useAppearanceProps<
 ): P {
   const defaults = useContext(AppearanceContext);
   const { variant, size, labelPosition, className, ...rest } = props;
-  const existingPosition = className?.match(/\bmf-label--(top|bottom|start|end)\b/)?.[1];
+  const existingPosition = className?.match(/\bmf-label--(top|bottom|start|end|none)\b/)?.[1];
   const chosenPosition = labelPosition ?? existingPosition ?? defaults.labelPosition;
   const chosenVariant = variant ?? defaults.variant;
   const normalizedVariant =
     chosenVariant && (aliases[chosenVariant as LegacyVariant] ?? chosenVariant);
-  const chosenSize = size ?? defaults.size;
+  const existingSize = className?.match(/\bmf-scale--(sm|md|lg)\b/)?.[1] as ComponentSize | undefined;
+  const chosenSize = size ?? existingSize ?? defaults.size;
   return {
     ...rest,
     ...(options.preserveVariant ? { variant } : {}),
@@ -84,7 +86,7 @@ export function useAppearanceProps<
       chosenPosition && `mf-label--${chosenPosition}`,
       normalizedVariant && `mf-variant--${normalizedVariant}`,
       typeof chosenSize === "string" && `mf-scale--${chosenSize}`,
-      className?.replace(/\bmf-label--(top|bottom|start|end)\b/g, ""),
+      className?.replace(/\bmf-label--(top|bottom|start|end|none)\b/g, "").replace(/\bmf-scale--(sm|md|lg)\b/g, ""),
     ),
   } as P;
 }
@@ -94,4 +96,10 @@ export function appearanceClasses(className?: string) {
     ?.split(/\s+/)
     .filter((name) => /^mf-(variant|scale|label)--/.test(name))
     .join(" ");
+}
+
+/** Enforce documented component sizes even under a broader group default. */
+export function useSizePolicy<P extends AppearanceInput>(component: string, props: P): P {
+  const defaults = useContext(AppearanceContext);
+  return { ...props, size: normalizeComponentSize(component, typeof props.size === "string" ? props.size : defaults.size) };
 }

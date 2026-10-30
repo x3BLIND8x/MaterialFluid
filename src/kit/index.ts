@@ -17,3 +17,6 @@ export * from "./overlays";
 
 export * from "./rolling-number";
 export * from "./icon-swap";
+
+export * from "./misc-colors";
+export * from "./component-policy";

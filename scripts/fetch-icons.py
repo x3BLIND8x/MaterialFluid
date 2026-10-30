@@ -29,7 +29,7 @@ CORE = ['bell','check','menu','close','plus','search','settings','sun','moon','c
  'eye','eye-off','wifi','wifi-off','bluetooth','bluetooth-off','heart','loader',
  'check-check','sliders','help','download','external','minus','activity']
 # Statically used kit and showcase controls must not depend on the lazy full pack.
-CORE += ['arrow_downward', 'arrow_upward', 'category', 'dashboard', 'edit_note', 'filter_list', 'layers', 'more_vert', 'notifications', 'reply', 'tab', 'touch_app', 'undo', 'unfold_more']
+CORE += ['palette', 'arrow_downward', 'arrow_upward', 'category', 'dashboard', 'edit_note', 'filter_list', 'layers', 'more_vert', 'notifications', 'reply', 'tab', 'touch_app', 'undo', 'unfold_more']
 SIZE = 192
 
 def thin(binary):

@@ -1,3 +1,5 @@
+import { useSizePolicy } from "./appearance";
+import { Progress } from "./feedback";
 import { useAppearanceProps, useComponentAppearance, ComponentAppearanceProvider, type AppearanceProps } from "./appearance";
 import {
   forwardRef,
@@ -39,7 +41,7 @@ function useFieldPadding() {
   return { setFocused, paddingInline, textPadding };
 }
 export type FieldAppearanceProps = Omit<AppearanceProps, "variant" | "labelPosition"> & {
-  labelPosition?: "top" | "start";
+  labelPosition?: "top" | "start" | "none";
 };
 export interface FormFieldProps
   extends HTMLAttributes<HTMLDivElement>, FieldAppearanceProps {
@@ -54,7 +56,7 @@ export interface FormFieldProps
 export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
   function FormField(rawProps, ref) {
     const defaults = useComponentAppearance();
-    const classPosition = rawProps.className?.match(/\bmf-label--(top|bottom|start|end)\b/)?.[1];
+    const classPosition = rawProps.className?.match(/\bmf-label--(top|bottom|start|end|none)\b/)?.[1];
     const requestedPosition = rawProps.labelPosition ?? classPosition ?? defaults.labelPosition;
     const {
       label,
@@ -67,7 +69,7 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
       children,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, labelPosition: requestedPosition === "start" ? "start" : "top", variant: "outline" });
+    } = useAppearanceProps({ ...rawProps, labelPosition: requestedPosition === "none" ? "none" : requestedPosition === "start" ? "start" : "top", variant: "outline" });
 
     const element = useRef<HTMLDivElement | null>(null);
     const subtitle = useRef<HTMLDivElement | null>(null);
@@ -89,7 +91,7 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
         onInvalidCapture={event => { props.onInvalidCapture?.(event); wobble(); }}
         className={cx("mf-field", error && "mf-field--invalid", className)}
       >
-        <label htmlFor={htmlFor} className="mf-field-label">
+        <label htmlFor={htmlFor} className="mf-field-label" onClick={event => event.preventDefault()}>
           {label}
           {required && <span aria-hidden="true"> *</span>}
         </label>
@@ -290,11 +292,13 @@ export const PasswordField = forwardRef<HTMLInputElement, TextFieldProps>(
 export type NumberFieldProps = Omit<TextFieldProps, "labelPosition"> & {
   unit?: ReactNode;
 } & (
-  | { presentation?: "standard"; labelPosition?: "top" | "start" }
-  | { presentation: "goal"; labelPosition?: "top" }
+  | { presentation?: "standard"; labelPosition?: "top" | "start" | "none" }
+  | { presentation: "goal"; labelPosition?: "top" | "none" }
 );
 export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
   function NumberField({ presentation = "standard", unit, ...props }, ref) {
+    const defaults = useComponentAppearance();
+    const labelPosition = props.labelPosition ?? defaults.labelPosition;
     const input = useRef<HTMLInputElement | null>(null);
     const stepping = useRef(false);
     const { locale } = useMaterialFluid();
@@ -340,7 +344,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
       surface.addEventListener("wheel", wheel as EventListener, { passive: false });
       return () => surface.removeEventListener("wheel", wheel as EventListener);
     });
-    return <TextField {...props} labelPosition={presentation === "goal" ? "top" : props.labelPosition} className={cx(props.className, presentation === "goal" && "mf-number-field--goal")} ref={node => { input.current = node; setRef(ref, node); }} type="number" inputMode="decimal"
+    return <TextField {...props} labelPosition={presentation === "goal" && labelPosition !== "none" ? "top" : props.labelPosition} className={cx(props.className, presentation === "goal" && "mf-number-field--goal")} ref={node => { input.current = node; setRef(ref, node); }} type="number" inputMode="decimal"
       placeholder={props.placeholder === undefined ? undefined : localizeDigits(props.placeholder, locale)}
       valueOverlayActive={valid && (locale === "fa" || !editing)}
       valueOverlay={valid ? <span className="mf-number-value-content" dir="ltr" data-editing={editing || undefined}>{locale === "fa" && editing ? localizeDigits(value, locale) : <RollingNumber value={Number(value)} format={() => localizeDigits(value, locale)} />}</span> : null}
@@ -725,7 +729,7 @@ export const OTPInput = forwardRef<HTMLDivElement, OTPInputProps>(
       disabled,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    } = useAppearanceProps(useSizePolicy("otp-input", { ...rawProps, variant: "outline" }));
 
     const [code, set] = useControllable(value, defaultValue, onValueChange);
     const helpId = useId();
@@ -813,7 +817,8 @@ export interface FileUploadOptions {
   /** Report the actual upload percentage, from 0 to 100. */
   onProgress: (percentage: number) => void;
 }
-export type FileInputProps = Omit<TextFieldProps, "value" | "defaultValue" | "leading" | "trailing" | "valueOverlay" | "valueOverlayActive" | "controlRef"> & {
+export type FileInputProps = Omit<TextFieldProps, "value" | "defaultValue" | "leading" | "trailing" | "valueOverlay" | "valueOverlayActive" | "controlRef" | "size"> & {
+  size?: "sm" | "md";
   /** Upload selected files. Resolve on success; reject on failure. Omit for native selection only. */
   onUpload?: (file: File, options: FileUploadOptions) => Promise<void>;
   /** Maximum selected files in multiple mode. Defaults to 5; single mode always allows 1. */
@@ -822,7 +827,7 @@ export type FileInputProps = Omit<TextFieldProps, "value" | "defaultValue" | "le
 type FileUploadState = { status: "uploading" | "completed" | "error"; progress?: number };
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   function FileInput(rawProps, ref) {
-    const { label, hint, error, className, id: givenId, size: fieldSize = "md", showCount: _showCount, onUpload, maxFiles = 5, ...props } = useAppearanceProps({ ...rawProps, variant: "outline" }, { preserveSize: true });
+    const { label, hint, error, className, id: givenId, size: fieldSize = "md", showCount: _showCount, onUpload, maxFiles = 5, ...props } = useAppearanceProps({ ...useSizePolicy("file-input", rawProps), variant: "outline" }, { preserveSize: true });
     const generatedId = useId();
     const id = givenId ?? generatedId;
     const fileLimit = props.multiple ? Number.isFinite(maxFiles) ? Math.max(1, Math.floor(maxFiles)) : 5 : 1;
@@ -955,9 +960,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                   <div className="mf-file-details">
                     <span className="mf-file-name" title={file.name} dir="auto">{file.name}</span>
                     <span className="mf-file-status"><bdi>{localizeDigits(size, locale)}</bdi><span className="mf-file-state" aria-live="polite">{status === "uploading" ? t("Uploading…", "در حال بارگذاری…") : status === "completed" ? t("Uploaded", "بارگذاری شد") : status === "error" ? t("Upload failed. Try again.", "بارگذاری ناموفق بود. دوباره تلاش کنید.") : t("Ready", "آماده")}</span>{status === "uploading" && upload?.progress !== undefined && <bdi className="mf-file-percent">{localizeDigits(`${Math.round(upload.progress)}%`, locale)}</bdi>}</span>
-                    {upload && <div className={cx("mf-progress", "mf-file-progress", status === "uploading" && upload.progress === undefined && "mf-progress--indeterminate")} role="progressbar" aria-label={`${t("Upload", "بارگذاری")} ${file.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={upload.progress}>
-                      <motion.span className="mf-progress-fill" initial={false} animate={{ width: upload.progress === undefined ? status === "error" ? "0%" : "35%" : `${upload.progress}%` }} transition={{ duration: expressive ? .3 : 0, ease: [.2, 0, 0, 1] }} />
-                    </div>}
+                    {upload && <Progress className="mf-file-progress" label={`${t("Upload", "بارگذاری")} ${file.name}`} value={upload.progress === undefined && status === "error" ? 0 : upload.progress} />}
                   </div>
                   {status === "completed" && <span className="mf-file-complete" aria-hidden="true"><AnimatedIcon name="check" size={20} /></span>}
                   {status === "error" && <IconButton label={`${t("Retry", "تلاش مجدد")} ${file.name}`} size={fieldSize} disabled={props.disabled} onClick={() => { jobs.current.delete(file); setRetry(value => value + 1); }}><AnimatedIcon name="undo" /></IconButton>}

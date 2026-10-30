@@ -1,6 +1,6 @@
 # MaterialFluid
 
-A Material-inspired React/TypeScript kit with fluid interaction motion, English/Persian support, and a 56-page showcase.
+A Material-inspired React/TypeScript kit with fluid interaction motion, English/Persian support, and a 58-page showcase.
 
 ## Open the local showcase
 
@@ -135,7 +135,7 @@ away from the foreground tone to retain contrast.
 
 The same optional settings are accepted by `createTheme(seed, dark, colorBehavior, colorScheme)`.
 
-Choose a whole-theme Material color scheme with `colorScheme` on `MaterialFluidProvider`: `tonalSpot` (default), `expressive`, `vibrant`, `neutral`, `monochrome`, `fidelity`, `content`, `rainbow`, or `fruitSalad`. The color utility uses its 2025 specification for tonal spot, expressive, vibrant, and neutral; the remaining schemes fall back to the 2021 specification. The showcase saves this choice and applies it to the Material color design; the Previous design keeps its original generator. Existing color adjustments continue to apply on top of the selected scheme.
+Material color design uses Tonal Spot with the 2025 specification. It is the only supported `colorScheme` (`tonalSpot`); saved choices from older versions migrate to it. Existing color adjustments still apply. The Previous color design retains its original generator.
 Brightness values are HCT tones (light default 85; dark default 90). Saturation and
 surface tint are percentages of the classic CorePalette chroma values; hue shifts
 are degrees relative to the seed (secondary default 0, tertiary 30). Primary,
@@ -217,7 +217,7 @@ switch the paired foreground to keep it readable.
 
 Explicit component props override group defaults; popup content retains the same
 appearance when rendered through a portal. The showcase has variant/size controls
-on each page. Component sizing uses Small, Medium and Large; there is no global density setting.
+on each page. Each component exposes its supported sizes from the shared policy; there is no global density setting.
 
 Button variant/accent/theme changes reveal the new color in a crisp circle from
 the center. Hover does not trigger this reveal. `colorMotion={{duration: 0.55}}`
@@ -235,7 +235,7 @@ Toggle, ToggleGroup, Checkbox, RadioGroup, Switch and Slider no longer expose ac
 
 - Toggle rests in Outline and becomes Primary when pressed.
 - ToggleGroup uses Ghost items with one movable Primary selection. The pill shares Button's press-depth and radius animation, stays within its resting size, and glides between snapped items while dragging. Items have no separate press fills or ripple trails. Release commits and cancellation restores the previous selection. ButtonGroup and ToggleGroup fit their contents.
-- Checkbox rests in Outline; checked state fills with Primary, while partial state keeps the outline with a minus and no fill. Both the check and minus strokes draw in. Its outer rectangle springs in scale on every press and release, including the partial state, while its corner radius stays fixed. Quick clicks complete a visible press before the return spring. Checkbox and radio filling follow press depth like Toggle.
+- Checkbox rests in Outline; checked state fills with Primary, while partial state keeps the outline with a minus and no fill. Both the check and minus strokes draw in. Its circular outline springs in scale on every press and release, including the partial state, while its corner radius stays fixed. Quick clicks complete a visible press before the return spring. Checkbox and radio filling follow press depth like Toggle.
 - RadioGroup stays outlined with a centered, springing Primary dot. The outer circle also springs on every press and release. Both controls use the shared button spring settings and respect minimal and reduced motion.
 - Switch uses an Outline track off and Primary track on; its Primary thumb swaps to Outline when enabled, with centered animated Wi-Fi/Bluetooth icons. Explicit `animated={true}` enables an AnimatedIcon while the default global pause remains in effect elsewhere.
 - Slider uses split Primary/neutral tracks with continuous and stepped values, expressive movement, and press/release feedback. Use `mode="continuous"` for free movement or `mode="stepped" step={5}` for snapping. Passing `step` alone selects stepped mode; the default is continuous. Pointer movement follows a continuous physical spring with momentum and gentle overshoot, settling to the committed step on release; keyboard and wheel changes use expressive 340ms glides; held navigation keys retain press feedback throughout repeat events.
@@ -264,7 +264,7 @@ Calendars support wheel month navigation, a month chooser with month numbers, an
 
 Select, Combobox, and MultiSelect share an anchored, scrollable menu below the field. Combobox includes optional `allowCustom` entry; the separate Autocomplete component and page have been removed.
 
-MultiSelect renders removable Primary chips with 6px gaps and wraps to additional rows; its border and content height spring together without scaling text. Calendar height also springs when its week rows change. Date ranges use square connected edges and reset to a new start when an earlier date is clicked. TimePicker offers a goal-style hours/minutes overlay (and seconds where needed), with native input values and form submission preserved. FileInput supports multiple files, removable filename rows, and per-file progress. Small uses a compact horizontal drop area; Medium and Large stay centered. The visible file limit is enforced for both browsing and dropping: single mode allows one file, while multiple mode defaults to five, configurable with `maxFiles`. Exceeding the limit preserves the previous selection and shows an error. Pass `onUpload={(file, { signal, onProgress }) => uploadFile(file, signal, onProgress)}` to connect your upload transport. Report actual percentages from 0–100; resolve after server confirmation or reject to show retry. Removal, replacement, form reset, and unmount abort outstanding uploads. Without `onUpload`, files remain locally selected and native form submission works. The showcase explicitly simulates upload progress.
+MultiSelect renders removable Primary chips with 6px gaps and wraps to additional rows; its border and content height spring together without scaling text. Calendar height also springs when its week rows change. Date ranges use square connected edges and reset to a new start when an earlier date is clicked. TimePicker offers a goal-style hours/minutes overlay (and seconds where needed), with native input values and form submission preserved. FileInput supports multiple files, removable filename rows, and per-file progress. Small uses a compact horizontal drop area; Medium stays centered. There is no Large FileInput variant. The visible file limit is enforced for both browsing and dropping: single mode allows one file, while multiple mode defaults to five, configurable with `maxFiles`. Exceeding the limit preserves the previous selection and shows an error. Pass `onUpload={(file, { signal, onProgress }) => uploadFile(file, signal, onProgress)}` to connect your upload transport. Report actual percentages from 0–100; resolve after server confirmation or reject to show retry. Removal, replacement, form reset, and unmount abort outstanding uploads. Without `onUpload`, files remain locally selected and native form submission works. The showcase explicitly simulates upload progress.
 
 Select, Combobox, and MultiSelect share bounded, scrollable dropdown lists. MultiSelect offers search with a visually hidden label, highlights selected options without checkmarks and animates adding or removing its selected chips. Combobox accepts listed options by default; set `allowCustom` to enable the explicit Add action. Its helper text communicates this policy in both locales.
 
@@ -287,3 +287,29 @@ Visible form field labels default to the top and may be placed at the logical st
 
 
 `CardGroup` offers radio-style single selection (`value: string`) and checkbox-style multiple selection (`selectionMode="multiple"`, `value: string[]`). Options accept `label`, `description`, and a decorative `symbol` containing an icon, symbol, or emoji. Native inputs support keyboard selection and named form values. Switch captions stay at End; Slider supports Top, Bottom, Start, and End label positions.
+
+### Shared shapes and hidden labels
+
+Control base radii are: Small 14px, Medium 24px, Large 29px, matching half the standard button height. Standard buttons appear as pills. Framed containers add their padding inset and border to the base radius for concentric curves. Icon actions start circular and retain radius compression during presses. Unscaled surfaces use Medium. Existing press-depth and ripple-linked radius animations remain active.
+
+Use `labelPosition="none"` to hide a field's visible label while retaining its accessible name. The showcase Label selector offers Top, Start, and None; goal-style number fields support Top and None. Continue supplying meaningful label text for assistive technology.
+
+Field labels and checkbox, radio, and switch captions retain accessible naming but do not activate or focus their controls when clicked. Use the control itself to interact.
+
+### Shared identity colors and Tree icons
+
+`Avatar` chooses a stable miscellaneous color from its name. Override it with `color="blue"`, `"teal"`, `"green"`, `"amber"`, `"rose"`, or `"violet"`. `Badge` accepts the same color choices; semantic tones reuse the shared status palette. These colors are independent of the accent seed and have paired foregrounds in both themes.
+
+Tree's `iconMode` accepts `"all"`, `"none"`, or `"parents"` for top-level icons only. Supply icons on the items themselves; hidden or missing icons leave no empty slot. TableOfContents uses Tree and accepts nested `children` plus the same icon mode. See [COMPONENT_POLICY.md](COMPONENT_POLICY.md) for supported sizes and the rationale for each component.
+
+Size changes across the kit share Button’s sizing spring through `MaterialFluidProvider`, including fields, navigation, surfaces, Spinner and icons. Minimal/reduced motion applies sizes immediately. FileInput supports only `sm` and `md`. Progress and Spinner use linear/circular Material Expressive waves, which pause when hidden or offscreen.
+
+Progress also supports `presentation="segmented"` and `presentation="status"`:
+
+```tsx
+<Progress label="Upload" value={30} presentation="segmented" segments={8} />
+<Progress label="Update" value={30} presentation="status"
+  status="Update in progress…" remaining="8s left" />
+```
+
+The Wave presentation uses the supplied [wavy-slider reference](https://github.com/mahozad/wavy-slider) settings: a 60px wavelength, 20px height, 31px/s toward the tail, 5px stroke, 20px inactive track, and incremental amplitude. Override these with the `wave` prop (`ProgressWaveOptions`). Remaining time is application-provided; the component does not estimate it.

@@ -53,7 +53,7 @@ test("dragged selection keeps one pill and glides between snapped items", async 
 test("icon variants share a compact row", async ({ page }) => {
   await page.goto("/#/components/icon-button");
   const buttons = page.locator(".demo-primary .mf-icon-button");
-  await expect(buttons).toHaveCount(6);
+  await expect(buttons).toHaveCount(5);
   const bounds = await buttons.evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
     return { left: rect.left, right: rect.right, top: rect.top };

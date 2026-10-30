@@ -1,10 +1,9 @@
+import { miscColors } from "../kit/misc-colors";
 import { type Ref } from "react";
 import { Button, Checkbox } from "../kit/controls";
-import { Badge, CardGroup } from "../kit/surfaces";
+import { Avatar, Badge, CardGroup } from "../kit/surfaces";
 import { useMaterialFluid } from "../kit/provider";
 import { AccentSeed } from "./accent-seed";
-import { ColorSchemeControl } from "./color-scheme-control";
-import { type ColorScheme } from "../kit/theme";
 
 type Role = { token: string; en: string; fa: string; fallback?: string };
 const accents: Role[] = [
@@ -102,18 +101,18 @@ function AccentExamples({ fa, previous }: { fa: boolean; previous: boolean }) {
     </section>
   </div>;
 }
-export function ColorPage({ seed, onSeedChange, onSchemeChange, heading }: { seed: string; onSeedChange: (seed: string) => void; onSchemeChange: (scheme: ColorScheme) => void; heading: Ref<HTMLHeadingElement> }) {
-  const { locale, colorDesign, colorScheme } = useMaterialFluid();
+export function ColorPage({ seed, onSeedChange, heading }: { seed: string; onSeedChange: (seed: string) => void; heading: Ref<HTMLHeadingElement> }) {
+  const { locale, colorDesign } = useMaterialFluid();
   const fa = locale === "fa";
   const t = (en: string, persian: string) => fa ? persian : en;
   return <div className="palette-page">
     <div className="component-intro"><div><h1 ref={heading} tabIndex={-1}>{t("Color system", "سیستم رنگ")}</h1><p>{t("Explore the colors generated for your current theme and seed. Related roles share one color wherever possible.", "رنگ‌های ساخته‌شده برای پوسته و رنگ پایه فعلی را ببینید. نقش‌های مرتبط تا جای ممکن از یک رنگ مشترک استفاده می‌کنند.")}</p></div></div>
     <section className="palette-seed"><div><h2>{t("Seed hue", "فام پایه")}</h2><p>{t("The hue control uses HSV degrees; the palette is generated using Material color roles.", "کنترل فام بر حسب درجه HSV است؛ پالت با نقش‌های رنگی متریال ساخته می‌شود.")}</p></div><AccentSeed value={seed} onChange={onSeedChange} fa={fa} /></section>
-    <section className="palette-section palette-scheme"><h2>{t("Theme color scheme", "گونه رنگ پوسته")}</h2><ColorSchemeControl value={colorScheme} onChange={onSchemeChange} locale={locale} disabled={colorDesign === "previous"} /></section>
     <section className="palette-section"><h2>{t("Action variants", "گونه‌های دکمه")}</h2><p>{t("These treatments use the primary, secondary, neutral and error roles. Their colors can be adjusted in settings.", "این گونه‌ها از نقش‌های اصلی، ثانویه، خنثی و خطا استفاده می‌کنند و رنگشان در تنظیمات قابل تغییر است.")}</p><div className="palette-actions">{actions.map(action => <div className="palette-action" key={action.variant}><Button variant={action.variant}>{t(action.en, action.fa)}</Button><span>{action.description[fa ? 1 : 0]}</span><code dir="ltr">{colorDesign === "previous" ? action.previous : action.material}</code></div>)}</div></section>
     <section className="palette-section"><h2>{t("Seed-derived accents", "رنگ‌های تأکیدی از فام پایه")}</h2><p>{t("Primary and secondary provide accent colors and matching foregrounds. These examples show where the showcase uses them together.", "رنگ‌های اصلی و ثانویه به همراه رنگ متن مناسب تولید می‌شوند. نمونه‌ها کاربرد آن‌ها را در کامپوننت‌ها نشان می‌دهند.")}</p><AccentExamples fa={fa} previous={colorDesign === "previous"} /><Swatches roles={accents} fa={fa} previous={colorDesign === "previous"} /></section>
     <section className="palette-section"><h2>{t("Seed-tinted neutrals", "رنگ‌های خنثی با ته‌رنگ پایه")}</h2><p>{t("Surfaces, text and outlines use neutral palettes influenced by the seed and surface settings.", "سطوح، متن و خطوط از پالت‌های خنثی تأثیرگرفته از رنگ پایه و تنظیمات سطح استفاده می‌کنند.")}</p><Swatches roles={surfaces} fa={fa} previous={colorDesign === "previous"} /></section>
+    <section className="palette-section"><h2>{t("Identity and status colors", "رنگ‌های هویت و وضعیت")}</h2><p>{t("A separate shared palette gives people distinct identities and statuses stable meanings. These colors stay the same when the accent seed changes.", "یک پالت مستقل به افراد هویت متمایز و به وضعیت‌ها معنای ثابت می‌دهد. تغییر رنگ پایه این رنگ‌ها را تغییر نمی‌دهد.")}</p><div className="palette-roles">{miscColors.map(color => <div className="palette-role" key={color}><Avatar name={color} color={color} /><span><strong>{color}</strong><code dir="ltr">--mf-misc-{color}</code><code dir="ltr">--mf-on-misc-{color}</code></span></div>)}</div></section>
     <section className="palette-section"><h2>{t("Error and danger", "خطا و خطر")}</h2><p>{t("The error palette is separate from the seed-derived accents. Its displayed tones can still change with the theme and settings.", "پالت خطا از رنگ‌های تأکیدی پایه جداست؛ درجه روشنایی آن با پوسته و تنظیمات تغییر می‌کند.")}</p><Swatches roles={errors} fa={fa} previous={colorDesign === "previous"} /></section>
-    <p className="palette-footnote">{colorDesign === "previous" ? t("Previous design starts from Material's legacy CorePalette and Scheme. Brightness, saturation and contrast settings adjust the resulting roles.", "طرح قبلی از CorePalette و Scheme قدیمی متریال استفاده می‌کند و تنظیمات روشنایی، اشباع و کنتراست رنگ‌ها را تغییر می‌دهند.") : t("Material design converts the seed to HCT and uses the selected scheme. The library uses the 2025 spec for Tonal spot, Expressive, Vibrant and Neutral, and 2021 for the other schemes. For adjusted action colors: hue = role hue + shift; chroma = role chroma × saturation / 100; tone = role tone + tone offset, clamped to 0–100. Foregrounds are chosen for contrast. Brightness and contrast settings may adjust the base roles.", "طرح متریال رنگ پایه را به HCT تبدیل و از گونه انتخاب‌شده استفاده می‌کند. کتابخانه برای تونال، بیانگر، زنده و خنثی از نسخه ۲۰۲۵ و برای سایر گونه‌ها از نسخه ۲۰۲۱ استفاده می‌کند. برای رنگ دکمه: فام = فام نقش + چرخش؛ کروما = کرومای نقش × اشباع ÷ ۱۰۰؛ روشنایی = روشنایی نقش + تغییر روشنایی، محدود به ۰ تا ۱۰۰. رنگ نوشته بر اساس کنتراست انتخاب می‌شود. تنظیمات روشنایی و کنتراست ممکن است رنگ نقش پایه را تغییر دهند.")}</p>
+    <p className="palette-footnote">{colorDesign === "previous" ? t("Previous design starts from Material's legacy CorePalette and Scheme. Brightness, saturation and contrast settings adjust the resulting roles.", "طرح قبلی از CorePalette و Scheme قدیمی متریال استفاده می‌کند و تنظیمات روشنایی، اشباع و کنتراست رنگ‌ها را تغییر می‌دهند.") : t("Material design converts the seed to HCT and uses Tonal Spot with the 2025 Material color specification. For adjusted action colors: hue = role hue + shift; chroma = role chroma × saturation / 100; tone = role tone + tone offset, clamped to 0–100. Foregrounds are chosen for contrast. Brightness and contrast settings may adjust the base roles.", "طرح متریال رنگ پایه را به HCT تبدیل و از تونال با نسخه ۲۰۲۵ رنگ متریال استفاده می‌کند. برای رنگ دکمه: فام = فام نقش + چرخش؛ کروما = کرومای نقش × اشباع ÷ ۱۰۰؛ روشنایی = روشنایی نقش + تغییر روشنایی، محدود به ۰ تا ۱۰۰. رنگ نوشته بر اساس کنتراست انتخاب می‌شود. تنظیمات روشنایی و کنتراست ممکن است رنگ نقش پایه را تغییر دهند.")}</p>
   </div>;
 }

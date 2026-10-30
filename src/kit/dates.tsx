@@ -1,4 +1,4 @@
-import { useAppearanceProps, type AppearanceProps } from "./appearance";
+import { useAppearanceProps, type AppearanceProps, type ComponentSize } from "./appearance";
 import {
   forwardRef,
   memo,
@@ -15,7 +15,7 @@ import {
   type ReactNode,
   type ButtonHTMLAttributes,
 } from "react";
-import { DateLib, DayPicker, type MonthCaptionProps } from "react-day-picker";
+import { DateLib, DayPicker, type MonthCaptionProps, type WeekProps } from "react-day-picker";
 import {
   getDateLib as getPersianDateLib,
   faIR as jalaliFa,
@@ -33,19 +33,24 @@ import { Portal } from "./portal";
 import { FieldTriggerIcon } from "./field-trigger-icon";
 import { localizeDigits } from "./numerals";
 function CalendarNavButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <IconButton {...props} label={props["aria-label"] ?? "Change month"} variant="ghost" size="sm" />;
+  const navigation = useContext(CalendarNavigation);
+  const { dir } = useMaterialFluid();
+  const previous = props.className?.includes("rdp-button_previous");
+  const direction = previous === (dir !== "rtl") ? "left" : "right";
+  return <IconButton {...props} label={props["aria-label"] ?? "Change month"} variant="ghost" size={navigation?.size ?? "md"}><AnimatedIcon name={`chevron-${direction}`} animated={false} /></IconButton>;
 }
 type CalendarView = "days" | "months" | "year";
 const CalendarNavigation = createContext<{
   library: DateLib; view: CalendarView; openView: (view: CalendarView) => void;
   monthButton: RefObject<HTMLButtonElement | null>; yearButton: RefObject<HTMLButtonElement | null>; disabled?: boolean;
+  size: ComponentSize; showOutsideDays: boolean;
 } | null>(null);
 function CalendarCaption({ calendarMonth, displayIndex: _displayIndex, children: _children, ...props }: MonthCaptionProps) {
   const navigation = useContext(CalendarNavigation);
   if (!navigation) return <div {...props} />;
   return <div {...props}>
-    <Button ref={navigation.monthButton} variant="ghost" size="sm" disabled={navigation.disabled} aria-expanded={navigation.view === "months"} onClick={() => navigation.openView("months")}>{navigation.library.format(calendarMonth.date, "LLLL")}</Button>
-    <Button ref={navigation.yearButton} variant="ghost" size="sm" disabled={navigation.disabled} aria-expanded={navigation.view === "year"} onClick={() => navigation.openView("year")}>{navigation.library.format(calendarMonth.date, "yyyy")}</Button>
+    <Button ref={navigation.monthButton} variant="ghost" size={navigation.size} disabled={navigation.disabled} aria-expanded={navigation.view === "months"} onClick={() => navigation.openView("months")}>{navigation.library.format(calendarMonth.date, "LLLL")}</Button>
+    <Button ref={navigation.yearButton} variant="ghost" size={navigation.size} disabled={navigation.disabled} aria-expanded={navigation.view === "year"} onClick={() => navigation.openView("year")}>{navigation.library.format(calendarMonth.date, "yyyy")}</Button>
   </div>;
 }
 function CalendarChevron({ orientation = "left" }: { orientation?: "up" | "down" | "left" | "right" }) {
@@ -53,7 +58,12 @@ function CalendarChevron({ orientation = "left" }: { orientation?: "up" | "down"
   const direction = dir === "rtl" ? orientation === "left" ? "right" : orientation === "right" ? "left" : orientation : orientation;
   return <AnimatedIcon name={`chevron-${direction}`} size={20} animated={false} />;
 }
-const calendarComponents = { MonthCaption: CalendarCaption, PreviousMonthButton: CalendarNavButton, NextMonthButton: CalendarNavButton, Chevron: CalendarChevron };
+function CalendarWeek({ week, ...props }: WeekProps) {
+  const navigation = useContext(CalendarNavigation);
+  if (!navigation?.showOutsideDays && week.days.every(day => day.outside)) return <></>;
+  return <tr {...props} />;
+}
+const calendarComponents = { MonthCaption: CalendarCaption, PreviousMonthButton: CalendarNavButton, NextMonthButton: CalendarNavButton, Chevron: CalendarChevron, Week: CalendarWeek };
 
 /** Format and localize once; DayPicker must not wrap the Jalali formatter again. */
 function createCalendarLibrary(calendar: CalendarSystem, locale: "en" | "fa") {
@@ -157,6 +167,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
     } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
     const { locale, dir, motion: mode, reducedMotion } = useMaterialFluid();
+    const size = (className?.match(/\bmf-scale--(sm|md|lg)\b/)?.[1] ?? "md") as ComponentSize;
     const calendar =
       givenCalendar ?? (locale === "fa" ? "persian" : "gregorian");
     const [selected, set] = useControllable<DateOnly | undefined>(
@@ -242,11 +253,13 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
             ...(maximum ? [{ after: maximum }] : []),
           ],
       className: "mf-calendar",
+      navLayout: "around" as const,
+      fixedWeeks: false,
       showOutsideDays,
       components: calendarComponents,
     };
     return (
-      <CalendarNavigation.Provider value={{ library, view, openView, monthButton, yearButton, disabled }}>
+      <CalendarNavigation.Provider value={{ library, view, openView, monthButton, yearButton, disabled, size, showOutsideDays }}>
       <div {...props} ref={node => { container.current = node; if (typeof ref === "function") ref(node); else if (ref) ref.current = node; }} className={cx("mf-calendar-wrap", className)} data-calendar-view={view}
         onKeyDown={event => { props.onKeyDown?.(event); if (event.key === "Escape" && view !== "days") { event.preventDefault(); event.stopPropagation(); closeView(); } }}>
         <AutoHeight className="mf-calendar-size">

@@ -1,3 +1,4 @@
+import { createTheme as createPreviousTheme } from "../src/kit/theme-previous";
 import { Tabs, Breadcrumbs, Link, Stepper } from "../src/kit/navigation";
 import { describe, it, expect, afterEach, vi, beforeAll } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
@@ -14,7 +15,6 @@ import {
   themeFromSourceColor,
   argbFromHex,
   hexFromArgb,
-  lstarFromArgb,
 } from "@material/material-color-utilities";
 import { Calendar, DatePicker, DateRangePicker, TimePicker, parseDateOnly, toDateOnly, formatDateOnly } from "../src/kit/dates";
 import { Switch, Button, Checkbox, Slider } from "../src/kit/controls";
@@ -77,7 +77,7 @@ describe("theme colors", () => {
   it("can reproduce the classic palette with explicit settings", () => {
     const old = themeFromSourceColor(argbFromHex("#eedd96"));
     for (const dark of [false, true]) {
-      const actual = createTheme("#eedd96", dark, {
+      const actual = createPreviousTheme("#eedd96", dark, {
         primarySaturation: 100,
         secondarySaturation: 100,
         tertiarySaturation: 100,
@@ -263,44 +263,21 @@ describe("theme colors", () => {
 });
 
 describe("approved palette settings", () => {
-  it.each([false, true])(
-    "separates colored and plain icon tones and provides solid red Danger (dark=%s)",
-    (dark) => {
-      const theme = createTheme("#eedd96", dark);
-      expect(lstarFromArgb(argbFromHex(theme["--mf-primary-ink"]))).toBeCloseTo(
-        dark ? 50 : 40,
-        0,
-      );
-      expect(
-        lstarFromArgb(argbFromHex(theme["--mf-primary-plain-ink"])),
-      ).toBeCloseTo(dark ? 90 : 40, 0);
-      expect(theme["--mf-on-error-fill"]).toBe("#ffffff");
-      expect(lstarFromArgb(argbFromHex(theme["--mf-error-fill"]))).toBeCloseTo(
-        49,
-        0,
-      );
-      const changed = createTheme("#eedd96", dark, {
-        lightPlainInkBrightness: 80,
-        darkPlainInkBrightness: 80,
-      });
-      expect(changed["--mf-primary-ink"]).toBe(theme["--mf-primary-ink"]);
-      expect(changed["--mf-primary-plain-ink"]).not.toBe(
-        theme["--mf-primary-plain-ink"],
-      );
-    },
-  );
-  it("honors icon brightness directly while keeping readable accent text separate", () => {
-    const theme = createTheme("#eedd96", false, { lightInkBrightness: 100 });
-    expect(theme["--mf-primary-ink"]).toBe("#ffffff");
-    expect(theme["--mf-primary"]).not.toBe("#ffffff");
-    expect(
-      contrast(theme["--mf-primary"], theme["--mf-surface-high"]),
-    ).toBeGreaterThanOrEqual(4.5);
-    expect(
-      createTheme("#eedd96", false, { lightInkBrightness: 80 })[
-        "--mf-primary-ink"
-      ],
-    ).not.toBe("#ffffff");
+  it.each([false, true])("keeps accent ink readable and Danger paired in dark=%s", dark => {
+    const theme = createTheme("#eedd96", dark);
+    for (const role of ["primary-ink", "primary-plain-ink", "action-ghost", "action-outlined"]) {
+      for (const surface of ["surface", "surface-container", "surface-high"]) {
+        expect(contrast(theme[`--mf-${role}`], theme[`--mf-${surface}`])).toBeGreaterThanOrEqual(6.9);
+      }
+    }
+    expect(theme["--mf-on-error-fill"]).toBe("#ffffff");
+    expect(contrast(theme["--mf-error-fill"], theme["--mf-on-error-fill"])).toBeGreaterThanOrEqual(4.5);
+  });
+  it("clamps extreme icon brightness to the readable range", () => {
+    for (const brightness of [0, 40, 80, 100]) {
+      const theme = createTheme("#eedd96", false, { lightInkBrightness: brightness });
+      expect(contrast(theme["--mf-primary-ink"], theme["--mf-surface-high"])).toBeGreaterThanOrEqual(6.9);
+    }
   });
   it.each([false, true])(
     "controls ink, containers, neutrals and borders independently (dark=%s)",
@@ -404,7 +381,7 @@ describe("approved palette settings", () => {
       tertiarySaturation: 100,
       secondaryHueShift: 0,
       tertiaryHueShift: 30,
-      surfaceTint: 75,
+      surfaceTint: 25,
       contrast: 0,
       lightInkBrightness: 40,
       darkInkBrightness: 50,
@@ -554,9 +531,9 @@ describe("preferences and catalogue", () => {
       preferenceDefaults,
     );
   });
-  it("has exactly 56 unique component pages", () => {
-    expect(catalogue).toHaveLength(56);
-    expect(new Set(catalogue.map((c) => c.id)).size).toBe(56);
+  it("has exactly 58 unique component pages", () => {
+    expect(catalogue).toHaveLength(58);
+    expect(new Set(catalogue.map((c) => c.id)).size).toBe(58);
   });
   it("normalizes malformed stored preferences", () => {
     expect(
@@ -1289,17 +1266,17 @@ describe("localized numeric fields and dates", () => {
 
 describe("shared label placement", () => {
   it("uses provider label defaults and preserves explicit overrides", () => {
-    render(<MaterialFluidProvider><ComponentAppearanceProvider labelPosition="end"><TextField label="Default" /><TextField label="Override" labelPosition="start" /></ComponentAppearanceProvider></MaterialFluidProvider>);
-    expect(screen.getByLabelText("Default").closest(".mf-field")?.classList.contains("mf-label--end")).toBe(true);
+    render(<MaterialFluidProvider><ComponentAppearanceProvider labelPosition="none"><TextField label="Default" /><TextField label="Override" labelPosition="start" /></ComponentAppearanceProvider></MaterialFluidProvider>);
+    expect(screen.getByLabelText("Default").closest(".mf-field")?.classList.contains("mf-label--none")).toBe(true);
     const override = screen.getByLabelText("Override").closest(".mf-field")!;
     expect(override.classList.contains("mf-label--start")).toBe(true);
-    expect(override.classList.contains("mf-label--end")).toBe(false);
+    expect(override.classList.contains("mf-label--none")).toBe(false);
   });
 
   it("keeps explicit field placement through nested field components without DOM prop leakage", () => {
-    const { container } = render(<MaterialFluidProvider><TextField label="Title" labelPosition="start" hint="Helper" /><FileInput label="Attachment" labelPosition="bottom" /></MaterialFluidProvider>);
+    const { container } = render(<MaterialFluidProvider><TextField label="Title" labelPosition="start" hint="Helper" /><FileInput label="Attachment" labelPosition="none" /></MaterialFluidProvider>);
     expect(screen.getByLabelText("Title").closest(".mf-field")?.classList.contains("mf-label--start")).toBe(true);
-    expect(screen.getByLabelText("Attachment").closest(".mf-field")?.classList.contains("mf-label--bottom")).toBe(true);
+    expect(screen.getByLabelText("Attachment").closest(".mf-field")?.classList.contains("mf-label--none")).toBe(true);
     expect(container.querySelector("[labelposition]")).toBeNull();
     expect(screen.getByText("Helper")).toBeTruthy();
   });

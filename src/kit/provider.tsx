@@ -1,3 +1,5 @@
+import { createMiscColorTokens } from "./misc-colors";
+import { useSizeMotion } from "./size-motion";
 import { NotificationProvider } from "./notifications";
 import {
   createContext,
@@ -170,10 +172,16 @@ export const MaterialFluidProvider = forwardRef<
     () => ({ ...textMorphMotionDefaults, ...textMorph }),
     [textMorph],
   );
+  useSizeMotion(portalContainer, {
+    expressive: motion === "expressive" && !reduced,
+    stiffness: effectiveButtonMotion.stiffness,
+    damping: effectiveButtonMotion.sizeDamping,
+    mass: effectiveButtonMotion.mass,
+  });
   const tokens = useMemo(
-    () => colorDesign === "previous"
+    () => ({ ...(colorDesign === "previous"
       ? createPreviousTheme(accentSeed, dark, effectiveColors)
-      : createTheme(accentSeed, dark, effectiveColors, colorScheme),
+      : createTheme(accentSeed, dark, effectiveColors, colorScheme)), ...createMiscColorTokens(dark) }),
     [accentSeed, dark, effectiveColors, colorDesign, colorScheme],
   );
   const value = useMemo(

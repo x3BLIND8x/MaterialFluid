@@ -21,7 +21,7 @@ export function useOptionsExpansion(open: boolean, anchor: RefObject<HTMLElement
       placed.current = true;
     }
     const css = getComputedStyle(surface);
-    const radius = Math.max(...[css.borderTopLeftRadius, css.borderTopRightRadius, css.borderBottomLeftRadius, css.borderBottomRightRadius].map(parseFloat));
+    const radius = Math.min(surface.offsetWidth / 2, surface.offsetHeight / 2, parseFloat(css.borderTopLeftRadius));
     if (!surface.dataset.optionsExpanded) panel.style.setProperty("--mf-options-radius", `${radius}px`);
     panel.style.setProperty("--mf-options-stroke", css.getPropertyValue(surface.closest(".mf-field--invalid") ? "--mf-error" : "--mf-palette-primary"));
     const sync = () => {

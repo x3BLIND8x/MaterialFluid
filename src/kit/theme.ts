@@ -6,22 +6,13 @@ import {
   lstarFromArgb,
   Hct,
   SchemeTonalSpot,
-  SchemeExpressive,
-  SchemeVibrant,
-  SchemeNeutral,
-  SchemeMonochrome,
-  SchemeFidelity,
-  SchemeContent,
-  SchemeRainbow,
-  SchemeFruitSalad,
   DynamicScheme,
 } from "@material/material-color-utilities";
 export type ThemeMode = "light" | "dark" | "system";
 export type MotionMode = "expressive" | "minimal";
 export type Locale = "en" | "fa";
-export const colorSchemes = ["tonalSpot", "expressive", "vibrant", "neutral", "monochrome", "fidelity", "content", "rainbow", "fruitSalad"] as const;
+export const colorSchemes = ["tonalSpot"] as const;
 export type ColorScheme = (typeof colorSchemes)[number];
-const schemeConstructors = { tonalSpot: SchemeTonalSpot, expressive: SchemeExpressive, vibrant: SchemeVibrant, neutral: SchemeNeutral, monochrome: SchemeMonochrome, fidelity: SchemeFidelity, content: SchemeContent, rainbow: SchemeRainbow, fruitSalad: SchemeFruitSalad };
 export interface ColorBehavior {
   primarySaturation: number;
   secondarySaturation: number;
@@ -70,7 +61,7 @@ export const colorBehaviorDefaults: Readonly<ColorBehavior> = {
   tertiarySaturation: 100,
   secondaryHueShift: 0,
   tertiaryHueShift: 30,
-  surfaceTint: 75,
+  surfaceTint: 25,
   contrast: 0,
   lightBrightness: 85,
   darkBrightness: 90,
@@ -153,15 +144,14 @@ export function createTheme(
   seed = "#eedd96",
   dark = false,
   colorBehavior?: Partial<ColorBehavior>,
-  colorScheme: ColorScheme = "tonalSpot",
+  _colorScheme: ColorScheme = "tonalSpot",
 ): Record<string, string> {
   if (!/^#[0-9a-f]{6}$/i.test(seed))
     throw new Error("Accent seed must be a six-digit hex color.");
   const behavior = normalizeColorBehavior(colorBehavior);
   const strength = behavior.contrast / 100;
   const sourceColorHct = Hct.fromInt(argbFromHex(seed));
-  const SchemeClass = schemeConstructors[colorScheme] ?? SchemeTonalSpot;
-  const base = new SchemeClass(sourceColorHct, dark, strength, "2025");
+  const base = new SchemeTonalSpot(sourceColorHct, dark, strength, "2025");
   const adjustPalette = (source: TonalPalette, saturation: number, defaultSaturation: number, hueShift = 0) =>
     TonalPalette.fromHueAndChroma((source.hue + hueShift + 360) % 360, source.chroma * saturation / defaultSaturation);
   const palette = {
@@ -328,7 +318,7 @@ export function createTheme(
   const actionPrimary = palette.a1;
   const actionSecondary = palette.a2;
   const actionNeutral = palette.n2;
-  for (const [name, base, role, inkRole, hueOffset, saturation, lightOffset, darkOffset, surface] of [
+  for (const [name, _base, role, inkRole, hueOffset, saturation, lightOffset, darkOffset, surface] of [
     ["Filled", actionPrimary, roles.primary(), roles.onPrimary(), behavior.filledHueShift, behavior.filledSaturation, behavior.lightFilledTone, behavior.darkFilledTone, true],
     ["Tonal", actionSecondary, roles.secondaryContainer(), roles.onSecondaryContainer(), behavior.tonalHueShift, dark ? behavior.darkTonalSaturation : behavior.tonalSaturation, behavior.lightTonalTone, behavior.darkTonalTone, true],
     ["Outlined", actionNeutral, roles.onSurfaceVariant(), roles.onSurfaceVariant(), behavior.outlinedHueShift, behavior.outlinedSaturation, behavior.lightOutlinedTone, behavior.darkOutlinedTone, false],
@@ -382,6 +372,29 @@ export function createTheme(
     errorFillHover: "errorFill", onErrorFillHover: "onErrorFill",
   };
   for (const [role, source] of Object.entries(sharedRoles)) scheme[role] = scheme[source];
+  // One legibility floor across every neutral layer, including table headers and overlays.
+  // A quieter neutral chroma lets the seed distinguish actions rather than tinting all text.
+  const surfaces = [scheme.background, scheme.surface, scheme.surfaceContainer, scheme.surfaceContainerHigh];
+  scheme.onSurface = readable(palette.n1, tone((dark ? 94 : 18) + textOffset), surfaces, 7);
+  scheme.onBackground = scheme.onSurface;
+  scheme.onSurfaceVariant = readable(palette.n2, tone((dark ? 80 : 34) + textOffset), surfaces, 7);
+  scheme.outline = readable(palette.n2, tone((dark ? 65 : 48) + borderOffset), surfaces, 3);
+  scheme.outlineVariant = scheme.outline;
+  // Transparent actions must be readable on both the page and the example canvas.
+  for (const [name, colors] of [["primary", palette.a1], ["secondary", palette.a2]] as const) {
+    scheme[name] = readable(colors, lstarFromArgb(scheme[name]), surfaces, 7);
+    scheme[`${name}Ink`] = readable(colors, dark ? behavior.darkInkBrightness : behavior.lightInkBrightness, surfaces, 7);
+    scheme[`${name}PlainInk`] = readable(colors, dark ? behavior.darkPlainInkBrightness : behavior.lightPlainInkBrightness, surfaces, 7);
+  }
+  const plainInkOffset = dark ? behavior.darkPlainInkBrightness - 90 : behavior.lightPlainInkBrightness - 40;
+  scheme.actionGhost = readable(TonalPalette.fromInt(scheme.actionGhost), tone(lstarFromArgb(scheme.actionGhost) + plainInkOffset), surfaces, 7);
+  scheme.onActionGhost = scheme.actionGhost;
+  scheme.actionOutlined = readable(TonalPalette.fromInt(scheme.actionOutlined), tone(lstarFromArgb(scheme.actionOutlined) + plainInkOffset), surfaces, 7);
+  scheme.onActionOutlined = scheme.actionOutlined;
+  scheme.inverseSurface = scheme.onSurface;
+  scheme.inverseOnSurface = scheme.surface;
+  scheme.actionOutlinedBorder = readable(TonalPalette.fromInt(scheme.actionOutlinedBorder), tone(lstarFromArgb(scheme.actionOutlinedBorder) + borderOffset), surfaces, 3);
+
   const tokens: Record<string, string> = {};
   for (const [key, value] of Object.entries(scheme))
     tokens[`--mf-${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`] =

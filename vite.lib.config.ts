@@ -12,7 +12,7 @@ export default defineConfig({
     },
     rollupOptions: {
       external: (id) =>
-        !id.startsWith(".") && !id.startsWith("/") && !id.includes(":"),
+        id !== "@material/material-color-utilities" && !id.startsWith(".") && !id.startsWith("/") && !id.includes(":"),
     },
   },
 });

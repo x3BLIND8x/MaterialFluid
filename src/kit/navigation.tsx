@@ -1,8 +1,9 @@
-import { useAppearanceProps, type AppearanceProps } from "./appearance";
+import { useSizePolicy } from "./appearance";
+import { Tree, type TreeItem } from "./tree";
+import { useAppearanceProps, appearanceClasses, type AppearanceProps } from "./appearance";
 import {
   forwardRef,
   useId,
-  useState,
   useEffect,
   useRef,
   useLayoutEffect,
@@ -53,14 +54,14 @@ function NavigationSelection({ id, className, keepPill = false }: { id: string; 
   useLayoutEffect(() => {
     const node = element.current;
     if (!node) return;
-    const measure = () => radius.set(Math.min(node.offsetWidth, node.offsetHeight) / 2);
+    const measure = () => radius.set(Math.min(parseFloat(getComputedStyle(node).getPropertyValue("--mf-ui-radius")) || 24, node.offsetWidth / 2, node.offsetHeight / 2));
     measure();
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(measure); observer.observe(node);
     return () => observer.disconnect();
   }, [radius]);
   return <motion.span ref={element} className={cx("mf-selection", className)} aria-hidden="true" initial={false}
-    layoutId={animated ? id : undefined} style={{ scale: boundedScale, borderRadius: keepPill ? "999px" : pressedRadius }}
+    layoutId={animated ? id : undefined} style={{ scale: boundedScale, borderRadius: keepPill ? "var(--mf-ui-radius)" : pressedRadius }}
     transition={animated ? { type: "spring", stiffness: 620, damping: 42, mass: .65 } : { duration: 0 }} />;
 }
 
@@ -159,7 +160,7 @@ export const Breadcrumbs = forwardRef<HTMLElement, BreadcrumbsProps>(
       label = "Breadcrumb",
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "ghost" });
+    } = useAppearanceProps(useSizePolicy("breadcrumbs", { ...rawProps, variant: "ghost" }));
 
     return (
       <nav
@@ -264,7 +265,7 @@ export interface TopAppBarProps
 export const TopAppBar = forwardRef<HTMLElement, TopAppBarProps>(
   function TopAppBar(rawProps, ref) {
     const { title, leading, actions, className, ...props } =
-      useAppearanceProps({ ...rawProps, variant: "ghost" });
+      useAppearanceProps(useSizePolicy("top-app-bar", { ...rawProps, variant: "ghost" }));
 
     return (
       <header {...props} ref={ref} className={cx("mf-appbar", className)}>
@@ -336,12 +337,16 @@ export const SideNavigation = forwardRef<HTMLElement, NavigationProps>(
   },
 );
 /** In-page navigation. Item values are the IDs of their destination sections. */
-export const TableOfContents = forwardRef<HTMLElement, NavigationProps>(
-  function TableOfContents({ items, value, defaultValue, onValueChange, ...props }, ref) {
+export interface TableOfContentsProps extends Omit<NavigationProps, "items"> { items: TreeItem[]; iconMode?: "all" | "none" | "parents" }
+export const TableOfContents = forwardRef<HTMLElement, TableOfContentsProps>(
+  function TableOfContents(rawProps, ref) {
+    const { items, value, defaultValue, onValueChange, label, iconMode = "none", className, ...props } = useAppearanceProps(rawProps);
     const [selected, set] = useControllable(value, defaultValue ?? items[0]?.value ?? "", onValueChange);
     const { motion: mode, reducedMotion } = useMaterialFluid();
+    const flatten = (nodes: TreeItem[]): TreeItem[] => nodes.flatMap(item => [item, ...flatten(item.children ?? [])]);
+    const headings = flatten(items);
     useEffect(() => {
-      const sections = items.map(item => document.getElementById(item.value)).filter((element): element is HTMLElement => !!element);
+      const sections = headings.map(item => document.getElementById(item.value)).filter((element): element is HTMLElement => !!element);
       if (!sections.length) return;
       const update = () => {
         const current = sections.filter(section => section.getBoundingClientRect().top <= window.innerHeight * .3).at(-1) ?? sections[0];
@@ -350,11 +355,13 @@ export const TableOfContents = forwardRef<HTMLElement, NavigationProps>(
       window.addEventListener("scroll", update, { passive: true });
       return () => window.removeEventListener("scroll", update);
     }, [items, set]);
-    return <div ref={ref as React.Ref<HTMLDivElement>}><NavBase {...props} kind="toc" items={items} value={selected}
-      onValueChange={next => {
-        set(next);
-        document.getElementById(next)?.scrollIntoView({ behavior: mode === "expressive" && !reducedMotion ? "smooth" : "instant", block: "start" });
-      }} /></div>;
+    return <nav {...props} ref={ref} aria-label={label} className={cx("mf-toc", className)}>
+      <Tree iconMode={iconMode} className={appearanceClasses(className)} label={label} items={items} value={selected} defaultExpanded={headings.filter(item => item.children?.length).map(item => item.value)}
+        showExpandControls={false} selectBranches onValueChange={next => {
+          set(next);
+          document.getElementById(next)?.scrollIntoView({ behavior: mode === "expressive" && !reducedMotion ? "smooth" : "instant", block: "start" });
+        }} />
+    </nav>;
   },
 );
 export interface StepperProps extends NavigationProps {

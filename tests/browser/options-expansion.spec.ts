@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 
 for (const route of ['select','combobox','multi-select']) {
-  test(`${route} morphs its entire surface and collapses on repeated keyboard dismissals`,async({page})=>{
+  test(`${route} keeps the joined outline without a background behind the animated list and collapses on repeated keyboard dismissals`,async({page})=>{
     await page.goto('/');
     await page.evaluate(()=>localStorage.setItem('materialfluid.preferences',JSON.stringify({locale:'en',motion:'expressive'})));
     await page.goto(`/#/components/${route}`);
@@ -48,6 +48,11 @@ for (const route of ['select','combobox','multi-select']) {
       await expect(surface).toHaveCSS('outline-style','none');
       await expect(surface).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
       expect(await panel.evaluate(el=>getComputedStyle(el,'::before').backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+      const radii = await surface.evaluate(el => {
+        const css = getComputedStyle(el);
+        return Math.min(el.clientHeight / 2 + 1, el.clientWidth / 2 + 1, parseFloat(css.borderTopLeftRadius));
+      });
+      expect(await panel.evaluate(el => parseFloat(getComputedStyle(el, '::before').borderTopLeftRadius))).toBeCloseTo(radii, 0);
       expect(frames.blur).not.toBe('blur(0px)');
       await expect(surface).toHaveAttribute('data-options-expanded','true');
       await expect(surface.locator('.mf-icon-button .mf-animated-icon').last()).toHaveCSS('rotate','180deg');

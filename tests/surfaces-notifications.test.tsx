@@ -155,12 +155,12 @@ describe("height budget and progress timeline", () => {
     expect(fitNotificationCount([], budget)).toBe(0);
     expect(fitNotificationCount([600], 160)).toBe(1);
   });
-  it("keeps the timed droplet mounted across progress updates", () => {
+  it("keeps the wave mounted across progress updates", () => {
     const {container, rerender} = render(<MaterialFluidProvider motion="expressive"><Progress label="Upload" value={20} /></MaterialFluidProvider>);
-    const droplet = container.querySelector(".mf-progress-droplet");
-    expect(droplet).not.toBeNull();
+    const wave = container.querySelector(".mf-progress-wave");
+    expect(wave).not.toBeNull();
     rerender(<MaterialFluidProvider motion="expressive"><Progress label="Upload" value={40} /></MaterialFluidProvider>);
-    expect(container.querySelector(".mf-progress-droplet")).toBe(droplet);
+    expect(container.querySelector(".mf-progress-wave")).toBe(wave);
     expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("40");
   });
 });

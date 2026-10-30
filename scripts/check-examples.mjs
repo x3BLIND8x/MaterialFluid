@@ -9,6 +9,20 @@ for (const entry of catalogue) {
   await writeFile(`${folder}/${entry.id}.tsx`, usageFor(entry));
   await writeFile(`${folder}/${entry.id}-appearance.tsx`, usageFor(entry, {variant:"tertiary", size:"sm"}));
 }
+await writeFile(`${folder}/presentation-policy.tsx`, `
+import { Progress, FileInput, type ProgressWaveOptions } from "materialfluid";
+const wave: ProgressWaveOptions = { waveLength: 60, waveHeight: 20, waveVelocity: 31, direction: "tail", waveThickness: 5, trackThickness: 20, incremental: true };
+// @ts-expect-error FileInput intentionally has no Large variant.
+const unsupported = <FileInput label="Attachment" size="lg" />;
+void unsupported;
+export default function Presentations() { return <>
+  <Progress label="Upload" value={65} wave={wave} />
+  <Progress label="Upload" value={30} presentation="segmented" segments={8} />
+  <Progress label="Update" value={30} presentation="status" status="Updating" remaining="8s left" />
+  <FileInput label="Attachment" size="sm" />
+  <FileInput label="Attachment" size="md" />
+</>; }
+`);
 await writeFile(
   ".cache/package-smoke/tsconfig.examples.json",
   JSON.stringify({
@@ -36,5 +50,5 @@ const result = spawnSync(
 );
 if (result.status !== 0) throw Error(result.stdout || result.stderr);
 console.log(
-  `All ${catalogue.length} default and ${catalogue.length} size examples typecheck against the installed package.`,
+  `All ${catalogue.length} default and ${catalogue.length} size examples, plus Progress presentations and the FileInput size policy, typecheck against the installed package.`,
 );

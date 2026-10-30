@@ -31,7 +31,7 @@ export function FieldTriggerIcon() {
   useLayoutEffect(() => {
     const node = element.current;
     if (!node) return;
-    const measure = () => restRadius.set(Math.min(node.offsetWidth, node.offsetHeight) / 2);
+    const measure = () => restRadius.set(Math.min(node.offsetWidth / 2, node.offsetHeight / 2));
     measure();
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(measure);

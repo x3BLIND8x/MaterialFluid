@@ -252,14 +252,16 @@ async function expectOuterPress(control: Locator) {
   await expect.poll(scale).toBeLessThan(.99);
 }
 
-test("checkbox and radio label presses animate and select their control", async ({ page }) => {
+test("checkbox and radio control presses animate and select while captions remain passive", async ({ page }) => {
   for (const route of ["checkbox", "radio-group"]) {
     await page.goto(`/#/components/${route}`);
     const control = page.locator(`.live-stage .${route === "checkbox" ? "mf-checkbox" : "mf-radio"}`).first();
     const labelText = control.locator("..").locator(":scope > span");
     let expectedChecked = await control.getAttribute("aria-checked") === "true";
     for (let repeat = 0; repeat < 2; repeat++) {
-      await labelText.hover();
+      await labelText.click();
+      await expect(control).toHaveAttribute("aria-checked", String(expectedChecked));
+      await control.hover();
       await page.mouse.down();
       await expectOuterPress(control);
       await page.mouse.up();
@@ -277,7 +279,7 @@ test("radio preview keeps the previous dot visible and the pressed dot below act
   const other = radios.nth(0);
   const dot = selected.locator(".mf-radio-center");
   await expect(dot).toHaveAttribute("r", "6");
-  await other.locator("..").locator(":scope > span").hover();
+  await other.hover();
   await page.mouse.down();
   await expectOuterPress(other);
   await expect.poll(() => dot.evaluate(el => Number(el.getAttribute("r")))).toBeLessThan(5.8);
@@ -288,7 +290,7 @@ test("radio preview keeps the previous dot visible and the pressed dot below act
   await expect(other).toHaveAttribute("aria-checked", "true");
   await expect.poll(() => dot.evaluate(el => Number(el.getAttribute("r")))).toBeLessThan(.05);
   await expect.poll(() => other.locator(".mf-radio-center").evaluate(el => Number(el.getAttribute("r")))).toBeCloseTo(6, 2);
-  await other.locator("..").locator(":scope > span").hover();
+  await other.hover();
   await page.mouse.down();
   await expect.poll(() => other.locator(".mf-radio-center").evaluate(el => Number(el.getAttribute("r")))).toBeCloseTo(4.2, 1);
   await page.mouse.up();
@@ -437,7 +439,7 @@ test("checkbox off, partial and checked states have distinct marks and liquid fi
   await page.mouse.up();
   await expect(boxes.first()).toHaveAttribute("data-state", "checked");
   await expect.poll(() => fill.evaluate(el => getComputedStyle(el).clipPath)).not.toBe(off);
-  await expect(boxes.nth(1).locator(".mf-choice-fill")).toHaveCSS("clip-path", "circle(0% at 50% 50%)");
+  await expect(boxes.nth(1).locator(".mf-choice-fill")).toHaveCSS("clip-path", "circle(75% at 50% 50%)");
   await expect(boxes.first().locator('[data-icon-name="check"]')).toBeVisible();
   await expect(fill).toHaveCSS("border-radius", "0px");
   const colors = await boxes.first().evaluate(el => ({
@@ -485,13 +487,12 @@ for (const locale of ["en", "fa"]) {
       }
       if (id === "switch") {
         const button = page.locator(".live-stage .mf-switch").first();
-        const thumbColor = await button.locator(".mf-switch-thumb").evaluate(el => getComputedStyle(el).backgroundColor);
-        const offTrack = await button.evaluate(el => getComputedStyle(el).backgroundColor);
+        const expected = await button.evaluate(el => { const color=(name:string)=>{const probe=document.createElement("span");probe.style.background=`var(--mf-${name})`;el.append(probe);const result=getComputedStyle(probe).backgroundColor;probe.remove();return result;};return {track:color("primary"),thumb:color("outline-surface")}; });
         await button.click();
         await expect(button).toHaveAttribute("aria-checked", "true");
         await expect(button.locator("[data-icon-name=wifi]")).toBeVisible();
-        await expect.poll(() => button.locator(".mf-switch-thumb").evaluate(el => getComputedStyle(el).backgroundColor)).toBe(offTrack);
-        await expect.poll(() => button.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(thumbColor);
+        await expect.poll(() => button.locator(".mf-switch-thumb").evaluate(el => getComputedStyle(el).backgroundColor)).toBe(expected.thumb);
+        await expect.poll(() => button.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(expected.track);
         await button.press("Space");
         await expect(button).toHaveAttribute("aria-checked", "false");
       }

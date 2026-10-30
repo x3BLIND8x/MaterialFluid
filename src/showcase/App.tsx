@@ -1,3 +1,4 @@
+import { normalizeComponentSize, sizesForComponent } from "../kit/component-policy";
 import { LayoutGroup } from "motion/react";
 import { Component, useState, useEffect, lazy, Suspense, useRef, type ReactNode } from "react";
 import { MaterialFluidProvider } from "../kit/provider";
@@ -111,6 +112,8 @@ export default function App() {
     fa = locale === "fa";
   const t = (en: string, persian: string) => (fa ? persian : en);
   const entry = catalogue.find((c) => c.id === route) ?? catalogue[0];
+  const effectiveSize = normalizeComponentSize(entry.id, size);
+  const sizeOptions = sizesForComponent(entry.id);
   const colorsPage = route === "colors";
   const family = families.find((f) => f.id === entry.family)!;
   const Demo = demos[entry.family];
@@ -154,13 +157,13 @@ export default function App() {
   }, [search]);
   const nav = (
     <div className="catalogue-navigation">
-      <a href="#/colors" className="palette-nav-link" aria-current={colorsPage ? "page" : undefined}><AnimatedIcon name="palette" size={19} />{t("Color system", "سیستم رنگ")}</a>
+      <Link href="#/colors" size="sm" className="palette-nav-link" aria-current={colorsPage ? "page" : undefined}><AnimatedIcon name="palette" size={19} />{t("Color system", "سیستم رنگ")}</Link>
       <SearchField className="nav-search" label={t("Search components", "جستجوی کامپوننت‌ها")}
         placeholder={t("Find a component…", "یافتن کامپوننت…")} value={search}
         onChange={event => setSearch(event.target.value)}
         trailing={<span className="nav-search-count">{results.length.toLocaleString(locale)}</span>} />
       <nav aria-label={t("Components", "کامپوننت‌ها")}>
-        {results.length > 0 && <Tree className="catalogue-tree" size="sm" label={t("Components", "کامپوننت‌ها")}
+        {results.length > 0 && <Tree iconMode="none" className="catalogue-tree" size="sm" label={t("Components", "کامپوننت‌ها")}
           value={colorsPage ? "" : entry.id} expanded={expandedFamilies} onExpandedChange={setExpandedFamilies}
           items={families.flatMap(group => {
             const entries = results.filter(component => component.family === group.id);
@@ -192,7 +195,7 @@ export default function App() {
   const next = catalogue[catalogue.indexOf(entry) + 1];
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(usageFor(entry, { variant, size, labelPosition }));
+      await navigator.clipboard.writeText(usageFor(entry, { variant, size: effectiveSize, labelPosition }));
       setCopied(true);
       setCopyError(false);
     } catch {
@@ -283,8 +286,6 @@ export default function App() {
                     locale={locale}
                     colorDesign={prefs.colorDesign}
                     onColorDesignChange={(value) => change("colorDesign", value)}
-                    colorScheme={prefs.colorScheme}
-                    onColorSchemeChange={(value) => change("colorScheme", value)}
                   />
                   <p className="settings-note">
                     {t(
@@ -363,7 +364,7 @@ export default function App() {
             </>}
             actions={compactActions ? <Popover label={t("Quick settings", "تنظیمات سریع")} className="topbar-overflow" trigger={<IconButton variant="ghost" label={t("More options", "گزینه‌های بیشتر")}><AnimatedIcon name="more_vert" /></IconButton>}>{headerActions}</Popover> : headerActions} />
           <main className="showcase-frame" id="main-content">
-            {colorsPage ? <ColorPage seed={prefs.accentSeed} onSeedChange={seed => change("accentSeed", seed)} onSchemeChange={scheme => change("colorScheme", scheme)} heading={heading} /> : <>
+            {colorsPage ? <ColorPage seed={prefs.accentSeed} onSeedChange={seed => change("accentSeed", seed)} heading={heading} /> : <>
             <div className="component-intro">
               <div>
                 <h1 ref={heading} tabIndex={-1}>
@@ -378,18 +379,19 @@ export default function App() {
             </div>
             <TableOfContents className="page-sections" label={t("On this page", "در این صفحه")} size="sm" value={section}
               onValueChange={setSection}
-              items={[{ value: "examples", label: t("Examples", "نمونه‌ها") }, { value: "usage", label: t("Usage", "استفاده") }, { value: "props", label: t("Props & behavior", "ویژگی‌ها و رفتار") }]} />
+              items={[{ value: "examples", label: t("Examples", "نمونه‌ها") }, { value: "usage", label: t("Usage", "استفاده") }, { value: "props", label: t("Props & behavior", "ویژگی‌ها و رفتار"), children: [{ value: "props-api", label: t("API", "رابط برنامه‌نویسی") }, { value: "props-behavior", label: t("Behavior", "رفتار") }] }]} />
             <section
               id="examples"
               aria-label={t("Live examples", "نمونه‌های زنده")}
             >
               <div className="live-stage">
                 <div className="component-appearance-controls">
-                  <Select id="component-size" labelPosition="start" label={t("Size", "اندازه")} size="sm" value={size}
+                  {sizeOptions.length > 1 && <Select id="component-size" labelPosition="start" label={t("Size", "اندازه")} size="sm" value={effectiveSize}
                     onValueChange={value => setSize(value as ComponentSize)}
-                    options={[{ value: "sm", label: t("Small", "کوچک") }, { value: "md", label: t("Medium", "متوسط") }, { value: "lg", label: t("Large", "بزرگ") }]} />
-                  {entry.family === "forms" && <Select id="component-label-position" labelPosition="start" size="sm" label={t("Label", "برچسب")} value={labelPosition} onValueChange={value => setLabelPosition(value as LabelPosition)} options={[{value:"top",label:t("Top", "بالا")},{value:"start",label:t("Start", "ابتدا")}]} />}
+                    options={sizeOptions.map(value => ({ value, label: value === "sm" ? t("Small", "کوچک") : value === "lg" ? t("Large", "بزرگ") : t("Medium", "متوسط") }))} />}
+                  {entry.family === "forms" && <Select id="component-label-position" labelPosition="start" size="sm" label={t("Label", "برچسب")} value={labelPosition} onValueChange={value => setLabelPosition(value as LabelPosition)} options={[{value:"top",label:t("Top", "بالا")},{value:"start",label:t("Start", "ابتدا")},{value:"none",label:t("None", "بدون برچسب")}]} />}
                 </div>
+                <div className="showcase-canvas">
                 <DemoBoundary key={entry.id} fa={fa}>
                 <Suspense
                   key={entry.id}
@@ -402,7 +404,7 @@ export default function App() {
                   }
                 >
                   {entry.id === "button" || entry.family === "icons" || entry.family === "forms" || entry.family === "navigation" || entry.family === "surfaces" || entry.family === "feedback" || entry.family === "overlays" || fixedControls.includes(entry.id) ? (
-                    <ComponentAppearanceProvider variant={entry.family === "forms" ? "outline" : "filled"} size={size} labelPosition={labelPosition}>
+                    <ComponentAppearanceProvider variant={entry.family === "forms" ? "outline" : "filled"} size={effectiveSize} labelPosition={labelPosition}>
                       <Demo
                         key={entry.id + JSON.stringify(states) + locale}
                         id={entry.id}
@@ -420,7 +422,7 @@ export default function App() {
                           : value[0].toUpperCase() + value.slice(1);
                         return (
                           <section className="component-variant-example" key={value} aria-label={label}>
-                            <ComponentAppearanceProvider variant={value} size={size} labelPosition={labelPosition}>
+                            <ComponentAppearanceProvider variant={value} size={effectiveSize} labelPosition={labelPosition}>
                               <Demo
                                 key={entry.id + value + JSON.stringify(states) + locale}
                                 id={entry.id}
@@ -437,6 +439,7 @@ export default function App() {
                   )}
                 </Suspense>
                 </DemoBoundary>
+                </div>
                 <div className="stage-footer">
                   <span className="live-dot" aria-hidden="true" />
                   <span>
@@ -521,7 +524,7 @@ export default function App() {
                 tabIndex={0}
                 aria-label={t("Usage example code", "کد نمونه استفاده")}
               >
-                <code>{usageFor(entry, { variant, size, labelPosition })}</code>
+                <code>{usageFor(entry, { variant, size: effectiveSize, labelPosition })}</code>
               </pre>
               <div className="copy-status" role="status">
                 {copyError
@@ -539,6 +542,7 @@ export default function App() {
             </section>
             <section id="props" className="documentation-section">
               <h2>{t("Props & behavior", "ویژگی‌ها و رفتار")}</h2>
+              <h3 id="props-api">{t("API", "رابط برنامه‌نویسی")}</h3>
               {entry.props.length > 0 ? (
                 <div className="props-scroll">
                   <table className="props-table">
@@ -575,6 +579,7 @@ export default function App() {
                   )}
                 </p>
               )}
+              <h3 id="props-behavior">{t("Behavior", "رفتار")}</h3>
               <div className="behavior-note">
                 <AnimatedIcon name="help" size={20} />
                 <p>{text(entry.notes, locale)}</p>

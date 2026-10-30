@@ -39,6 +39,7 @@ import { AnimatedIcon, type AnimatedIconProps } from "./icons";
 import { RollingNumber } from "./rolling-number";
 import { SwitchIcon, type SwitchStateIcon } from "./switch-icon";
 import { useButtonGeometry } from "./button-geometry";
+import { CircularWave } from "./wavy-progress";
 
 const ButtonPressProgressContext = createContext<MotionValue<number> | null>(
   null,
@@ -301,18 +302,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     useLayoutEffect(() => {
       const button = node.current;
       if (!button) return;
-      const computed = getComputedStyle(button);
-      const authoredRadius =
-        parseFloat(computed.getPropertyValue("--mf-button-rest-radius")) ||
-        parseFloat(computed.borderTopLeftRadius) || 999;
-      const measure = () =>
-        restRadius.set(
-          Math.min(
-            authoredRadius,
-            button.offsetHeight / 2,
-            button.offsetWidth / 2,
-          ),
-        );
+      const measure = () => {
+        const computed = getComputedStyle(button);
+        const authoredRadius = button.classList.contains("mf-icon-button") ? Number.POSITIVE_INFINITY : parseFloat(computed.getPropertyValue("--mf-ui-radius")) || 24;
+        restRadius.set(Math.min(authoredRadius, button.offsetHeight / 2, button.offsetWidth / 2));
+      };
       measure();
       linkedRadius.set(`${restRadius.get()}px`);
       setRadiusMeasured(true);
@@ -471,7 +465,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           />
         ))}
         {loading ? (
-          <span className="mf-button-loader" aria-hidden="true" />
+          <span className="mf-button-loader" aria-hidden="true"><CircularWave animated={expressive} /></span>
         ) : (
           leading
         )}
@@ -626,7 +620,10 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
     }, [ref]);
     const [pillBounds, setPillBounds] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
     useLayoutEffect(() => {
-      if (pillBounds) pillRadius.set(Math.min(pillBounds.width, pillBounds.height) / 2);
+      if (pillBounds) {
+        const radius = groupElement.current ? parseFloat(getComputedStyle(groupElement.current).getPropertyValue("--mf-ui-radius")) : 24;
+        pillRadius.set(Math.min(radius || 24, pillBounds.width / 2, pillBounds.height / 2));
+      }
     }, [pillBounds, pillRadius]);
     useLayoutEffect(() => {
       const group = groupElement.current;
@@ -781,7 +778,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
   useEffect(() => {
     const button = element.current?.closest<HTMLButtonElement>("button");
     if (!button) return;
-    const pressTarget = button.closest("label.mf-choice") ?? button;
+    const pressTarget = button;
     let animation: ReturnType<typeof animate> | undefined;
     let outerAnimation: ReturnType<typeof animate> | undefined;
     let sequence = 0;
@@ -887,7 +884,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
     const animated = mode === "expressive" && !reducedMotion;
 
     return (
-      <label className={cx("mf-choice", className)}>
+      <label className={cx("mf-choice", className)} onClick={event => { if (!(event.target as Element).closest("button, input")) event.preventDefault(); }}>
         <Check.Root {...props} checked={current} onCheckedChange={setChecked} ref={ref} className="mf-checkbox">
           <ChoiceFill active={current === true || (current === "indeterminate" && colorDesign === "material")} partial={current === "indeterminate" && colorDesign !== "material"} onReadyChange={setFillReady} />
           <Check.Indicator forceMount className="mf-checkbox-mark" data-ready={(current === "indeterminate" && (colorDesign !== "material" || fillReady)) || (current === true && fillReady) ? "true" : undefined}>
@@ -948,7 +945,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       >
         {options.map((o) => (
           <label key={o.value} className="mf-choice"
-            onPointerDown={event => { if (event.button === 0 && !o.disabled && !props.disabled) setPreview(o.value); }}
+            onClick={event => { if (!(event.target as Element).closest("button, input")) event.preventDefault(); }}
+            onPointerDown={event => { if (event.button === 0 && (event.target as Element).closest(".mf-radio") && !o.disabled && !props.disabled) setPreview(o.value); }}
             onPointerUp={event => { if (event.button === 0 && preview === o.value) { setSelected(o.value); setPreview(null); } }}
             onPointerCancel={() => setPreview(null)}>
             <Radio.Item
@@ -1053,7 +1051,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
       }, 400);
     };
     return (
-      <label className={cx("mf-choice", className)}>
+      <label className={cx("mf-choice", className)} onClick={event => { if (!(event.target as Element).closest("button, input")) event.preventDefault(); }}>
         <button
           {...props}
           type="button"

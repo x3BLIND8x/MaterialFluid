@@ -1125,3 +1125,22 @@ body {
 .showcase-root[data-motion="minimal"] .showcase-shell { transition: none; }
 @media (prefers-reduced-motion: reduce) { .showcase-shell { transition: none; } }
 @media (max-width: 800px) { .showcase-shell[data-collapsed] { display: block; } }
+
+/* A shared component stage; dots belong only to the example canvas. */
+.live-stage { border: 1px solid var(--mf-outline-variant); background: var(--mf-surface-container); }
+.live-stage .showcase-canvas { background-color: var(--mf-surface); background-image: radial-gradient(circle, color-mix(in srgb, var(--mf-on-surface-variant) 22%, transparent) 1px, transparent 1px); background-size: 20px 20px; background-position: center; }
+.showcase-root .palette-nav-link { display: flex; justify-content: flex-start; width: calc(100% - 8px); min-height: 36px; border-radius: 18px; padding: 8px 12px; }
+.showcase-root .palette-nav-link .mf-animated-icon { color: currentColor; }
+.page-sections.mf-toc { margin: 24px 0; min-width: 200px; max-width: 100%; overflow: visible; }
+.mf-toc .mf-tree { width: 100%; }
+
+.showcase-root .icon-gallery-tile[aria-pressed="true"] {
+  --mf-variant-fill: var(--mf-primary-container);
+  --mf-variant-on-fill: var(--mf-on-primary-container);
+  --mf-icon-ink: var(--mf-on-primary-container);
+  --mf-solid-hover: var(--mf-primary-container);
+}
+.live-stage .component-appearance-controls { padding-bottom: 16px; border-bottom: 1px solid var(--mf-outline-variant); }
+.live-stage .component-appearance-controls:empty { display: none; }
+
+.live-stage .showcase-canvas .demo-primary { background: transparent; }

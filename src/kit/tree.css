@@ -1,6 +1,6 @@
-.mf-tree { --mf-tree-row-height: 44px; min-width: 0; color: var(--mf-on-surface); }
-.mf-tree.mf-scale--sm { --mf-tree-row-height: 36px; }
-.mf-tree.mf-scale--lg { --mf-tree-row-height: 52px; }
+.mf-tree { --mf-tree-row-height: 48px; min-width: 0; color: var(--mf-on-surface); }
+.mf-tree.mf-scale--sm { --mf-tree-row-height: 28px; }
+.mf-tree.mf-scale--lg { --mf-tree-row-height: 58px; }
 .mf-tree-actions { display: flex; flex-wrap: wrap; gap: 2px; margin-block-end: 8px; }
 .mf-tree-list, .mf-tree-node { min-width: 0; }
 .mf-tree-item { position: relative; isolation: isolate; display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--mf-tree-row-height); padding: 6px 12px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; text-align: start; text-decoration: none; cursor: pointer; transition: background-color 180ms ease, color 180ms ease; }
@@ -16,3 +16,17 @@
 .mf-tree-count { font-size: .8em; font-variant-numeric: tabular-nums; color: var(--mf-on-surface-variant); }
 .mf-tree-group { overflow: hidden; margin-inline-start: 20px; padding-inline-start: 4px; border-inline-start: 1px solid var(--mf-outline-variant); }
 @media (prefers-reduced-motion: reduce) { .mf-tree-item { transition: none; } }
+
+/* Override the generic inline-link radius with the shared Tree silhouette. */
+.mf-root .mf-tree .mf-tree-item { border-radius: calc(var(--mf-tree-row-height) / 2); }
+
+.mf-tree.mf-scale--sm .mf-tree-item { padding-block: 4px; }
+
+/* Navigation labels use neutral ink; the selected surface carries the accent. */
+.mf-root .mf-tree .mf-tree-item,
+.mf-root .mf-tree .mf-tree-item--selected,
+.mf-root .mf-tree-actions .mf-button { color: var(--mf-on-surface) !important; --mf-icon-ink: var(--mf-on-surface); }
+.mf-root .mf-tree .mf-tree-chevron,
+.mf-root .mf-tree .mf-tree-count { color: var(--mf-on-surface); }
+
+.mf-tree-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }

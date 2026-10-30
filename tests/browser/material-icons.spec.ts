@@ -45,7 +45,7 @@ test("paused action icons remain static across mouse, keyboard and reduced motio
   await button.press("Enter");
   await button.press("Space");
   expect(await icon.locator("path").first().getAttribute("d")).toBe(path);
-  for (const name of ["Favorite", "Settings", "Edit", "Search", "Delete"]) {
+  for (const name of ["Favorite", "Edit", "Search", "Delete"]) {
     await expect(page.getByRole("button", {name,exact:true}).locator("svg")).toBeVisible();
   }
   await page.emulateMedia({reducedMotion:"reduce"});

@@ -42,8 +42,8 @@ test("showcase uses kit fields, Toggle and navigation", async ({page}) => {
   await expect(page.locator(".nav-search .mf-input-wrap")).toBeVisible();
   await expect(page.locator("#component-size")).toHaveAttribute("role","combobox");
   await expect(page.getByRole("button",{name:"Fluid",exact:true})).toHaveClass(/mf-toggle/);
-  await expect(page.locator(".page-sections .mf-selection")).toBeVisible();
-  await expect(page.locator(".catalogue-nav-list").first()).toHaveClass(/mf-navigation--side/);
+  await expect(page.locator(".page-sections .mf-tree-selection")).toBeVisible();
+  await expect(page.locator(".catalogue-tree").first()).toHaveClass(/mf-tree/);
   await page.getByRole("button",{name:"Fluid",exact:true}).click();
   await expect(page.getByRole("button",{name:"Minimal",exact:true})).toHaveClass(/mf-variant--outline/);
   await expect(page.locator(".mf-root")).toHaveAttribute("data-motion","minimal");
@@ -52,7 +52,7 @@ test("showcase uses kit fields, Toggle and navigation", async ({page}) => {
 test("tabs stay compact and rounded, pagination has readable selected ink, and the shell is Ghost", async ({page}) => {
   await page.goto("/#/components/tabs");
   const list = page.locator(".demo-primary .mf-tab-list");
-  await expect(list).toHaveCSS("border-radius", "999px");
+  await expect(list).toHaveCSS("border-radius", "29px");
   const widths = await list.evaluate(el => ({list: el.getBoundingClientRect().width, parent: el.parentElement!.getBoundingClientRect().width}));
   expect(widths.list).toBeLessThan(widths.parent);
   await expect(page.locator(".showcase-topbar")).toHaveClass(/mf-variant--ghost/);
@@ -66,8 +66,8 @@ test("tabs stay compact and rounded, pagination has readable selected ink, and t
 
 test("TOC jumps to its document sections and menu anchors stay stationary during a hold", async ({page}) => {
   await page.goto("/#/components/table-of-contents");
-  await page.locator(".demo-primary .mf-navigation--toc").getByRole("button", {name:"Settings"}).click();
-  await expect.poll(() => page.locator("#toc-demo-settings").evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(350);
+  await page.locator(".demo-primary .mf-toc").getByRole("treeitem", {name:"Structure"}).click();
+  await expect.poll(() => page.locator("#toc-demo-structure").evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(350);
   await page.goto("/#/components/menu");
   const trigger = page.locator(".demo-primary button").filter({hasText:"Actions"});
   await expect(trigger).toHaveClass(/mf-variant--primary/);
