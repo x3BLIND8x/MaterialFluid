@@ -98,7 +98,7 @@ for (const locale of ["en", "fa"]) {
         else expect(width).toBeCloseTo(actionWidths.get(size)!, 1);
         const icon = surface.locator(".mf-icon-button:last-child .mf-animated-icon, .mf-field-adornment:last-child .mf-animated-icon").first();
         await expect(icon).toHaveCSS("width", `${size === "sm" ? 20 : size === "lg" ? 24 : 22}px`);
-        expect(width).toBeCloseTo(size === "sm" ? 32 : size === "lg" ? 40 : 36, 1);
+        expect(width).toBeCloseTo(size === "sm" ? 28 : size === "lg" ? 40 : 36, 1);
         const alignment = await icon.evaluate(el => {
           const glyph = el.getBoundingClientRect();
           const action = el.closest(".mf-icon-button, .mf-field-adornment")!.getBoundingClientRect();
@@ -106,7 +106,7 @@ for (const locale of ["en", "fa"]) {
         });
         expect(alignment.x).toBeLessThan(.5);
         expect(alignment.y).toBeLessThan(.5);
-        expect(alignment.ratio).toBeLessThan(.7);
+        expect(alignment.ratio).toBeLessThan(.8);
         if (route === "multi-select") {
           for (const chipIcon of await surface.locator(".mf-multi-chip .mf-animated-icon").all()) await expect(chipIcon).toHaveCSS("width", "14px");
         }

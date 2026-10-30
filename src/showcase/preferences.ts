@@ -1,5 +1,6 @@
-import type { Locale, ThemeMode, MotionMode } from "../kit/theme";
+import type { Locale, ThemeMode, MotionMode, ColorScheme } from "../kit/theme";
 import {
+  colorSchemes,
   colorBehaviorDefaults,
   normalizeColorBehavior,
   type ColorBehavior,
@@ -10,6 +11,8 @@ export interface Preferences {
   motion: MotionMode;
   accentSeed: string;
   colorBehavior: ColorBehavior;
+  colorDesign: "material" | "previous";
+  colorScheme: ColorScheme;
 }
 export const preferenceDefaults: Preferences = {
   locale: "en",
@@ -17,6 +20,8 @@ export const preferenceDefaults: Preferences = {
   motion: "expressive",
   accentSeed: "#eedd96",
   colorBehavior: { ...colorBehaviorDefaults },
+  colorDesign: "material",
+  colorScheme: "tonalSpot",
 };
 export function loadPreferences(
   storage?: Pick<Storage, "getItem">,
@@ -29,6 +34,12 @@ export function loadPreferences(
       source?.getItem("materialfluid.preferences") ?? "{}",
     );
     const colorBehavior = normalizeColorBehavior(data?.colorBehavior);
+    // Apply the requested defaults once; later edits remain under user control.
+    if (data?.actionColorVersion !== 1) {
+      colorBehavior.darkFilledTone = 10;
+      colorBehavior.darkTonalTone = -10;
+      colorBehavior.darkTonalSaturation = 150;
+    }
     // The former global default becomes the new colored-component default.
     // Preserve explicit tuning once the split roles have been saved.
     if (
@@ -51,6 +62,8 @@ export function loadPreferences(
         : "system",
       motion: data?.motion === "minimal" ? "minimal" : "expressive",
       colorBehavior,
+      colorDesign: data?.colorDesign === "previous" ? "previous" : "material",
+      colorScheme: colorSchemes.includes(data?.colorScheme) ? data.colorScheme : "tonalSpot",
       accentSeed: /^#[0-9a-f]{6}$/i.test(data?.accentSeed ?? "")
         ? data.accentSeed
         : "#eedd96",
@@ -66,7 +79,7 @@ export function savePreferences(
   try {
     (storage ?? window.localStorage).setItem(
       "materialfluid.preferences",
-      JSON.stringify(preferences),
+      JSON.stringify({ ...preferences, actionColorVersion: 1 }),
     );
   } catch {
     /* Browsing remains usable when storage is blocked. */

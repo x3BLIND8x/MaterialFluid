@@ -25,7 +25,7 @@ import { enUS, faIR } from "react-day-picker/locale";
 import * as Pop from "@radix-ui/react-popover";
 import { useMaterialFluid } from "./provider";
 import { useControllable, useLatest, cx, setRef } from "./utils";
-import { FormField, TextField, NumberField, type TextFieldProps } from "./forms";
+import { FormField, TextField, NumberField, type TextFieldProps, type FieldAppearanceProps } from "./forms";
 import { AnimatedIcon } from "./icons";
 import { AutoHeight } from "./auto-height";
 import { Button, IconButton, ToggleGroup } from "./controls";
@@ -289,7 +289,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
     );
   },
 );
-export interface DatePickerProps extends Omit<AppearanceProps, "variant"> {
+export interface DatePickerProps extends FieldAppearanceProps {
   label: string;
   value?: DateOnly;
   defaultValue?: DateOnly;

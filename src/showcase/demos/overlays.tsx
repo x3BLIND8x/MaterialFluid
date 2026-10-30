@@ -7,8 +7,9 @@ import {
   Popover,
   Menu,
   Tooltip,
+  type TooltipProps,
 } from "../../kit/overlays";
-import { Button, IconButton, Switch } from "../../kit/controls";
+import { Button, IconButton, Switch, ToggleGroup } from "../../kit/controls";
 import { TextField } from "../../kit/forms";
 import { AnimatedIcon } from "../../kit/icons";
 import { type DemoProps, translate } from "./shared";
@@ -17,6 +18,7 @@ export default function OverlaysDemo({ id, states, locale }: DemoProps) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [enabled, setEnabled] = useState(true);
+  const [tooltipSide, setTooltipSide] = useState<NonNullable<TooltipProps["side"]>>("top");
   const content = (
     <div className="demo-fields">
       <TextField
@@ -205,7 +207,19 @@ export default function OverlaysDemo({ id, states, locale }: DemoProps) {
     case "tooltip":
       demo = (
         <div className="demo-stack">
-          <Tooltip content={t("Notifications", "اعلان‌ها")}>
+          <ToggleGroup
+            label={t("Tooltip position", "جای راهنما")}
+            size="sm"
+            value={tooltipSide}
+            onValueChange={value => setTooltipSide(value as NonNullable<TooltipProps["side"]>)}
+            options={[
+              { value: "top", label: t("Top", "بالا") },
+              { value: "bottom", label: t("Bottom", "پایین") },
+              { value: "left", label: t("Left", "چپ") },
+              { value: "right", label: t("Right", "راست") },
+            ]}
+          />
+          <Tooltip side={tooltipSide} content={t("Notifications", "اعلان‌ها")}>
             <IconButton
               label={t("Notifications", "اعلان‌ها")}
               variant="outlined"

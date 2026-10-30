@@ -12,6 +12,7 @@ import {
 } from "../../kit/navigation";
 import { Button, IconButton } from "../../kit/controls";
 import { AnimatedIcon } from "../../kit/icons";
+import { Tree } from "../../kit/tree";
 import { type DemoProps, translate } from "./shared";
 export default function NavigationDemo({ id, states, locale }: DemoProps) {
   const t = translate(locale);
@@ -138,6 +139,24 @@ export default function NavigationDemo({ id, states, locale }: DemoProps) {
           }))}
         />
       );
+      break;
+    case "tree":
+      demo = <div style={{ width: "min(100%, 360px)" }}><Tree label={t("Workspace", "فضای کاری")}
+        defaultExpanded={["projects", "design"]} defaultValue="components"
+        items={[
+          { value: "projects", label: t("Projects", "پروژه‌ها"), children: [
+            { value: "design", label: t("Design system", "سیستم طراحی"), children: [
+              { value: "components", label: t("Components", "کامپوننت‌ها") },
+              { value: "tokens", label: t("Tokens", "توکن‌ها") },
+              { value: "guidelines", label: t("Guidelines", "راهنما") },
+            ] },
+            { value: "website", label: t("Website", "وب‌سایت") },
+          ] },
+          { value: "team", label: t("Team", "تیم"), children: [
+            { value: "people", label: t("People", "اعضا") },
+            { value: "settings", label: t("Settings", "تنظیمات") },
+          ] },
+        ]} /></div>;
       break;
     case "table-of-contents":
       demo = (

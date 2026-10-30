@@ -45,18 +45,13 @@ export function FieldTriggerIcon() {
     let held = false;
     let paintedAt: number | null = null;
     let frame = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     const settle = () => {
       if (paintedAt === null) return;
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        setPressed(false);
-        setRipples(current => current.map(ripple => ({ ...ripple, released: true })));
-      }, Math.max(0, 120 - (performance.now() - paintedAt!)));
+      setPressed(false);
+      setRipples(current => current.map(ripple => ({ ...ripple, released: true })));
     };
     const press = (event?: PointerEvent) => {
       if (trigger.disabled || held) return;
-      clearTimeout(timer);
       cancelAnimationFrame(frame);
       held = true;
       paintedAt = null;
@@ -91,7 +86,6 @@ export function FieldTriggerIcon() {
     document.addEventListener("pointercancel", release, true);
     document.addEventListener("keyup", release, true);
     return () => {
-      clearTimeout(timer);
       cancelAnimationFrame(frame);
       trigger.removeEventListener("pointerdown", down);
       trigger.removeEventListener("keydown", key);

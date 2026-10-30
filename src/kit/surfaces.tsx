@@ -10,6 +10,8 @@ import {
   forwardRef,
   useState,
   useRef,
+  useId,
+  useEffect,
   Children,
   type HTMLAttributes,
   type ReactNode,
@@ -31,10 +33,10 @@ import {
   type ColumnSizingState,
   type Column,
 } from "@tanstack/react-table";
-import { cx } from "./utils";
+import { cx, setRef } from "./utils";
 import { useMaterialFluid } from "./provider";
 import { Button, Checkbox } from "./controls";
-import { SearchField } from "./forms";
+import { SearchField, FormField } from "./forms";
 import { AnimatedIcon } from "./icons";
 import { EmptyState } from "./feedback";
 export interface CardProps
@@ -57,6 +59,68 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     );
   },
 );
+function CardGroupSymbol({ symbol }: { symbol: ReactNode }) {
+  const emoji = typeof symbol === "string" && /[\p{Extended_Pictographic}\p{Regional_Indicator}\u20e3]/u.test(symbol);
+  return <span className="mf-card-choice-glyph">{emoji
+    ? <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><text x="12" y="12" textAnchor="middle" dominantBaseline="central" fontSize="20" fontFamily="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif">{symbol}</text></svg>
+    : symbol}</span>;
+}
+export interface CardGroupOption {
+  value: string;
+  label: ReactNode;
+  description?: ReactNode;
+  /** Decorative icon, symbol, or emoji. The label supplies the accessible name. */
+  symbol?: ReactNode;
+  disabled?: boolean;
+}
+interface CardGroupBaseProps extends Omit<HTMLAttributes<HTMLFieldSetElement>, "defaultValue" | "onChange">, Omit<AppearanceProps, "labelPosition"> {
+  label: ReactNode;
+  options: CardGroupOption[];
+  name?: string;
+  disabled?: boolean;
+  required?: boolean;
+}
+export type CardGroupProps = CardGroupBaseProps & (
+  { selectionMode?: "single"; value?: string; defaultValue?: string; onValueChange?: (value: string) => void }
+  | { selectionMode: "multiple"; value?: string[]; defaultValue?: string[]; onValueChange?: (value: string[]) => void }
+);
+export const CardGroup = forwardRef<HTMLFieldSetElement, CardGroupProps>(function CardGroup(rawProps, ref) {
+  const { label, options, name, disabled, required, selectionMode = "single", value, defaultValue, onValueChange: _onValueChange, className, ...props } = useAppearanceProps({ ...rawProps, variant: "outline", labelPosition: "top" });
+  const id = useId();
+  const element = useRef<HTMLFieldSetElement | null>(null);
+  const initial = useRef(Array.isArray(defaultValue) ? defaultValue : defaultValue ? [defaultValue] : []);
+  const [local, setLocal] = useState<string[]>(initial.current);
+  const selected = value === undefined ? local : Array.isArray(value) ? value : [value];
+  const change = (next: string[]) => {
+    if (value === undefined) setLocal(next);
+    if (rawProps.selectionMode === "multiple") rawProps.onValueChange?.(next);
+    else rawProps.onValueChange?.(next[0] ?? "");
+  };
+  useEffect(() => {
+    const form = element.current?.form;
+    if (!form) return;
+    const reset = (event: Event) => queueMicrotask(() => { if (!event.defaultPrevented && element.current) setLocal([...initial.current]); });
+    form.addEventListener("reset", reset);
+    return () => form.removeEventListener("reset", reset);
+  }, []);
+  return <FormField label={<span id={`${id}-label`}>{label}</span>} required={required} className={cx("mf-card-group", className)}>
+    <fieldset {...props} ref={node => { element.current = node; setRef(ref, node); }} disabled={disabled} aria-labelledby={`${id}-label`} className="mf-card-group-options" data-selection-mode={selectionMode}>
+      {options.map((option, index) => {
+        const active = selected.includes(option.value);
+        return <label key={option.value} className="mf-card-choice" data-has-symbol={option.symbol ? "true" : undefined} data-selected={active} data-disabled={disabled || option.disabled || undefined}>
+          <input className="mf-sr" type={selectionMode === "multiple" ? "checkbox" : "radio"} name={name ?? id} value={option.value} checked={active} disabled={option.disabled} required={required && (selectionMode === "single" || selected.length === 0)}
+            aria-labelledby={`${id}-${index}-title`} aria-describedby={option.description ? `${id}-${index}-description` : undefined}
+            onChange={() => change(selectionMode === "single" ? [option.value] : active ? selected.filter(item => item !== option.value) : [...selected, option.value])} />
+          <span className="mf-card-choice-mark" aria-hidden="true">{active && <AnimatedIcon name="check" size={16} />}</span>
+          {option.symbol && <span className="mf-card-choice-symbol" aria-hidden="true"><CardGroupSymbol symbol={option.symbol} /></span>}
+          <span className="mf-card-choice-copy"><span className="mf-card-choice-title" id={`${id}-${index}-title`}>{option.label}</span>
+          {option.description && <span className="mf-card-choice-description" id={`${id}-${index}-description`}>{option.description}</span>}</span>
+        </label>;
+      })}
+    </fieldset>
+  </FormField>;
+});
+
 export interface ListProps
   extends HTMLAttributes<HTMLUListElement>, AppearanceProps {
   items: {

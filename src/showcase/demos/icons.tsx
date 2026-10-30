@@ -88,7 +88,7 @@ export default function IconsDemo({ locale }: DemoProps) {
           <div className="icon-variant-previews">
             {componentVariants.map((variant) => {
               const label = locale === "fa"
-                ? { primary: "اصلی", secondary: "ثانویه", tertiary: "سوم", outline: "خطی", ghost: "شفاف", danger: "خطر" }[variant]
+                ? { filled: "پر", tonal: "تونال", outlined: "خطی", ghost: "شفاف", danger: "خطر" }[variant]
                 : variant[0].toUpperCase() + variant.slice(1);
               return (
                 <div className="icon-variant-preview" key={variant}>

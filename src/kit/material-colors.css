@@ -1,0 +1,170 @@
+/* Previous keeps the pre-redesign action roles, including the current aliases. */
+.mf-root[data-color-design="previous"] .mf-variant--filled {
+  --mf-variant-fill: var(--mf-palette-primary-fill); --mf-variant-on-fill: var(--mf-palette-on-primary-fill);
+  --mf-solid-hover: var(--mf-palette-primary-fill-hover); --mf-icon-ink: var(--mf-variant-on-fill);
+}
+.mf-root[data-color-design="previous"] .mf-variant--tonal {
+  --mf-variant-fill: var(--mf-palette-secondary-fill); --mf-variant-on-fill: var(--mf-palette-on-secondary-fill);
+  --mf-solid-hover: var(--mf-palette-secondary-fill-hover); --mf-icon-ink: var(--mf-variant-on-fill);
+}
+.mf-root[data-color-design="previous"] .mf-variant--outlined {
+  --mf-variant-fill: var(--mf-outline-surface); --mf-variant-on-fill: var(--mf-on-outline-surface);
+  --mf-variant-border: var(--mf-outline-stroke); --mf-icon-ink: var(--mf-variant-on-fill);
+  --mf-solid-hover: color-mix(in srgb, var(--mf-outline-surface) 92%, var(--mf-primary-plain-ink));
+}
+.mf-root[data-color-design="previous"] .mf-button.mf-variant--ghost {
+  --mf-variant-on-fill: var(--mf-palette-primary); --mf-icon-ink: var(--mf-variant-on-fill);
+}
+.mf-root[data-color-design="previous"][data-theme="dark"] .mf-button.mf-variant--ghost {
+  --mf-variant-on-fill: var(--mf-palette-primary-fill);
+}
+
+/* Component color treatments do not alter geometry, motion or saved colors. */
+.mf-root[data-color-design="material"] {
+  --mf-outline-surface: var(--mf-surface-container-lowest, var(--mf-surface));
+  --mf-on-outline-surface: var(--mf-on-surface);
+  --mf-outline-stroke: var(--mf-outline-variant);
+  --mf-component-surface: var(--mf-surface-container, var(--mf-surface));
+  --mf-component-raised: var(--mf-surface-container-high, var(--mf-surface-high));
+  --mf-component-selected: var(--mf-secondary-container);
+  --mf-component-on-selected: var(--mf-on-secondary-container);
+}
+
+/* Selection controls: a single paired primary role for each mark and track. */
+.mf-root[data-color-design="material"] .mf-toggle[aria-pressed="true"] {
+  --mf-variant-fill: var(--mf-primary); --mf-variant-on-fill: var(--mf-on-primary);
+  --mf-solid-hover: color-mix(in srgb, var(--mf-primary) 92%, var(--mf-on-primary));
+  --mf-icon-ink: var(--mf-on-primary);
+}
+.mf-root[data-color-design="material"] .mf-toggle[aria-pressed="false"] {
+  --mf-variant-fill: var(--mf-surface-container); --mf-variant-on-fill: var(--mf-on-surface-variant);
+  --mf-variant-border: var(--mf-outline-variant); --mf-icon-ink: var(--mf-on-surface-variant);
+}
+.mf-root[data-color-design="material"] .mf-toggle-group {
+  background: var(--mf-component-surface); border-color: var(--mf-outline-variant);
+}
+.mf-root[data-color-design="material"] .mf-toggle-group .mf-selection {
+  background: var(--mf-component-selected);
+}
+.mf-root[data-color-design="material"] .mf-toggle-group .mf-segment[aria-pressed="true"] {
+  color: var(--mf-component-on-selected) !important;
+}
+.mf-root[data-color-design="material"] .mf-toggle-group .mf-segment[aria-pressed="false"] {
+  color: var(--mf-on-surface-variant) !important;
+}
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox {
+  --mf-palette-primary-fill: var(--mf-primary);
+  --mf-palette-on-primary-fill: var(--mf-on-primary);
+  background: transparent; border-color: var(--mf-on-surface-variant);
+}
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox[data-state="checked"] {
+  border-color: var(--mf-primary); color: var(--mf-on-primary);
+}
+.mf-root[data-color-design="material"] .mf-checkbox[data-state="indeterminate"] {
+  color: var(--mf-on-primary); border-color: var(--mf-primary);
+}
+.mf-root[data-color-design="material"] .mf-checkbox[data-state="indeterminate"] .mf-checkbox-mark > .mf-animated-icon {
+  color: var(--mf-on-primary) !important;
+}
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox[aria-invalid="true"] { border-color: var(--mf-error); }
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox[aria-invalid="true"] .mf-choice-fill { background: var(--mf-error); }
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox[aria-invalid="true"]:is([data-state="checked"], [data-state="indeterminate"]) { color: var(--mf-on-error); }
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox:disabled {
+  opacity: 1; border-color: color-mix(in srgb, var(--mf-on-surface) 38%, transparent);
+}
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox:disabled .mf-choice-fill {
+  background: color-mix(in srgb, var(--mf-on-surface) 38%, var(--mf-surface));
+}
+.mf-root[data-color-design="material"] .mf-choice .mf-checkbox:disabled:is([data-state="checked"], [data-state="indeterminate"]) { color: var(--mf-surface); }
+.mf-root[data-color-design="material"] .mf-radio-ring { fill: transparent; stroke: var(--mf-on-surface-variant); }
+.mf-root[data-color-design="material"] .mf-radio[data-state="checked"] .mf-radio-ring { stroke: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-radio-center { fill: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-radio:disabled { opacity: 1; }
+.mf-root[data-color-design="material"] .mf-radio:disabled .mf-radio-ring { stroke: color-mix(in srgb, var(--mf-on-surface) 38%, transparent); }
+.mf-root[data-color-design="material"] .mf-radio:disabled .mf-radio-center { fill: color-mix(in srgb, var(--mf-on-surface) 38%, transparent); }
+.mf-root[data-color-design="material"] .mf-switch { background: var(--mf-surface-container-highest); border-color: var(--mf-outline); }
+.mf-root[data-color-design="material"] .mf-switch .mf-switch-thumb { background: var(--mf-outline); color: var(--mf-surface-container-highest); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-switch[data-state="checked"] { background: var(--mf-primary); border-color: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-switch[data-state="checked"] .mf-switch-thumb { background: var(--mf-on-primary); color: var(--mf-primary-container); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-switch:disabled { opacity: 1; background: color-mix(in srgb, var(--mf-surface-container-highest) 12%, var(--mf-surface)); border-color: color-mix(in srgb, var(--mf-on-surface) 12%, var(--mf-surface)); }
+.mf-root[data-color-design="material"] .mf-switch:disabled .mf-switch-thumb { background: color-mix(in srgb, var(--mf-on-surface) 38%, var(--mf-surface)); color: var(--mf-surface); }
+.mf-root[data-color-design="material"] .mf-switch:disabled[data-state="checked"] { background: color-mix(in srgb, var(--mf-on-surface) 12%, var(--mf-surface)); }
+.mf-root[data-color-design="material"] .mf-switch:disabled[data-state="checked"] .mf-switch-thumb { background: var(--mf-surface); color: color-mix(in srgb, var(--mf-on-surface) 38%, var(--mf-surface)); }
+.mf-root[data-color-design="material"] .mf-slider-field .mf-slider-piece { background: var(--mf-secondary-container); }
+.mf-root[data-color-design="material"] .mf-slider-field .mf-slider-range > .mf-slider-piece,
+.mf-root[data-color-design="material"] .mf-slider-handle { background: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-slider-segment[data-edge-end] > .mf-slider-piece::after { background: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-slider[data-disabled] .mf-slider-piece { background: color-mix(in srgb, var(--mf-on-surface) 12%, var(--mf-surface)); }
+.mf-root[data-color-design="material"] .mf-slider[data-disabled] .mf-slider-range > .mf-slider-piece,
+.mf-root[data-color-design="material"] .mf-slider[data-disabled] .mf-slider-handle { background: color-mix(in srgb, var(--mf-on-surface) 38%, var(--mf-surface)); }
+
+/* Form fields, expanded options, file input and date/time pickers. */
+.mf-root[data-color-design="material"] .mf-field :is(.mf-input-wrap, .mf-textarea, .mf-select-trigger),
+.mf-root[data-color-design="material"] .mf-otp input {
+  background: var(--mf-surface); border-color: var(--mf-outline); color: var(--mf-on-surface);
+}
+.mf-root[data-color-design="material"] .mf-field :is(.mf-input-wrap:focus-within, .mf-textarea:focus, .mf-select-trigger:focus-visible) { border-color: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-field--invalid :is(.mf-input-wrap, .mf-textarea, .mf-select-trigger),
+.mf-root[data-color-design="material"] .mf-field--invalid :is(.mf-input-wrap:focus-within, .mf-textarea:focus) { border-color: var(--mf-error); }
+.mf-root[data-color-design="material"] .mf-field :is(.mf-input::placeholder, .mf-field-hint) { color: var(--mf-on-surface-variant); }
+.mf-root[data-color-design="material"] .mf-field--invalid .mf-field-hint { color: var(--mf-error); }
+.mf-root[data-color-design="material"] :is(.mf-options-popup, .mf-select-content, .mf-combobox-content, .mf-multiselect-content) {
+  background: var(--mf-component-raised); color: var(--mf-on-surface); border-color: var(--mf-outline-variant);
+}
+.mf-root[data-color-design="material"] :is(.mf-select-item[data-highlighted], .mf-select-item[aria-selected="true"]) {
+  background: var(--mf-component-selected); color: var(--mf-component-on-selected);
+}
+.mf-root[data-color-design="material"] .mf-file-surface { background: var(--mf-surface); border-color: var(--mf-outline); color: var(--mf-on-surface); }
+.mf-root[data-color-design="material"] .mf-file-row { background: var(--mf-component-surface); color: var(--mf-on-surface); }
+.mf-root[data-color-design="material"] .mf-calendar :is(.rdp-range_middle, .rdp-range_start, .rdp-range_end) { background-color: var(--mf-secondary-container); color: var(--mf-on-secondary-container); }
+.mf-root[data-color-design="material"] .mf-calendar .rdp-selected:not(.rdp-range_middle) .rdp-day_button { background: var(--mf-primary); color: var(--mf-on-primary); border-color: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-calendar .rdp-range_middle .rdp-day_button { background: transparent; color: var(--mf-on-secondary-container); }
+.mf-root[data-color-design="material"] .mf-calendar .rdp-today:not(.rdp-selected) .rdp-day_button { border-color: var(--mf-primary); color: var(--mf-primary); }
+
+/* Navigation keeps the existing movable pill and changes only its color roles. */
+.mf-root[data-color-design="material"] :is(.mf-navigation, .mf-tabs .mf-tab-list) { background: var(--mf-component-surface); border-color: var(--mf-outline-variant); }
+.mf-root[data-color-design="material"] :is(.mf-navigation, .mf-tabs, .mf-pagination, .mf-stepper) .mf-selection { background: var(--mf-component-selected); }
+.mf-root[data-color-design="material"] :is(.mf-tab[data-state="active"], .mf-nav-item[aria-current="page"]) { color: var(--mf-component-on-selected); }
+.mf-root[data-color-design="material"] :is(.mf-tab, .mf-nav-item) { color: var(--mf-on-surface-variant); }
+.mf-root[data-color-design="material"] .mf-stepper .mf-step-dot { background: var(--mf-component-raised); color: var(--mf-on-surface-variant); }
+.mf-root[data-color-design="material"] .mf-stepper :is(button[aria-current="step"] .mf-step-dot, .mf-step-dot[data-complete]) { color: var(--mf-component-on-selected); }
+.mf-root[data-color-design="material"] .mf-stepper .mf-step-dot[data-complete] { background: var(--mf-component-selected); }
+.mf-root[data-color-design="material"] .mf-step-connector { background: var(--mf-outline-variant); }
+.mf-root[data-color-design="material"] .mf-step-connector > span { background: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-appbar { color: var(--mf-on-surface); }
+.mf-root[data-color-design="material"] .mf-link { color: var(--mf-primary) !important; }
+
+/* Reading surfaces and data. Selected rows use the same tonal selection role. */
+.mf-root[data-color-design="material"] :is(.mf-card, .mf-accordion-item, .mf-table-scroll, .mf-empty, .mf-notification-card) {
+  background: var(--mf-component-surface); color: var(--mf-on-surface); border-color: var(--mf-outline-variant);
+}
+.mf-root[data-color-design="material"] .mf-list .mf-list-row { background: var(--mf-surface); color: var(--mf-on-surface); border-color: var(--mf-outline-variant); }
+.mf-root[data-color-design="material"] .mf-list button.mf-list-row:hover { background: var(--mf-component-raised); }
+.mf-root[data-color-design="material"] .mf-card-choice { background: var(--mf-surface); color: var(--mf-on-surface); border-color: var(--mf-outline-variant); }
+.mf-root[data-color-design="material"] .mf-card-choice[data-selected="true"] { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); border-color: var(--mf-secondary); }
+.mf-root[data-color-design="material"] .mf-card-choice-symbol { background: var(--mf-component-raised); color: var(--mf-on-surface-variant); }
+.mf-root[data-color-design="material"] .mf-card-choice[data-selected="true"] .mf-card-choice-symbol { background: var(--mf-surface); color: var(--mf-secondary); }
+.mf-root[data-color-design="material"] .mf-card-choice[data-selected="true"] .mf-card-choice-mark { background: var(--mf-secondary); color: var(--mf-on-secondary); border-color: var(--mf-secondary); }
+.mf-root[data-color-design="material"] .mf-data-table :is(caption, th) { background: var(--mf-component-raised); color: var(--mf-on-surface); }
+.mf-root[data-color-design="material"] .mf-data-table tr[data-selected] { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); }
+.mf-root[data-color-design="material"] .mf-avatar { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); }
+.mf-root[data-color-design="material"] .mf-avatar-overflow { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); }
+.mf-root[data-color-design="material"] .mf-chip { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-divider { border-color: var(--mf-outline-variant); }
+
+/* Feedback, progress and transient surfaces use their matching content roles. */
+.mf-root[data-color-design="material"] .mf-progress { background: var(--mf-secondary-container); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-progress > :is(.mf-progress-fill, .mf-progress-droplet) { background: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-spinner { border-color: var(--mf-secondary-container); border-top-color: var(--mf-primary); }
+.mf-root[data-color-design="material"] .mf-skeleton { background: var(--mf-surface-container-highest); }
+.mf-root[data-color-design="material"] .mf-badge.mf-tone--primary { background: var(--mf-primary); color: var(--mf-on-primary); }
+.mf-root[data-color-design="material"] .mf-alert--info { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-alert--success { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-alert--error { background: var(--mf-error-container); color: var(--mf-on-error-container); border-color: transparent; }
+.mf-root[data-color-design="material"] :is(.mf-dialog, .mf-floating) { background: var(--mf-component-raised); color: var(--mf-on-surface); border-color: var(--mf-outline-variant); }
+.mf-root[data-color-design="material"] .mf-menu-item[data-highlighted] { background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); }
+.mf-root[data-color-design="material"] .mf-menu-item[data-highlighted].mf-destructive { background: var(--mf-error-container); color: var(--mf-on-error-container) !important; }
+.mf-root[data-color-design="material"] .mf-tooltip { background: var(--mf-inverse-surface); color: var(--mf-inverse-on-surface); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-toast { background: var(--mf-inverse-surface); color: var(--mf-inverse-on-surface); border-color: transparent; }
+.mf-root[data-color-design="material"] .mf-toast :is(.mf-notification-description, .mf-icon-button, .mf-notification-action-status) { color: var(--mf-inverse-on-surface) !important; --mf-icon-ink: var(--mf-inverse-on-surface); }
+.mf-root[data-color-design="material"] .mf-toast .mf-button.mf-variant--ghost { --mf-variant-on-fill: var(--mf-inverse-primary); --mf-icon-ink: var(--mf-inverse-primary); }

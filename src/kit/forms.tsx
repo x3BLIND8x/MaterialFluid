@@ -1,4 +1,4 @@
-import { useAppearanceProps, ComponentAppearanceProvider, type AppearanceProps } from "./appearance";
+import { useAppearanceProps, useComponentAppearance, ComponentAppearanceProvider, type AppearanceProps } from "./appearance";
 import {
   forwardRef,
   useId,
@@ -16,7 +16,7 @@ import { AnimatePresence, motion, useSpring, useMotionTemplate, useMotionValueEv
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { AnimatedIcon } from "./icons";
-import { Button, ButtonGroup, IconButton, type ChoiceOption } from "./controls";
+import { ButtonGroup, IconButton, type ChoiceOption } from "./controls";
 import { cx, useControllable, setRef } from "./utils";
 import { useMaterialFluid } from "./provider";
 import { AutoHeight } from "./auto-height";
@@ -38,8 +38,11 @@ function useFieldPadding() {
   const textPadding = useMotionTemplate`${inset}px`;
   return { setFocused, paddingInline, textPadding };
 }
+export type FieldAppearanceProps = Omit<AppearanceProps, "variant" | "labelPosition"> & {
+  labelPosition?: "top" | "start";
+};
 export interface FormFieldProps
-  extends HTMLAttributes<HTMLDivElement>, Omit<AppearanceProps, "variant"> {
+  extends HTMLAttributes<HTMLDivElement>, FieldAppearanceProps {
   label: ReactNode;
   htmlFor?: string;
   hint?: ReactNode;
@@ -50,6 +53,9 @@ export interface FormFieldProps
 }
 export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
   function FormField(rawProps, ref) {
+    const defaults = useComponentAppearance();
+    const classPosition = rawProps.className?.match(/\bmf-label--(top|bottom|start|end)\b/)?.[1];
+    const requestedPosition = rawProps.labelPosition ?? classPosition ?? defaults.labelPosition;
     const {
       label,
       htmlFor,
@@ -61,7 +67,7 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
       children,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    } = useAppearanceProps({ ...rawProps, labelPosition: requestedPosition === "start" ? "start" : "top", variant: "outline" });
 
     const element = useRef<HTMLDivElement | null>(null);
     const subtitle = useRef<HTMLDivElement | null>(null);
@@ -125,7 +131,7 @@ function CharacterCounter({ count, limit, id }: { count: number; limit?: number;
   </span>;
 }
 export interface TextFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size">, Omit<AppearanceProps, "variant"> {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size">, FieldAppearanceProps {
   label: string;
   hint?: ReactNode;
   error?: ReactNode;
@@ -193,7 +199,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   },
 );
 export interface TextareaProps
-  extends TextareaHTMLAttributes<HTMLTextAreaElement>, Omit<AppearanceProps, "variant"> {
+  extends TextareaHTMLAttributes<HTMLTextAreaElement>, FieldAppearanceProps {
   label: string;
   showCount?: boolean;
   hint?: ReactNode;
@@ -281,10 +287,12 @@ export const PasswordField = forwardRef<HTMLInputElement, TextFieldProps>(
     );
   },
 );
-export interface NumberFieldProps extends TextFieldProps {
-  presentation?: "standard" | "goal";
+export type NumberFieldProps = Omit<TextFieldProps, "labelPosition"> & {
   unit?: ReactNode;
-}
+} & (
+  | { presentation?: "standard"; labelPosition?: "top" | "start" }
+  | { presentation: "goal"; labelPosition?: "top" }
+);
 export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
   function NumberField({ presentation = "standard", unit, ...props }, ref) {
     const input = useRef<HTMLInputElement | null>(null);
@@ -332,7 +340,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
       surface.addEventListener("wheel", wheel as EventListener, { passive: false });
       return () => surface.removeEventListener("wheel", wheel as EventListener);
     });
-    return <TextField {...props} className={cx(props.className, presentation === "goal" && "mf-number-field--goal")} ref={node => { input.current = node; setRef(ref, node); }} type="number" inputMode="decimal"
+    return <TextField {...props} labelPosition={presentation === "goal" ? "top" : props.labelPosition} className={cx(props.className, presentation === "goal" && "mf-number-field--goal")} ref={node => { input.current = node; setRef(ref, node); }} type="number" inputMode="decimal"
       placeholder={props.placeholder === undefined ? undefined : localizeDigits(props.placeholder, locale)}
       valueOverlayActive={valid && (locale === "fa" || !editing)}
       valueOverlay={valid ? <span className="mf-number-value-content" dir="ltr" data-editing={editing || undefined}>{locale === "fa" && editing ? localizeDigits(value, locale) : <RollingNumber value={Number(value)} format={() => localizeDigits(value, locale)} />}</span> : null}
@@ -371,7 +379,7 @@ export const SearchField = forwardRef<HTMLInputElement, TextFieldProps>(
   },
 );
 export interface SelectProps
-  extends Omit<SelectPrimitive.SelectProps, "children">, Omit<AppearanceProps, "variant"> {
+  extends Omit<SelectPrimitive.SelectProps, "children">, FieldAppearanceProps {
   label: string;
   options: ChoiceOption[];
   placeholder?: string;
@@ -617,7 +625,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(
     );
   },
 );
-export interface MultiSelectProps extends Omit<AppearanceProps, "variant"> {
+export interface MultiSelectProps extends FieldAppearanceProps {
   label: string;
   options: ChoiceOption[];
   value?: string[];
@@ -692,7 +700,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
 export interface OTPInputProps
   extends
     Omit<HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue">,
-    Omit<AppearanceProps, "variant"> {
+    FieldAppearanceProps {
   label: string;
   hint?: ReactNode;
   error?: ReactNode;
@@ -735,7 +743,7 @@ export const OTPInput = forwardRef<HTMLDivElement, OTPInputProps>(
       following?.select();
     };
     return (
-      <FormField label={label} hint={hint} error={error} descriptionId={helpId}>
+      <FormField label={label} hint={hint} error={error} descriptionId={helpId} className={className}>
         <div
           {...props}
           ref={ref}
@@ -800,23 +808,61 @@ export const OTPInput = forwardRef<HTMLDivElement, OTPInputProps>(
     );
   },
 );
-export type FileInputProps = Omit<TextFieldProps, "value" | "defaultValue" | "leading" | "trailing" | "valueOverlay" | "valueOverlayActive" | "controlRef">;
-function shortFileName(name: string) {
-  if (Array.from(name).length <= 20) return name;
-  const dot = name.lastIndexOf(".");
-  const extension = dot > 0 ? name.slice(dot) : "";
-  return `${Array.from(dot > 0 ? name.slice(0, dot) : name).slice(0, 12).join("")}…${extension}`;
+export interface FileUploadOptions {
+  signal: AbortSignal;
+  /** Report the actual upload percentage, from 0 to 100. */
+  onProgress: (percentage: number) => void;
 }
+export type FileInputProps = Omit<TextFieldProps, "value" | "defaultValue" | "leading" | "trailing" | "valueOverlay" | "valueOverlayActive" | "controlRef"> & {
+  /** Upload selected files. Resolve on success; reject on failure. Omit for native selection only. */
+  onUpload?: (file: File, options: FileUploadOptions) => Promise<void>;
+  /** Maximum selected files in multiple mode. Defaults to 5; single mode always allows 1. */
+  maxFiles?: number;
+};
+type FileUploadState = { status: "uploading" | "completed" | "error"; progress?: number };
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   function FileInput(rawProps, ref) {
-    const { label, hint, error, className, id: givenId, size: fieldSize = "md", showCount: _showCount, ...props } = useAppearanceProps({ ...rawProps, variant: "outline" }, { preserveSize: true });
+    const { label, hint, error, className, id: givenId, size: fieldSize = "md", showCount: _showCount, onUpload, maxFiles = 5, ...props } = useAppearanceProps({ ...rawProps, variant: "outline" }, { preserveSize: true });
     const generatedId = useId();
     const id = givenId ?? generatedId;
+    const fileLimit = props.multiple ? Number.isFinite(maxFiles) ? Math.max(1, Math.floor(maxFiles)) : 5 : 1;
+    const description = `${id}-limits${hint || error ? ` ${id}-help` : ""}`;
     const input = useRef<HTMLInputElement | null>(null);
     const depth = useRef(0);
     const replacing = useRef(false);
     const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [files, setFiles] = useState<File[]>([]);
+    const jobs = useRef(new Map<File, AbortController>());
+    const [uploads, setUploads] = useState(new Map<File, FileUploadState>());
+    const [retry, setRetry] = useState(0);
+    useEffect(() => {
+      for (const [file, controller] of jobs.current) {
+        if (!files.includes(file)) { controller.abort(); jobs.current.delete(file); }
+      }
+      setUploads(current => new Map([...current].filter(([file]) => files.includes(file))));
+      if (!onUpload) return;
+      for (const file of files) {
+        if (jobs.current.has(file)) continue;
+        const controller = new AbortController();
+        jobs.current.set(file, controller);
+        const update = (state: FileUploadState) => {
+          if (controller.signal.aborted || jobs.current.get(file) !== controller) return;
+          setUploads(current => new Map(current).set(file, state));
+        };
+        let settled = false;
+        update({ status: "uploading" });
+        Promise.resolve().then(() => {
+          if (controller.signal.aborted) return;
+          return onUpload(file, { signal: controller.signal, onProgress: value => {
+            if (!settled && Number.isFinite(value)) update({ status: "uploading", progress: Math.min(100, Math.max(0, value)) });
+          } });
+        }).then(() => { settled = true; update({ status: "completed", progress: 100 }); }, () => { settled = true; update({ status: "error" }); });
+      }
+    }, [files, onUpload, retry]);
+    useEffect(() => {
+      const controllers = jobs.current;
+      return () => { controllers.forEach(controller => controller.abort()); controllers.clear(); };
+    }, []);
     const [drop, setDrop] = useState<"idle" | "active" | "accepted">("idle");
     const [dropError, setDropError] = useState<string | undefined>();
     const { locale, motion: mode, reducedMotion } = useMaterialFluid();
@@ -830,6 +876,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       const reset = (event: Event) => queueMicrotask(() => {
         if (event.defaultPrevented || !input.current) return;
         clearTimeout(timeout.current); depth.current = 0;
+        jobs.current.forEach(controller => controller.abort()); jobs.current.clear(); setUploads(new Map());
         setFiles([]); setDrop("idle"); setDropError(undefined);
       });
       form.addEventListener("reset", reset);
@@ -845,6 +892,10 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       next.forEach(file => transfer.items.add(file));
       input.current.files = transfer.files;
     };
+    const mergeFiles = (incoming: File[]) => props.multiple
+      ? [...files, ...incoming].filter((file, index, all) => all.findIndex(other => other.name === file.name && other.size === file.size && other.lastModified === file.lastModified) === index)
+      : incoming.slice(0, 1);
+    const limitMessage = t(`Choose up to ${fileLimit} ${fileLimit === 1 ? "file" : "files"}.`, `حداکثر ${localizeDigits(String(fileLimit), locale)} فایل انتخاب کنید.`);
     const replace = (next: File[]) => {
       nativeFiles(next);
       replacing.current = true;
@@ -861,42 +912,64 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
         const accepted = Array.from(event.dataTransfer.files).filter(accepts);
         if (!accepted.length) { setDrop("idle"); setDropError(t("Choose a supported file type.", "نوع فایل مجاز نیست.")); return; }
         const incoming = accepted.slice(0, props.multiple ? accepted.length : 1);
-        const next = props.multiple ? [...files, ...incoming].filter((file, index, all) => all.findIndex(other => other.name === file.name && other.size === file.size && other.lastModified === file.lastModified) === index) : incoming;
+        const next = mergeFiles(incoming);
+        if (next.length > fileLimit) { setDrop("idle"); setDropError(limitMessage); return; }
         replace(next);
         setDropError(undefined); setDrop("accepted"); clearTimeout(timeout.current);
         timeout.current = setTimeout(() => setDrop("idle"), 420);
       }}>
-      <FormField label={label} htmlFor={id} hint={hint} error={error || dropError} descriptionId={`${id}-help`} required={props.required} className={className}>
+      <FormField label={label} htmlFor={id} hint={hint} error={error || dropError} descriptionId={`${id}-help`} required={props.required} className={cx(`mf-scale--${fieldSize}`, className)}>
         <input {...props} type="file" id={id} ref={node => { input.current = node; setRef(ref, node); }} className="mf-sr mf-file-native" tabIndex={-1}
-          aria-invalid={!!(error || dropError) || undefined} aria-describedby={hint || error || dropError ? `${id}-help` : undefined}
+          aria-invalid={!!(error || dropError) || undefined} aria-describedby={`${description}${dropError && !hint && !error ? ` ${id}-help` : ""}`}
           onChange={event => {
             let next = Array.from(event.currentTarget.files ?? []);
-            if (props.multiple && !replacing.current) { next = [...files, ...next].filter((file, index, all) => all.findIndex(other => other.name === file.name && other.size === file.size && other.lastModified === file.lastModified) === index); nativeFiles(next); }
+            if (!replacing.current) {
+              next = mergeFiles(next);
+              if (next.length > fileLimit) { nativeFiles(files); setDropError(limitMessage); return; }
+              if (props.multiple) nativeFiles(next);
+            }
             setFiles(next); setDropError(undefined); props.onChange?.(event);
           }} />
-        <AutoHeight className="mf-input-wrap mf-file-surface">
-          <div className="mf-file-content">
-            <Button variant="primary" size={fieldSize} disabled={props.disabled} aria-label={`${label}: ${actionLabel}`} aria-describedby={hint || error || dropError ? `${id}-help` : undefined} onClick={() => input.current?.click()}>{actionLabel}</Button>
-            <div className="mf-file-chips" role="list" aria-label={t("Selected files", "فایل‌های انتخاب‌شده")}>
-              <AnimatePresence initial={false} mode="popLayout">
-                {files.map((file, i) => <motion.span layout={expressive ? "position" : false} role="listitem" key={`${file.name}-${file.size}-${file.lastModified}`} className="mf-multi-chip-wrap"
-                  initial={expressive ? { opacity: 0, scale: .8 } : false} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: .8 }} transition={expressive ? { type: "spring", stiffness: 420, damping: 28 } : { duration: 0 }}>
-                  <motion.button type="button" className="mf-button mf-button--filled mf-variant--primary mf-scale--sm mf-multi-chip" title={file.name} disabled={props.disabled}
-                    aria-label={`${t("Remove", "حذف")} ${file.name}`} whileTap={expressive ? { scale: .96 } : undefined} onClick={() => replace(files.filter((_, index) => index !== i))}>
-                    <span className="mf-multi-chip-label">{shortFileName(file.name)}</span><AnimatedIcon name="close" size={14} />
-                  </motion.button>
-                </motion.span>)}
-              </AnimatePresence>
-            </div>
-          </div>
-          <AnimatePresence>
-            {drop === "active" && <motion.div className="mf-file-drop-overlay" aria-hidden="true"
-              initial={expressive ? { clipPath: "circle(0% at 50% 50%)" } : false}
-              animate={{ clipPath: "circle(150% at 50% 50%)" }} exit={{ opacity: 0 }} transition={{ duration: expressive ? .22 : 0 }}>
-              <span>{t("Release to upload", "برای بارگذاری رها کنید")}</span>
-            </motion.div>}
+        <button type="button" className="mf-input-wrap mf-file-surface" disabled={props.disabled}
+          aria-label={`${label}: ${actionLabel}`} aria-describedby={`${description}${dropError && !hint && !error ? ` ${id}-help` : ""}`}
+          aria-invalid={!!(error || dropError) || undefined} onClick={() => input.current?.click()}>
+          <span className="mf-file-upload-icon" aria-hidden="true"><AnimatedIcon name="arrow_upward" size={fieldSize === "sm" ? 22 : 30} /></span>
+          <span className="mf-file-copy">
+            <span className="mf-file-prompt">{drop === "active" ? t("Drop your files here", "فایل‌ها را اینجا رها کنید") : fieldSize === "sm" ? props.multiple ? t("Choose or drop files", "انتخاب یا رهاسازی فایل‌ها") : t("Choose or drop a file", "انتخاب یا رهاسازی فایل") : t("Choose a file or drag & drop it here", "فایل را انتخاب کنید یا اینجا بکشید و رها کنید")}</span>
+            <span className="mf-file-meta"><span className="mf-file-types">{props.accept ? localizeDigits(props.accept.split(",").map(type => type.trim()).join(" · "), locale) : t("All file types supported", "همهٔ انواع فایل پذیرفته می‌شوند")}</span>
+            <span className="mf-file-limit" id={`${id}-limits`}>{localizeDigits(files.length ? t(`${files.length} / ${fileLimit} files selected`, `${files.length} از ${fileLimit} فایل انتخاب شده`) : t(`Up to ${fileLimit} ${fileLimit === 1 ? "file" : "files"}`, `حداکثر ${fileLimit} فایل`), locale)}</span></span>
+          </span>
+          <span className="mf-file-browse">{actionLabel}</span>
+        </button>
+        <div className="mf-file-list" role="list" aria-label={t("Selected files", "فایل‌های انتخاب‌شده")}>
+          <AnimatePresence initial={false}>
+            {files.map(file => {
+              const upload = uploads.get(file);
+              const status = upload?.status;
+              const size = file.size < 1024 ? `${file.size} B` : file.size < 1048576 ? `${(file.size / 1024).toFixed(1)} KB` : `${(file.size / 1048576).toFixed(1)} MB`;
+              return <motion.div role="listitem" key={`${file.name}-${file.size}-${file.lastModified}`} className="mf-file-row" data-status={status ?? "ready"}
+                initial={expressive ? { opacity: 0, height: 0 } : false} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                transition={expressive ? { type: "spring", stiffness: 340, damping: 30 } : { duration: 0 }}>
+                <div className="mf-file-row-content">
+                  <span className="mf-file-kind" aria-hidden="true">{file.name.includes(".") ? file.name.split(".").pop()!.slice(0, 5).toUpperCase() : "FILE"}</span>
+                  <div className="mf-file-details">
+                    <span className="mf-file-name" title={file.name} dir="auto">{file.name}</span>
+                    <span className="mf-file-status"><bdi>{localizeDigits(size, locale)}</bdi><span className="mf-file-state" aria-live="polite">{status === "uploading" ? t("Uploading…", "در حال بارگذاری…") : status === "completed" ? t("Uploaded", "بارگذاری شد") : status === "error" ? t("Upload failed. Try again.", "بارگذاری ناموفق بود. دوباره تلاش کنید.") : t("Ready", "آماده")}</span>{status === "uploading" && upload?.progress !== undefined && <bdi className="mf-file-percent">{localizeDigits(`${Math.round(upload.progress)}%`, locale)}</bdi>}</span>
+                    {upload && <div className={cx("mf-progress", "mf-file-progress", status === "uploading" && upload.progress === undefined && "mf-progress--indeterminate")} role="progressbar" aria-label={`${t("Upload", "بارگذاری")} ${file.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={upload.progress}>
+                      <motion.span className="mf-progress-fill" initial={false} animate={{ width: upload.progress === undefined ? status === "error" ? "0%" : "35%" : `${upload.progress}%` }} transition={{ duration: expressive ? .3 : 0, ease: [.2, 0, 0, 1] }} />
+                    </div>}
+                  </div>
+                  {status === "completed" && <span className="mf-file-complete" aria-hidden="true"><AnimatedIcon name="check" size={20} /></span>}
+                  {status === "error" && <IconButton label={`${t("Retry", "تلاش مجدد")} ${file.name}`} size={fieldSize} disabled={props.disabled} onClick={() => { jobs.current.delete(file); setRetry(value => value + 1); }}><AnimatedIcon name="undo" /></IconButton>}
+                  <IconButton label={`${t("Remove", "حذف")} ${file.name}`} size={fieldSize} disabled={props.disabled} onClick={() => {
+                    jobs.current.get(file)?.abort(); jobs.current.delete(file);
+                    replace(files.filter(item => item !== file));
+                  }}><AnimatedIcon name="close" /></IconButton>
+                </div>
+              </motion.div>;
+            })}
           </AnimatePresence>
-        </AutoHeight>
+        </div>
       </FormField>
     </div>;
   },

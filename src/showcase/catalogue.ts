@@ -39,6 +39,7 @@ const prop = (name: string, type: string, en: string, fa: string): PropDoc => ({
   description: [en, fa],
 });
 const fieldProps = [
+  prop("labelPosition", "top | start", "Visible label placement (default top); start follows reading direction. Goal-style numbers always use top.", "جای برچسب بالا یا ابتدا است؛ مقدار هدف همیشه برچسب بالا دارد."),
   prop("label", "string", "Visible field label.", "برچسب قابل مشاهده."),
   prop(
     "error",
@@ -126,9 +127,9 @@ function entry(
     props: [
       ...(["forms", "navigation", "surfaces", "feedback", "overlays"].includes(family) || ["Toggle", "ToggleGroup", "Checkbox", "RadioGroup", "Switch", "Slider"].includes(name) ? [] : [prop(
         "variant",
-        "'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'danger'",
-        "Visual style. Legacy button/card aliases remain supported.",
-        "گونه ظاهری. نام‌های قبلی دکمه و کارت همچنان پشتیبانی می‌شوند.",
+        "'filled' | 'tonal' | 'outlined' | 'ghost' | 'danger'",
+        "Material action treatment; previous color variants remain supported.",
+        "گونه ظاهری دکمه؛ نام‌های قبلی رنگ همچنان پشتیبانی می‌شوند.",
       )]),
       ...(name === "NotificationCenter" ? [] : [prop(
         "size",
@@ -156,7 +157,7 @@ export const catalogue: Entry[] = [
     [
       prop(
         "variant",
-        "'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'danger'",
+        "'filled' | 'tonal' | 'outlined' | 'ghost' | 'danger'",
         "Visual emphasis.",
         "تأکید بصری.",
       ),
@@ -199,7 +200,7 @@ export const catalogue: Entry[] = [
         "نام دسترس‌پذیر الزامی.",
       ),
     ],
-    [],
+    ["disabled", "loading"],
   ),
   entry(
     "FAB",
@@ -238,6 +239,7 @@ export const catalogue: Entry[] = [
     "دکمه‌ای که وضعیت انتخاب را حفظ می‌کند.",
     "<Toggle defaultPressed>Favorite</Toggle>",
     [
+      prop("iconOnly", "boolean", "Shared icon-button sizing and centering; provide an aria-label.", "اندازه و ترازبندی مشترک با دکمهٔ آیکون؛ aria-label را تعیین کنید."),
       prop(
         "pressed / defaultPressed",
         "boolean",
@@ -464,10 +466,10 @@ export const catalogue: Entry[] = [
     "FileInput",
     "انتخاب فایل",
     "forms",
-    "Native file selection without an upload engine.",
-    "انتخاب بومی فایل بدون موتور بارگذاری.",
-    '<FileInput label="Attachment" accept=".pdf,.png" />',
-    fieldProps,
+    "A dashed drop area with per-file upload progress.",
+    "ناحیهٔ رهاسازی فایل با نمایش پیشرفت بارگذاری هر فایل.",
+    '<FileInput label="Attachment" accept=".pdf,.png" onUpload={uploadFile} />',
+    [...fieldProps, prop("maxFiles", "number", "Maximum selected files in multiple mode (default 5); single mode allows 1.", "حداکثر فایل‌های قابل انتخاب در حالت چندتایی (پیش‌فرض ۵)؛ حالت تکی ۱ فایل می‌پذیرد."), prop("onUpload", "(file: File, options: FileUploadOptions) => Promise<void>", "Upload callback with onProgress (0–100) and AbortSignal; omit for native selection only.", "تابع بارگذاری با onProgress (۰ تا ۱۰۰) و AbortSignal؛ برای انتخاب محلی حذف کنید.")],
     ["disabled", "invalid"],
   ),
   entry(
@@ -675,6 +677,22 @@ export const catalogue: Entry[] = [
     ["long"],
   ),
   entry(
+    "Tree",
+    "درخت",
+    "navigation",
+    "Explore nested items with expandable branches and a fluid selection.",
+    "مرور موارد تو در تو با شاخه‌های بازشونده و انتخاب روان.",
+    '<Tree label="Workspace" items={[{ value: "projects", label: "Projects", children: [{ value: "design", label: "Design" }] }]} defaultExpanded={["projects"]} />',
+    [
+      prop("items", "TreeItem[]", "Nested items with labels, optional links, icons and children.", "موارد تو در تو با برچسب، پیوند، آیکون و زیرشاخه اختیاری."),
+      prop("expanded / defaultExpanded", "string[]", "Controlled or initial open branches.", "شاخه‌های باز کنترل‌شده یا اولیه."),
+      prop("onExpandedChange", "(values: string[]) => void", "Called when open branches change.", "هنگام تغییر شاخه‌های باز فراخوانی می‌شود."),
+      prop("showExpandControls", "boolean", "Show expand-all and collapse-all actions.", "نمایش دکمه‌های باز و بسته کردن همه."),
+      ...selectionProps,
+    ],
+    [],
+  ),
+  entry(
     "TableOfContents",
     "فهرست مطالب",
     "navigation",
@@ -714,6 +732,13 @@ export const catalogue: Entry[] = [
     '<Link href="#button">Explore buttons</Link>',
     [prop("href", "string", "Link destination.", "مقصد پیوند.")],
     ["long"],
+  ),
+  entry(
+    "CardGroup", "گروه کارت‌ها", "surfaces",
+    "Selectable cards for one choice or several.", "کارت‌های قابل انتخاب برای یک یا چند گزینه.",
+    '<CardGroup label="Choose a focus" options={[{ value: "design", label: "Design", symbol: "🎨" }, { value: "build", label: "Build", symbol: "🛠️" }]} defaultValue="design" />',
+    [prop("selectionMode", "single | multiple", "Single selection uses radios; multiple selection uses checkboxes.", "انتخاب تکی با رادیو و انتخاب چندتایی با چک‌باکس."), prop("options", "CardGroupOption[]", "Each card has a value, label, optional description, symbol or emoji, and disabled state.", "هر کارت شامل مقدار، برچسب، توضیح اختیاری، نماد یا ایموجی و وضعیت غیرفعال است."), prop("value / defaultValue", "string | string[]", "A string in single mode; an array in multiple mode.", "رشته در حالت تکی و آرایه در حالت چندتایی."), prop("onValueChange", "(value) => void", "Called when the selection changes.", "هنگام تغییر انتخاب فراخوانی می‌شود.")],
+    ["disabled"],
   ),
   entry(
     "Card",
@@ -1074,8 +1099,9 @@ export const catalogue: Entry[] = [
     "overlays",
     "Supplementary context on hover or keyboard focus.",
     "توضیح تکمیلی هنگام اشاره یا تمرکز صفحه‌کلید.",
-    '<Tooltip content="Notifications"><IconButton label="Notifications"><AnimatedIcon name="bell" /></IconButton></Tooltip>',
+    '<Tooltip side="top" content="Notifications"><IconButton label="Notifications"><AnimatedIcon name="bell" /></IconButton></Tooltip>',
     [
+      prop("side", "top | bottom | left | right", "Preferred tooltip position; defaults to top and adjusts near viewport edges.", "جای ترجیحی راهنما؛ پیش‌فرض بالا است و نزدیک لبهٔ صفحه تنظیم می‌شود."),
       prop(
         "content",
         "ReactNode",

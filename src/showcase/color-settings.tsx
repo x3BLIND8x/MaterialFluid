@@ -1,10 +1,13 @@
-import { Button, Slider } from "../kit/controls";
+import { Button, Slider, ToggleGroup } from "../kit/controls";
 import { AnimatedIcon } from "../kit/icons";
+import { localizeDigits } from "../kit/numerals";
+import { ColorSchemeControl } from "./color-scheme-control";
 import {
   colorBehaviorDefaults,
   colorBehaviorRanges,
   type ColorBehavior,
   type Locale,
+  type ColorScheme,
 } from "../kit/theme";
 
 const controls: {
@@ -38,21 +41,9 @@ const controls: {
     unit: "%",
   },
   {
-    key: "tertiarySaturation",
-    en: "Tertiary saturation",
-    fa: "اشباع رنگ سوم",
-    unit: "%",
-  },
-  {
     key: "secondaryHueShift",
     en: "Secondary hue shift",
     fa: "چرخش فام ثانویه",
-    unit: "°",
-  },
-  {
-    key: "tertiaryHueShift",
-    en: "Tertiary hue shift",
-    fa: "چرخش فام سوم",
     unit: "°",
   },
   { key: "surfaceTint", en: "Surface tint", fa: "رنگ‌مایه سطوح", unit: "%" },
@@ -142,14 +133,55 @@ const controls: {
     unit: "%",
   },
 ];
+const actionGroups: {
+  variant: "filled" | "tonal" | "outlined" | "ghost" | "danger";
+  en: string;
+  fa: string;
+  fields: { key: keyof ColorBehavior; en: string; fa: string; unit: string }[];
+}[] = [
+  { variant: "filled", en: "Filled", fa: "پر", fields: [
+    { key: "filledHueShift", en: "Hue shift", fa: "چرخش فام", unit: "°" },
+    { key: "filledSaturation", en: "Saturation", fa: "اشباع رنگ", unit: "%" },
+    { key: "lightFilledTone", en: "Light brightness adjustment", fa: "تنظیم روشنایی حالت روشن", unit: "%" },
+    { key: "darkFilledTone", en: "Dark brightness adjustment", fa: "تنظیم روشنایی حالت تیره", unit: "%" },
+  ] },
+  { variant: "tonal", en: "Tonal", fa: "تونال", fields: [
+    { key: "tonalHueShift", en: "Hue shift", fa: "چرخش فام", unit: "°" },
+    { key: "tonalSaturation", en: "Light saturation", fa: "اشباع رنگ در حالت روشن", unit: "%" },
+    { key: "darkTonalSaturation", en: "Dark saturation", fa: "اشباع رنگ در حالت تیره", unit: "%" },
+    { key: "lightTonalTone", en: "Light brightness adjustment", fa: "تنظیم روشنایی حالت روشن", unit: "%" },
+    { key: "darkTonalTone", en: "Dark brightness adjustment", fa: "تنظیم روشنایی حالت تیره", unit: "%" },
+  ] },
+  { variant: "outlined", en: "Outlined", fa: "خطی", fields: [
+    { key: "outlinedHueShift", en: "Hue shift", fa: "چرخش فام", unit: "°" },
+    { key: "outlinedSaturation", en: "Saturation", fa: "اشباع رنگ", unit: "%" },
+    { key: "lightOutlinedTone", en: "Light ink adjustment", fa: "تنظیم رنگ نوشته در حالت روشن", unit: "%" },
+    { key: "darkOutlinedTone", en: "Dark ink adjustment", fa: "تنظیم رنگ نوشته در حالت تیره", unit: "%" },
+  ] },
+  { variant: "ghost", en: "Ghost", fa: "شفاف", fields: [
+    { key: "ghostHueShift", en: "Hue shift", fa: "چرخش فام", unit: "°" },
+    { key: "ghostSaturation", en: "Saturation", fa: "اشباع رنگ", unit: "%" },
+    { key: "lightGhostTone", en: "Light ink adjustment", fa: "تنظیم رنگ نوشته در حالت روشن", unit: "%" },
+    { key: "darkGhostTone", en: "Dark ink adjustment", fa: "تنظیم رنگ نوشته در حالت تیره", unit: "%" },
+  ] },
+  { variant: "danger", en: "Danger", fa: "خطر", fields: controls.filter(({ key }) => key === "lightDangerBrightness" || key === "darkDangerBrightness") },
+];
 export function ColorSettings({
   value,
   onChange,
   locale,
+  colorDesign,
+  onColorDesignChange,
+  colorScheme,
+  onColorSchemeChange,
 }: {
   value: ColorBehavior;
   onChange: (value: ColorBehavior) => void;
   locale: Locale;
+  colorDesign: "material" | "previous";
+  onColorDesignChange: (design: "material" | "previous") => void;
+  colorScheme: ColorScheme;
+  onColorSchemeChange: (scheme: ColorScheme) => void;
 }) {
   const fa = locale === "fa";
   const renderControl = ({
@@ -167,11 +199,11 @@ export function ColorSettings({
         max={colorBehaviorRanges[key][1]}
         step={1}
         showValue={false}
-        aria-valuetext={`${value[key]}${unit}`}
+        aria-valuetext={`${localizeDigits(String(value[key]), locale)}${unit}`}
         onValueChange={([next]) => onChange({ ...value, [key]: next })}
       />
       <output aria-hidden="true" dir="ltr">
-        {value[key]}
+        {localizeDigits(String(value[key]), locale)}
         {unit}
       </output>
     </div>
@@ -191,11 +223,18 @@ export function ColorSettings({
           {fa ? "بازنشانی رنگ‌ها" : "Reset colors"}
         </Button>
       </div>
+      <div className="color-design-control">
+        <span>{fa ? "طراحی رنگ کامپوننت‌ها" : "Component colors"}</span>
+        <ToggleGroup label={fa ? "طراحی رنگ کامپوننت‌ها" : "Component colors"} size="sm"
+          value={colorDesign} onValueChange={value => onColorDesignChange(value as "material" | "previous")}
+          options={[{ value: "material", label: fa ? "متریال" : "Material" }, { value: "previous", label: fa ? "قبلی" : "Previous" }]} />
+      </div>
+      <ColorSchemeControl value={colorScheme} onChange={onColorSchemeChange} locale={locale} disabled={colorDesign === "previous"} />
       <div
         className="color-preview"
         aria-label={fa ? "پیش‌نمایش پالت" : "Palette preview"}
       >
-        {(["primary", "secondary", "tertiary", "error"] as const).map(
+        {(["primary", "secondary", "error"] as const).map(
           (role, index) => (
             <span
               key={role}
@@ -206,8 +245,8 @@ export function ColorSettings({
             >
               {
                 (fa
-                  ? ["اصلی", "ثانویه", "سوم", "خطر"]
-                  : ["Primary", "Secondary", "Tertiary", "Danger"])[index]
+                  ? ["اصلی", "ثانویه", "خطر"]
+                  : ["Primary", "Secondary", "Danger"])[index]
               }
             </span>
           ),
@@ -219,6 +258,25 @@ export function ColorSettings({
           : "Changes apply live. More contrast increases separation between text and surfaces."}
       </p>
       {controls.slice(0, 9).map(renderControl)}
+      <details className="color-role-settings action-color-settings">
+        <summary className="mf-variant--outline">
+          <span>{fa ? "رنگ دکمه‌ها" : "Action colors"}</span>
+          <AnimatedIcon name="chevron-down" size={18} animated={false} />
+        </summary>
+        <p className="settings-note">{fa
+          ? "هر گونه را جداگانه تنظیم کنید؛ روشنایی نسبت به رنگ پالت تغییر می‌کند."
+          : "Tune each treatment independently. Brightness adjustments are relative to the palette."}</p>
+        {actionGroups.map(group => (
+          <details className="color-role-settings action-color-group" key={group.variant}>
+            <summary className="mf-variant--outline">
+              <span>{fa ? group.fa : group.en}</span>
+              <AnimatedIcon name="chevron-down" size={18} animated={false} />
+            </summary>
+            <div className="action-color-preview"><Button size="sm" variant={group.variant}>{fa ? group.fa : group.en}</Button></div>
+            {group.fields.map(renderControl)}
+          </details>
+        ))}
+      </details>
       <details className="color-role-settings">
         <summary className="mf-variant--outline">
           <span>{fa ? "نقش‌های رنگی پیشرفته" : "Advanced color roles"}</span>
@@ -229,7 +287,7 @@ export function ColorSettings({
             ? "آیکن داخل سطوح رنگی از مقدار اول استفاده می‌کند. آیکن بدون زمینه، نوار بالا و جستجو از مقدار Outline / Ghost استفاده می‌کند. خطر زمینه قرمز و نوشته و آیکن با کنتراست مناسب دارد."
             : "Colored components use the icon ink values. Outline, Ghost, toolbar and search icons use separate plain ink values. Danger uses a solid red fill with a readable foreground."}
         </p>
-        {controls.slice(9).map(renderControl)}
+        {controls.slice(9).filter(({ key }) => key !== "lightDangerBrightness" && key !== "darkDangerBrightness").map(renderControl)}
       </details>
     </section>
   );

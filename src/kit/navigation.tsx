@@ -4,24 +4,41 @@ import {
   useId,
   useState,
   useEffect,
+  useRef,
+  useLayoutEffect,
   type HTMLAttributes,
   type AnchorHTMLAttributes,
   type ReactNode,
 } from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useMotionValue, useTransform } from "motion/react";
 import { useMaterialFluid } from "./provider";
 import { useControllable, cx } from "./utils";
 import { Button, IconButton } from "./controls";
 import { GhostLink } from "./ghost-link";
+import { useButtonPressAnimation } from "./button-press";
 import { AnimatedIcon } from "./icons";
-function NavigationSelection({ id, held = false, className }: { id: string; held?: boolean; className?: string }) {
-  const { motion: mode, reducedMotion } = useMaterialFluid();
+function NavigationSelection({ id, held = false, className, keepPill = false }: { id: string; held?: boolean; className?: string; keepPill?: boolean }) {
+  const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
   const animated = mode === "expressive" && !reducedMotion;
-  return <motion.span className={cx("mf-selection", className)} aria-hidden="true" initial={false}
-    layoutId={animated ? id : undefined}
-    animate={{ scale: animated && held ? 1.025 : 1 }}
-    transition={animated ? { type: "spring", stiffness: 420, damping: 28, mass: .8 } : { duration: 0 }} />;
+  const element = useRef<HTMLSpanElement>(null);
+  const scale = useMotionValue(1);
+  const radius = useMotionValue(24);
+  useButtonPressAnimation(scale, held, animated, { scale: 1 - buttonMotion.pressDepth / 100, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass });
+  const boundedScale = useTransform(scale, value => Math.min(1, value));
+  const pressedRadius = useTransform(() => Math.max(6, radius.get() * (1 - Math.max(0, 1 - scale.get()) * buttonMotion.radiusDepthRatio)));
+  useLayoutEffect(() => {
+    const node = element.current;
+    if (!node) return;
+    const measure = () => radius.set(Math.min(node.offsetWidth, node.offsetHeight) / 2);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure); observer.observe(node);
+    return () => observer.disconnect();
+  }, [radius]);
+  return <motion.span ref={element} className={cx("mf-selection", className)} aria-hidden="true" initial={false}
+    layoutId={animated ? id : undefined} style={{ scale: boundedScale, borderRadius: keepPill ? "999px" : pressedRadius }}
+    transition={animated ? { type: "spring", stiffness: 620, damping: 42, mass: .65 } : { duration: 0 }} />;
 }
 
 export interface NavItem {
@@ -66,6 +83,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
       onValueChange,
     );
     const { dir } = useMaterialFluid();
+    const [held, setHeld] = useState<string | null>(null);
     const id = useId();
     return (
       <TabsPrimitive.Root
@@ -83,9 +101,11 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
               value={item.value}
               disabled={item.disabled}
               className="mf-tab"
+              onPointerDown={() => setHeld(item.value)} onPointerUp={() => setHeld(null)} onPointerCancel={() => setHeld(null)} onPointerLeave={() => setHeld(null)}
+              onKeyDown={event => { if (["Enter", " "].includes(event.key)) setHeld(item.value); }} onKeyUp={() => setHeld(null)} onBlur={() => setHeld(null)}
             >
               {selected === item.value && (
-                <NavigationSelection id={selectionId ?? id} />
+                <NavigationSelection id={selectionId ?? id} held={held === item.value} />
               )}
               <span>
                 {item.icon}
@@ -187,9 +207,9 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
         {Array.from({ length: count }, (_, i) => i + 1)
           .filter((p) => p === 1 || p === count || Math.abs(p - current) < 2)
           .map((p, i, visible) => (
-            <span key={p}>
+            <span key={p} className="mf-page-slot">
               {i > 0 && p - visible[i - 1] > 1 && (
-                <span className="mf-muted">…</span>
+                <span className="mf-pagination-gap" aria-hidden="true"><AnimatedIcon name="more_vert" size={20} style={{ rotate: "90deg" }} /></span>
               )}
               <motion.button
                 type="button"
@@ -265,7 +285,7 @@ function NavBase(rawProps: NavigationProps & { kind: string }) {
     >
       {items.map(item => {
         const selectedItem = item.value === selected;
-        const content = <>{selectedItem && <NavigationSelection id={selectionId ?? id} held={held === item.value} />}<span className="mf-nav-item-label">{item.icon}{item.label}</span></>;
+        const content = <>{selectedItem && <NavigationSelection id={selectionId ?? id} held={held === item.value} keepPill />}<span className="mf-nav-item-label">{item.icon}{item.label}</span></>;
         const shared = {
           className: cx("mf-nav-item", item.className),
           "aria-current": selectedItem ? "page" as const : undefined,
@@ -348,7 +368,7 @@ export const Stepper = forwardRef<HTMLOListElement, StepperProps>(
       onValueChange,
     );
     const index = items.findIndex((item) => item.value === selected);
-    const { motion: mode, reducedMotion, dir } = useMaterialFluid();
+    const { motion: mode, reducedMotion, dir, locale } = useMaterialFluid();
     const expressive = mode === "expressive" && !reducedMotion;
     const id = useId();
     return (
@@ -367,14 +387,14 @@ export const Stepper = forwardRef<HTMLOListElement, StepperProps>(
               aria-current={i === index ? "step" : undefined}
               onClick={() => set(item.value)}
             >
-              {i === index && <NavigationSelection id={selectionId ?? id} className="mf-step-selection" />}
               <span
                 className="mf-step-dot"
                 data-complete={i < index || undefined}
                 aria-hidden="true"
               >
+                {i === index && <NavigationSelection id={selectionId ?? id} className="mf-step-selection" />}
                 <AnimatePresence initial={false} mode="wait">
-                  {i < index ? <motion.span className="mf-step-symbol" key="complete" initial={expressive ? { opacity: 0, scale: .7 } : false} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: expressive ? .7 : 1 }} transition={{ duration: expressive ? .14 : 0 }}><AnimatedIcon name="check" size={16} animated animateOnMount /></motion.span> : <motion.span className="mf-step-symbol" key="number" initial={expressive ? { opacity: 0, scale: .8 } : false} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: expressive ? .8 : 1 }} transition={{ duration: expressive ? .1 : 0 }}>{i + 1}</motion.span>}
+                  {i < index ? <motion.span className="mf-step-symbol" key="complete" initial={expressive ? { opacity: 0, scale: .7 } : false} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: expressive ? .7 : 1 }} transition={{ duration: expressive ? .14 : 0 }}><AnimatedIcon name="check" size={16} animated animateOnMount /></motion.span> : <motion.span className="mf-step-symbol" key="number" initial={expressive ? { opacity: 0, scale: .8 } : false} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: expressive ? .8 : 1 }} transition={{ duration: expressive ? .1 : 0 }}>{(i + 1).toLocaleString(locale)}</motion.span>}
                 </AnimatePresence>
               </span>
               <span className="mf-step-label">{item.label}</span>

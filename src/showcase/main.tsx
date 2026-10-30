@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "../kit/styles.css";
 import "../kit/appearance.css";
+import "../kit/material-colors.css";
+import "../kit/tree.css";
 import "./showcase.css";
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";

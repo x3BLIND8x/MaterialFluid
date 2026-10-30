@@ -14,7 +14,7 @@ export function seedHue(seed: string): number {
       : max === g
         ? (b - r) / delta + 2
         : (r - g) / delta + 4;
-  return Math.round((sector * 60 + 360) % 360);
+  return Math.round((sector * 60 + 360) % 360) % 360;
 }
 
 /** The top-right corner of an HSV picker: saturation 100%, brightness 100%. */
@@ -63,7 +63,7 @@ export function AccentSeed({
           style={{ background: value }}
           aria-hidden="true"
         />
-        <code>{value.toUpperCase()}</code>
+        <output dir="ltr">{hue.toLocaleString(fa ? "fa" : "en")}°</output>
         <Button variant="ghost" size="sm" onClick={() => onChange("#eedd96")}>
           {fa ? "بازنشانی" : "Reset"}
         </Button>

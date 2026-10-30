@@ -1,15 +1,27 @@
 import {
   argbFromHex,
   hexFromArgb,
-  CorePalette,
-  Scheme,
   TonalPalette,
   Contrast,
   lstarFromArgb,
+  Hct,
+  SchemeTonalSpot,
+  SchemeExpressive,
+  SchemeVibrant,
+  SchemeNeutral,
+  SchemeMonochrome,
+  SchemeFidelity,
+  SchemeContent,
+  SchemeRainbow,
+  SchemeFruitSalad,
+  DynamicScheme,
 } from "@material/material-color-utilities";
 export type ThemeMode = "light" | "dark" | "system";
 export type MotionMode = "expressive" | "minimal";
 export type Locale = "en" | "fa";
+export const colorSchemes = ["tonalSpot", "expressive", "vibrant", "neutral", "monochrome", "fidelity", "content", "rainbow", "fruitSalad"] as const;
+export type ColorScheme = (typeof colorSchemes)[number];
+const schemeConstructors = { tonalSpot: SchemeTonalSpot, expressive: SchemeExpressive, vibrant: SchemeVibrant, neutral: SchemeNeutral, monochrome: SchemeMonochrome, fidelity: SchemeFidelity, content: SchemeContent, rainbow: SchemeRainbow, fruitSalad: SchemeFruitSalad };
 export interface ColorBehavior {
   primarySaturation: number;
   secondarySaturation: number;
@@ -34,6 +46,23 @@ export interface ColorBehavior {
   darkTextBrightness: number;
   lightBorderBrightness: number;
   darkBorderBrightness: number;
+  filledHueShift: number;
+  filledSaturation: number;
+  lightFilledTone: number;
+  darkFilledTone: number;
+  tonalHueShift: number;
+  tonalSaturation: number;
+  darkTonalSaturation: number;
+  lightTonalTone: number;
+  darkTonalTone: number;
+  outlinedHueShift: number;
+  outlinedSaturation: number;
+  lightOutlinedTone: number;
+  darkOutlinedTone: number;
+  ghostHueShift: number;
+  ghostSaturation: number;
+  lightGhostTone: number;
+  darkGhostTone: number;
 }
 export const colorBehaviorDefaults: Readonly<ColorBehavior> = {
   primarySaturation: 50,
@@ -59,6 +88,10 @@ export const colorBehaviorDefaults: Readonly<ColorBehavior> = {
   darkTextBrightness: 90,
   lightBorderBrightness: 20,
   darkBorderBrightness: 90,
+  filledHueShift: 0, filledSaturation: 100, lightFilledTone: 0, darkFilledTone: 10,
+  tonalHueShift: 0, tonalSaturation: 100, darkTonalSaturation: 150, lightTonalTone: 0, darkTonalTone: -10,
+  outlinedHueShift: 0, outlinedSaturation: 100, lightOutlinedTone: 0, darkOutlinedTone: 0,
+  ghostHueShift: 0, ghostSaturation: 100, lightGhostTone: 0, darkGhostTone: 0,
 };
 export const colorBehaviorRanges: Record<
   keyof ColorBehavior,
@@ -87,6 +120,10 @@ export const colorBehaviorRanges: Record<
   darkTextBrightness: [50, 100],
   lightBorderBrightness: [0, 100],
   darkBorderBrightness: [0, 100],
+  filledHueShift: [-180, 180], filledSaturation: [0, 300], lightFilledTone: [-50, 50], darkFilledTone: [-50, 50],
+  tonalHueShift: [-180, 180], tonalSaturation: [0, 300], darkTonalSaturation: [0, 300], lightTonalTone: [-50, 50], darkTonalTone: [-50, 50],
+  outlinedHueShift: [-180, 180], outlinedSaturation: [0, 300], lightOutlinedTone: [-50, 50], darkOutlinedTone: [-50, 50],
+  ghostHueShift: [-180, 180], ghostSaturation: [0, 300], lightGhostTone: [-50, 50], darkGhostTone: [-50, 50],
 };
 export function normalizeColorBehavior(
   input?: Partial<ColorBehavior> | null,
@@ -116,51 +153,51 @@ export function createTheme(
   seed = "#eedd96",
   dark = false,
   colorBehavior?: Partial<ColorBehavior>,
+  colorScheme: ColorScheme = "tonalSpot",
 ): Record<string, string> {
   if (!/^#[0-9a-f]{6}$/i.test(seed))
     throw new Error("Accent seed must be a six-digit hex color.");
   const behavior = normalizeColorBehavior(colorBehavior);
-  const palette = CorePalette.of(argbFromHex(seed));
-  const hue = palette.a1.hue;
-  const shift = (value: number) => (((hue + value) % 360) + 360) % 360;
-  palette.a1 = TonalPalette.fromHueAndChroma(
-    hue,
-    (palette.a1.chroma * behavior.primarySaturation) / 100,
-  );
-  palette.a2 = TonalPalette.fromHueAndChroma(
-    shift(behavior.secondaryHueShift),
-    (16 * behavior.secondarySaturation) / 100,
-  );
-  palette.a3 = TonalPalette.fromHueAndChroma(
-    shift(behavior.tertiaryHueShift),
-    (24 * behavior.tertiarySaturation) / 100,
-  );
-  palette.n1 = TonalPalette.fromHueAndChroma(
-    hue,
-    (4 * behavior.surfaceTint) / 100,
-  );
-  palette.n2 = TonalPalette.fromHueAndChroma(
-    hue,
-    (8 * behavior.surfaceTint) / 100,
-  );
-  const scheme: Record<string, number> = (
-    dark
-      ? Scheme.darkFromCorePalette(palette)
-      : Scheme.lightFromCorePalette(palette)
-  ).toJSON();
   const strength = behavior.contrast / 100;
+  const sourceColorHct = Hct.fromInt(argbFromHex(seed));
+  const SchemeClass = schemeConstructors[colorScheme] ?? SchemeTonalSpot;
+  const base = new SchemeClass(sourceColorHct, dark, strength, "2025");
+  const adjustPalette = (source: TonalPalette, saturation: number, defaultSaturation: number, hueShift = 0) =>
+    TonalPalette.fromHueAndChroma((source.hue + hueShift + 360) % 360, source.chroma * saturation / defaultSaturation);
+  const palette = {
+    a1: adjustPalette(base.primaryPalette, behavior.primarySaturation, 50),
+    a2: adjustPalette(base.secondaryPalette, behavior.secondarySaturation, 75, behavior.secondaryHueShift),
+    a3: adjustPalette(base.tertiaryPalette, behavior.tertiarySaturation, 100, behavior.tertiaryHueShift - 30),
+    n1: adjustPalette(base.neutralPalette, behavior.surfaceTint, 75),
+    n2: adjustPalette(base.neutralVariantPalette, behavior.surfaceTint, 75),
+    error: base.errorPalette,
+  };
+  // Use the same palettes for every system role, including derived surfaces.
+  const material = new DynamicScheme({
+    sourceColorHct, variant: base.variant, isDark: dark, contrastLevel: strength, specVersion: base.specVersion,
+    primaryPalette: palette.a1, secondaryPalette: palette.a2, tertiaryPalette: palette.a3,
+    neutralPalette: palette.n1, neutralVariantPalette: palette.n2,
+  });
+  const roles = material.colors;
+  const scheme: Record<string, number> = {};
+  for (const role of [...roles.allColors, roles.surfaceVariant(), roles.surfaceTint(), roles.shadow(), roles.scrim()])
+    scheme[role.name.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())] = role.getArgb(material);
   const tone = (value: number) => Math.max(0, Math.min(100, value));
-  const surfaceTone = dark
-    ? behavior.darkSurfaceBrightness
-    : behavior.lightSurfaceBrightness;
-  const surfaceTones = [
-    surfaceTone,
-    tone(surfaceTone + (dark ? 6 : 3)),
-    tone(surfaceTone + (dark ? 12 : -2)),
-    tone(surfaceTone + (dark ? 18 : -6)),
-  ];
-  const neutralSurfaces = surfaceTones.map((value) => palette.n1.tone(value));
-  scheme.background = palette.n1.tone(tone(surfaceTone + (dark ? 4 : 3)));
+  const surfaceOffset = dark ? behavior.darkSurfaceBrightness - 5 : behavior.lightSurfaceBrightness - 90;
+  const adjustedSurface = (role: ReturnType<typeof roles.surface>) => {
+    const original = Hct.fromInt(role.getArgb(material));
+    return surfaceOffset === 0 ? original.toInt()
+      : TonalPalette.fromHueAndChroma(original.hue, original.chroma).tone(tone(original.tone + surfaceOffset));
+  };
+  const neutralSurfaces = [roles.background(), roles.surface(), roles.surfaceContainer(), roles.surfaceContainerHigh()].map(adjustedSurface);
+  for (const [name, role] of [
+    ["surfaceDim", roles.surfaceDim()],
+    ["surfaceBright", roles.surfaceBright()],
+    ["surfaceContainerLowest", roles.surfaceContainerLowest()],
+    ["surfaceContainerLow", roles.surfaceContainerLow()],
+    ["surfaceContainerHighest", roles.surfaceContainerHighest()],
+  ] as const) scheme[name] = adjustedSurface(role);
+  scheme.background = neutralSurfaces[0];
   const targetContrast = 4.5 + 2.5 * strength;
   const ratio = (a: number, b: number) =>
     Contrast.ratioOfTones(lstarFromArgb(a), lstarFromArgb(b));
@@ -192,11 +229,11 @@ export function createTheme(
       ),
     );
   };
-  for (const [role, tones] of [
-    ["primary", palette.a1],
-    ["secondary", palette.a2],
-    ["tertiary", palette.a3],
-    ["error", palette.error],
+  for (const [role, tones, dynamicRole, onRole, containerRole, onContainerRole] of [
+    ["primary", palette.a1, roles.primary(), roles.onPrimary(), roles.primaryContainer(), roles.onPrimaryContainer()],
+    ["secondary", palette.a2, roles.secondary(), roles.onSecondary(), roles.secondaryContainer(), roles.onSecondaryContainer()],
+    ["tertiary", palette.a3, roles.tertiary(), roles.onTertiary(), roles.tertiaryContainer(), roles.onTertiaryContainer()],
+    ["error", palette.error, roles.error(), roles.onError(), roles.errorContainer(), roles.onErrorContainer()],
   ] as const) {
     const name = role[0].toUpperCase() + role.slice(1);
     const inkTone =
@@ -211,50 +248,35 @@ export function createTheme(
           : behavior.lightPlainInkBrightness,
       ),
     );
-    scheme[role] = readable(tones, tone(inkTone), neutralSurfaces);
-    scheme[`on${name}`] = readable(tones, dark ? 20 - 10 * strength : 100, [
-      scheme[role],
-    ]);
-    scheme[`${role}Container`] = tones.tone(
-      tone(
-        (dark
-          ? behavior.darkContainerBrightness
-          : behavior.lightContainerBrightness) +
-          (dark ? -8 : 4) * strength,
-      ),
-    );
-    const preferred = dark ? (role === "error" ? 80 : 90) : 10;
-    scheme[`on${name}Container`] = readable(
-      tones,
-      dark ? preferred + (96 - preferred) * strength : 10 - 6 * strength,
-      [scheme[`${role}Container`]],
-    );
+    const inkOffset = dark ? behavior.darkInkBrightness - 50 : behavior.lightInkBrightness - 40;
+    const containerOffset = dark ? behavior.darkContainerBrightness - 80 : behavior.lightContainerBrightness - 90;
+    if (inkOffset !== 0 || surfaceOffset !== 0) {
+      const original = Hct.fromInt(dynamicRole.getArgb(material));
+      const inkPalette = TonalPalette.fromHueAndChroma(original.hue, original.chroma);
+      scheme[role] = readable(inkPalette, tone(original.tone + inkOffset), neutralSurfaces);
+      scheme[`on${name}`] = readable(tones, onRole.getTone(material), [scheme[role]]);
+    }
+    if (containerOffset !== 0) {
+      const original = Hct.fromInt(containerRole.getArgb(material));
+      const containerPalette = TonalPalette.fromHueAndChroma(original.hue, original.chroma);
+      scheme[`${role}Container`] = containerPalette.tone(tone(original.tone + containerOffset));
+      scheme[`on${name}Container`] = readable(tones, onContainerRole.getTone(material), [scheme[`${role}Container`]]);
+    }
   }
-  scheme.onSurface = scheme.onBackground = readable(
-    palette.n1,
-    tone(
-      (dark ? behavior.darkTextBrightness : behavior.lightTextBrightness) +
-        (dark ? 6 : -6) * strength,
-    ),
-    neutralSurfaces,
-  );
-  scheme.onSurfaceVariant = readable(
-    palette.n2,
-    tone(
-      (dark
-        ? behavior.darkTextBrightness - 10
-        : behavior.lightTextBrightness + 20) +
-        (dark ? 10 : -12) * strength,
-    ),
-    neutralSurfaces,
-  );
-  const borderTone =
-    (dark ? behavior.darkBorderBrightness : behavior.lightBorderBrightness) +
-    (dark ? 12 : -12) * strength;
-  scheme.outline = palette.n2.tone(tone(borderTone));
-  scheme.outlineVariant = palette.n2.tone(
-    tone(borderTone + (dark ? -30 - 4 * strength : 30 + 4 * strength)),
-  );
+  const textOffset = dark ? behavior.darkTextBrightness - 90 : behavior.lightTextBrightness - 25;
+  if (textOffset !== 0 || surfaceOffset !== 0) {
+    for (const [name, role] of [["onSurface", roles.onSurface()], ["onBackground", roles.onBackground()], ["onSurfaceVariant", roles.onSurfaceVariant()]] as const) {
+      const original = Hct.fromInt(role.getArgb(material));
+      scheme[name] = readable(TonalPalette.fromHueAndChroma(original.hue, original.chroma), tone(original.tone + textOffset), neutralSurfaces);
+    }
+  }
+  const borderOffset = dark ? behavior.darkBorderBrightness - 90 : behavior.lightBorderBrightness - 20;
+  if (borderOffset !== 0) {
+    for (const [name, role] of [["outline", roles.outline()], ["outlineVariant", roles.outlineVariant()]] as const) {
+      const original = Hct.fromInt(role.getArgb(material));
+      scheme[name] = TonalPalette.fromHueAndChroma(original.hue, original.chroma).tone(tone(original.tone + borderOffset));
+    }
+  }
   // Filled actions can brighten independently of readable link/focus accents.
   // Select foregrounds from their real, gamut-mapped luminance, not the requested tone.
   for (const [role, tones] of [
@@ -302,15 +324,40 @@ export function createTheme(
       (lstarFromArgb(fill) > lstarFromArgb(foreground) ? -4 : 4);
     scheme[`on${name}FillHover`] = tones.tone(tone(inverseHoverTone));
   }
+  // Action variants start from the selected Material scheme's roles.
+  const actionPrimary = palette.a1;
+  const actionSecondary = palette.a2;
+  const actionNeutral = palette.n2;
+  for (const [name, base, role, inkRole, hueOffset, saturation, lightOffset, darkOffset, surface] of [
+    ["Filled", actionPrimary, roles.primary(), roles.onPrimary(), behavior.filledHueShift, behavior.filledSaturation, behavior.lightFilledTone, behavior.darkFilledTone, true],
+    ["Tonal", actionSecondary, roles.secondaryContainer(), roles.onSecondaryContainer(), behavior.tonalHueShift, dark ? behavior.darkTonalSaturation : behavior.tonalSaturation, behavior.lightTonalTone, behavior.darkTonalTone, true],
+    ["Outlined", actionNeutral, roles.onSurfaceVariant(), roles.onSurfaceVariant(), behavior.outlinedHueShift, behavior.outlinedSaturation, behavior.lightOutlinedTone, behavior.darkOutlinedTone, false],
+    ["Ghost", actionPrimary, roles.primary(), roles.primary(), behavior.ghostHueShift, behavior.ghostSaturation, behavior.lightGhostTone, behavior.darkGhostTone, false],
+  ] as const) {
+    const offset = dark ? darkOffset : lightOffset;
+    const original = Hct.fromInt(role.getArgb(material));
+    const unchanged = hueOffset === 0 && saturation === 100 && offset === 0;
+    const colors = TonalPalette.fromHueAndChroma((original.hue + hueOffset + 360) % 360, original.chroma * saturation / 100);
+    const requested = tone(original.tone + offset);
+    const action = unchanged ? original.toInt() : surface ? colors.tone(requested) : readable(colors, requested, neutralSurfaces);
+    const ink = unchanged ? inkRole.getArgb(material) : surface ? readable(colors, inkRole.getTone(material), [action]) : action;
+    scheme[`action${name}`] = action;
+    scheme[`onAction${name}`] = ink;
+    if (name === "Outlined") {
+      const border = Hct.fromInt(roles.outlineVariant().getArgb(material));
+      scheme.actionOutlinedBorder = hueOffset === 0 && saturation === 100
+        ? scheme.outlineVariant
+        : TonalPalette.fromHueAndChroma((border.hue + hueOffset + 360) % 360, border.chroma * saturation / 100).tone(tone(border.tone + borderOffset));
+    }
+  }
   const tokens: Record<string, string> = {};
   for (const [key, value] of Object.entries(scheme))
     tokens[`--mf-${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`] =
       hexFromArgb(value);
-  const neutral = palette.n1;
-  tokens["--mf-canvas"] = hexFromArgb(neutral.tone(surfaceTones[0]));
-  tokens["--mf-surface"] = hexFromArgb(neutral.tone(surfaceTones[1]));
-  tokens["--mf-surface-container"] = hexFromArgb(neutral.tone(surfaceTones[2]));
-  tokens["--mf-surface-high"] = hexFromArgb(neutral.tone(surfaceTones[3]));
+  tokens["--mf-canvas"] = hexFromArgb(neutralSurfaces[0]);
+  tokens["--mf-surface"] = hexFromArgb(neutralSurfaces[1]);
+  tokens["--mf-surface-container"] = hexFromArgb(neutralSurfaces[2]);
+  tokens["--mf-surface-high"] = hexFromArgb(neutralSurfaces[3]);
   // Include adjusted neutral layers in the immutable palette aliases too.
   for (const [key, value] of Object.entries(tokens))
     tokens[key.replace("--mf-", "--mf-palette-")] = value;

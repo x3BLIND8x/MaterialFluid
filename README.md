@@ -133,7 +133,9 @@ away from the foreground tone to retain contrast.
 </MaterialFluidProvider>
 ```
 
-The same optional settings are accepted by `createTheme(seed, dark, colorBehavior)`.
+The same optional settings are accepted by `createTheme(seed, dark, colorBehavior, colorScheme)`.
+
+Choose a whole-theme Material color scheme with `colorScheme` on `MaterialFluidProvider`: `tonalSpot` (default), `expressive`, `vibrant`, `neutral`, `monochrome`, `fidelity`, `content`, `rainbow`, or `fruitSalad`. The color utility uses its 2025 specification for tonal spot, expressive, vibrant, and neutral; the remaining schemes fall back to the 2021 specification. The showcase saves this choice and applies it to the Material color design; the Previous design keeps its original generator. Existing color adjustments continue to apply on top of the selected scheme.
 Brightness values are HCT tones (light default 85; dark default 90). Saturation and
 surface tint are percentages of the classic CorePalette chroma values; hue shifts
 are degrees relative to the seed (secondary default 0, tertiary 30). Primary,
@@ -175,23 +177,29 @@ receive the missing defaults without losing existing tuning.
 
 ## Shared variants and sizes
 
-Button and action-icon pages show six variants together; other families use their single approved treatment, with one shared Size selector
-and no Variant selector. Button keeps its six-button row without an extra
-Create project example. Icons keeps one catalogue and shows all six selected-icon
+Button and action-icon pages show Filled, Tonal, Outlined, Ghost and Danger together; other families use their single approved treatment, with one shared Size selector
+and no Variant selector. Icons keeps one catalogue and shows all five selected-icon
 previews together. Internal icon animations are temporarily disabled globally;
 the animation implementation remains available for later reactivation.
 
-Outline uses the neutral theme surface, its paired text, and a subtle outline
-border, matching the showcase Variant/Size selectors (white in the default light
-theme, dark in dark mode). Ghost remains transparent. The Fluid/Minimal control
+The legacy Outline treatment uses the neutral theme surface and subtle border
+for existing controls. The new Outlined action treatment is transparent with an
+outline-variant border. Ghost remains transparent. The Fluid/Minimal control
 uses the kit Toggle (Outline off, Primary on); language uses Icon Button with Ghost. Showcase
 search and advanced color-role disclosure share the Outline tokens as well.
 
-Every component accepts `variant="primary|secondary|tertiary|outline|ghost|danger"`
-and `size="sm|md|lg"`. Medium is the default. Small uses dense spacing and 28px
+Action components expose `variant="filled|tonal|outlined|ghost|danger"`, using primary,
+secondary-container, outline and transparent text treatments respectively. Previous
+`primary`, `secondary`, `tertiary`, `outline` and `text` names remain
+available for compatibility. Components use `size="sm|md|lg"`. Medium is the default. Small uses dense spacing and 28px
 desktop action controls, with touch targets enlarged on coarse pointers. Icons and
-spinners additionally accept numeric pixel sizes. Existing button/card variant
-aliases (`filled`, `tonal`, `outlined`, `text`) remain supported where applicable.
+spinners additionally accept numeric pixel sizes.
+
+Settings → Action colors provides separate hue, saturation, and light/dark tone adjustments for Filled, Tonal, Outlined, and Ghost. Danger retains its light/dark brightness controls. Tone adjustments are relative to the generated palette; Reset colors restores all of them. Settings persist on this device and missing values in older saved preferences use the defaults.
+
+Settings → Component colors switches between the Material component color redesign and the previous palette and component treatment. The choice is saved separately from the palette controls. Library consumers can set `colorDesign="material"` or `colorDesign="previous"` on `MaterialFluidProvider`; switching leaves the current seed and color adjustments intact.
+
+The shared color roles use the 2025 Material tonal-spot scheme across backgrounds, surfaces, text, borders, selection and actions. Dark Filled defaults to a +10 tone adjustment; dark Tonal defaults to -10 and 150% saturation. The main showcase page retains a separate container tone from its surroundings.
 
 Danger uses a solid red background with white text/icons, following the supplied
 reference image. Its brightness has independent light/dark controls. Hover moves
@@ -250,13 +258,13 @@ Checkbox ticks draw in over 180ms once the fill visibly covers the whole checkbo
 
 NumberField and Slider support the mouse wheel while hovered, consuming the gesture so the page stays still. Wheel up increases, wheel down decreases; sliders also support horizontal wheel movement. Free sliders move by one twentieth of the full range per wheel step, with a short glide in expressive mode; stepped sliders use their configured step. Range sliders adjust the handle closest to the pointer and preserve their neighbour bounds. Ctrl+wheel retains browser zoom. NumberField keeps native typing, arrow-key stepping, and explicit decrease/increase actions; its numeric overlay appears only while displaying or stepping values.
 
-NumberField supports `presentation="goal"` and `unit` for large goal-setting values. Text-field focus expands only the text inset, keeping adornments fixed; invalid subtitle/error text wobbles once on validation feedback in Expressive mode. OTP digits roll in from above. FileInput uses a Primary chooser and accepts supported files via drag and drop with bounded feedback. Calendar month transitions, day feedback, and rounded date popovers follow Expressive/Minimal and reduced-motion preferences.
+NumberField supports `presentation="goal"` and `unit` for large goal-setting values. Text-field focus expands only the text inset, keeping adornments fixed; invalid subtitle/error text wobbles once on validation feedback in Expressive mode. OTP digits roll in from above. FileInput provides a large dashed drop area, a Primary chooser, and separate file rows. Calendar month transitions, day feedback, and rounded date popovers follow Expressive/Minimal and reduced-motion preferences.
 
 Calendars support wheel month navigation, a month chooser with month numbers, and a goal-style year editor in both Gregorian and Persian systems. OTP showcase verification accepts only `123654`; the reusable OTPInput remains validation-agnostic. Combobox keeps its suggestion list open during input interaction and dismiss on selection or outside interaction.
 
 Select, Combobox, and MultiSelect share an anchored, scrollable menu below the field. Combobox includes optional `allowCustom` entry; the separate Autocomplete component and page have been removed.
 
-MultiSelect renders removable Primary chips with 6px gaps and wraps to additional rows; its border and content height spring together without scaling text. Calendar height also springs when its week rows change. Date ranges use square connected edges and reset to a new start when an earlier date is clicked. TimePicker offers a goal-style hours/minutes overlay (and seconds where needed), with native input values and form submission preserved. FileInput supports removable, shortened filename chips, multiple files, and a full Primary drag surface labelled “Release to upload”; selection remains local until an application handles it.
+MultiSelect renders removable Primary chips with 6px gaps and wraps to additional rows; its border and content height spring together without scaling text. Calendar height also springs when its week rows change. Date ranges use square connected edges and reset to a new start when an earlier date is clicked. TimePicker offers a goal-style hours/minutes overlay (and seconds where needed), with native input values and form submission preserved. FileInput supports multiple files, removable filename rows, and per-file progress. Small uses a compact horizontal drop area; Medium and Large stay centered. The visible file limit is enforced for both browsing and dropping: single mode allows one file, while multiple mode defaults to five, configurable with `maxFiles`. Exceeding the limit preserves the previous selection and shows an error. Pass `onUpload={(file, { signal, onProgress }) => uploadFile(file, signal, onProgress)}` to connect your upload transport. Report actual percentages from 0–100; resolve after server confirmation or reject to show retry. Removal, replacement, form reset, and unmount abort outstanding uploads. Without `onUpload`, files remain locally selected and native form submission works. The showcase explicitly simulates upload progress.
 
 Select, Combobox, and MultiSelect share bounded, scrollable dropdown lists. MultiSelect offers search with a visually hidden label, highlights selected options without checkmarks and animates adding or removing its selected chips. Combobox accepts listed options by default; set `allowCustom` to enable the explicit Add action. Its helper text communicates this policy in both locales.
 
@@ -273,3 +281,9 @@ The showcase shell uses the kit’s fields, Toggle, links, top app bar, breadcru
 Select, Combobox and MultiSelect expand the field outline into a continuous options surface without moving surrounding content. Height and corners morph over 300ms, including filtering, interrupted transitions and collapse; the chevron reverses over 400ms. Option rows rise 8px from a slight scale and 4px blur over 350ms, staggered by 50ms up to 250ms. The surface retains MaterialFluid colors and flat styling, follows upward collision placement, and skips spatial animation in Minimal or reduced-motion mode.
 
 Persian language displays Persian digits in number fields (including editing, steppers, time units and calendar year editors), date fields and both calendar systems. Native number values and date-only callbacks retain their canonical numeric/ISO data. Date ranges use `----/--/-- - ----/--/--` for empty boundaries and zero-padded `yyyy/MM/dd` dates in chronological left-to-right order.
+
+
+Visible form field labels default to the top and may be placed at the logical start with `labelPosition="start"` or a `ComponentAppearanceProvider` default. For example: `<Select label="Size" labelPosition="start" options={sizes} />`. Start follows the reading direction, and field helpers stay beside the control column. Goal-style NumberField and Slider always keep their labels at the top; Checkbox, RadioGroup and Switch keep captions at the end.
+
+
+`CardGroup` offers radio-style single selection (`value: string`) and checkbox-style multiple selection (`selectionMode="multiple"`, `value: string[]`). Options accept `label`, `description`, and a decorative `symbol` containing an icon, symbol, or emoji. Native inputs support keyboard selection and named form values. Switch captions stay at End; Slider supports Top, Bottom, Start, and End label positions.

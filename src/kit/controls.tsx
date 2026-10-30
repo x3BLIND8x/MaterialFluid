@@ -132,6 +132,7 @@ function buttonTransform(_values: unknown, transform: string) {
 }
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(rawProps, ref) {
+    const defaults = useComponentAppearance();
     const {
       variant = "filled",
       size = "md",
@@ -146,7 +147,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       sizeMotion,
       ripple: rippleOptions,
       ...props
-    } = useAppearanceProps(rawProps, {
+    } = useAppearanceProps({ ...rawProps, variant: rawProps.variant ?? defaults.variant ?? "filled" }, {
       preserveVariant: true,
       preserveSize: true,
     });
@@ -517,6 +518,8 @@ export const FAB = forwardRef<HTMLButtonElement, ButtonProps>(function FAB(
   );
 });
 export interface ToggleProps extends Omit<ButtonProps, "variant"> {
+  /** Use the shared square icon-action surface; provide an aria-label. */
+  iconOnly?: boolean;
   pressed?: boolean;
   defaultPressed?: boolean;
   onPressedChange?: (pressed: boolean) => void;
@@ -524,6 +527,7 @@ export interface ToggleProps extends Omit<ButtonProps, "variant"> {
 export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(
   function Toggle(
     {
+      iconOnly = false,
       pressed,
       defaultPressed = false,
       onPressedChange,
@@ -544,7 +548,7 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(
         ref={ref}
         aria-pressed={active}
         variant={active ? "primary" : "outline"}
-        className={cx("mf-toggle", className)}
+        className={cx("mf-toggle", iconOnly && "mf-icon-button", className)}
         onClick={(e) => {
           onClick?.(e);
           if (!e.defaultPrevented) set(!active);
@@ -608,14 +612,12 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       const depth = Math.max(0, Math.min(1, (1 - pillPress.get()) * buttonMotion.radiusDepthRatio));
       return `${Math.max(Math.min(6, radius), radius * (1 - depth))}px`;
     });
-    useEffect(() => {
-      const animation = animate(pillPress,
-        held && mode === "expressive" && !reducedMotion ? 1 - buttonMotion.pressDepth / 100 : 1,
-        mode === "expressive" && !reducedMotion
-          ? { type: "spring", stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass }
-          : { duration: 0 });
-      return () => animation.stop();
-    }, [held, mode, reducedMotion, buttonMotion, pillPress]);
+    useButtonPressAnimation(pillPress, held, mode === "expressive" && !reducedMotion, {
+      scale: 1 - buttonMotion.pressDepth / 100,
+      stiffness: buttonMotion.stiffness,
+      damping: buttonMotion.damping,
+      mass: buttonMotion.mass,
+    });
     const pointer = useRef<{ id: number; startX: number; startY: number } | null>(null);
     const suppressClickUntil = useRef(0);
     const displayed = preview ?? selected;
@@ -784,8 +786,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     const pressTarget = button.closest("label.mf-choice") ?? button;
     let animation: ReturnType<typeof animate> | undefined;
     let outerAnimation: ReturnType<typeof animate> | undefined;
-    let releaseTimer: ReturnType<typeof setTimeout> | undefined;
-    let pressedAt = 0;
+    let sequence = 0;
     let holding = false;
     let pointerHeld = false;
     const originalTransform = button.style.transform;
@@ -794,22 +795,17 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     const unsubscribeOuter = outerScale.on("change", value => {
       button.style.transform = `${originalTransform} scale(${radio ? Math.min(1, value) : value})`.trim();
     });
-    const outerPress = (down: boolean) => {
-      outerAnimation?.stop();
-      const depth = Math.min(.18, buttonMotion.pressDepth / 50);
-      const target = down ? 1 - depth : 1;
-      outerAnimation = animate(outerScale, target, spring);
-    };
+    const depth = Math.min(.18, buttonMotion.pressDepth / 50);
     pressed.set(0);
     const down = (event: Event) => {
       if (!fluid || button.disabled) return;
       if (event instanceof KeyboardEvent && (event.repeat || ![" ", "Enter"].includes(event.key))) return;
       if (event instanceof PointerEvent && event.button !== 0) return;
-      clearTimeout(releaseTimer);
-      pressedAt = performance.now();
+      sequence++;
       holding = true;
       pointerHeld = event instanceof PointerEvent;
-      outerPress(true);
+      outerAnimation?.stop();
+      outerAnimation = animate(outerScale, 1 - depth, spring);
       if (partialRef.current) return;
       animation?.stop();
       animation = animate(pressed, 1, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
@@ -821,10 +817,19 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
       if (!holding) return;
       holding = false;
       pointerHeld = false;
-      // A quick click still completes a visible press before the return spring.
-      releaseTimer = setTimeout(() => outerPress(false), Math.max(0, 120 - (performance.now() - pressedAt)));
-      animation?.stop();
-      animation = animate(pressed, 0, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
+      const current = sequence;
+      const inward = outerAnimation;
+      const fillInward = animation;
+      // Let both contours reach their pressed shape quickly before the release.
+      if (inward) inward.speed = 2.5;
+      if (fillInward) fillInward.speed = 2.5;
+      void Promise.all([inward, fillInward].filter(Boolean)).then(() => {
+        if (sequence !== current) return;
+        outerAnimation = animate(outerScale, 1, spring);
+        if (!partialRef.current) {
+          animation = animate(pressed, 0, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
+        }
+      });
     };
     pressTarget.addEventListener("pointerdown", down);
     button.addEventListener("keydown", down);
@@ -835,7 +840,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     return () => {
       animation?.stop();
       outerAnimation?.stop();
-      clearTimeout(releaseTimer);
+      sequence++;
       unsubscribeOuter();
       outerScale.set(1);
       button.style.transform = originalTransform;
@@ -857,24 +862,25 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
 export interface CheckboxProps
   extends
     Omit<Check.CheckboxProps, "checked" | "onCheckedChange">,
-    Omit<AppearanceProps, "variant"> {
+    Omit<AppearanceProps, "variant" | "labelPosition"> {
+  labelPosition?: "end";
   label: ReactNode;
   checked?: boolean | "indeterminate";
   onCheckedChange?: (checked: boolean | "indeterminate") => void;
 }
 export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
   function Checkbox(rawProps, ref) {
-    const { label, className, checked, defaultChecked = false, onCheckedChange, ...props } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    const { label, className, checked, defaultChecked = false, onCheckedChange, ...props } = useAppearanceProps({ ...rawProps, labelPosition: "end", variant: "outline" });
     const [current, setChecked] = useControllable<boolean | "indeterminate">(checked, defaultChecked, onCheckedChange);
     const [fillReady, setFillReady] = useState(current === true);
-    const { motion: mode, reducedMotion } = useMaterialFluid();
+    const { motion: mode, reducedMotion, colorDesign } = useMaterialFluid();
     const animated = mode === "expressive" && !reducedMotion;
 
     return (
       <label className={cx("mf-choice", className)}>
         <Check.Root {...props} checked={current} onCheckedChange={setChecked} ref={ref} className="mf-checkbox">
-          <ChoiceFill active={current === true} partial={current === "indeterminate"} onReadyChange={setFillReady} />
-          <Check.Indicator forceMount className="mf-checkbox-mark" data-ready={current === "indeterminate" || (current === true && fillReady) ? "true" : undefined}>
+          <ChoiceFill active={current === true || (current === "indeterminate" && colorDesign === "material")} partial={current === "indeterminate" && colorDesign !== "material"} onReadyChange={setFillReady} />
+          <Check.Indicator forceMount className="mf-checkbox-mark" data-ready={(current === "indeterminate" && (colorDesign !== "material" || fillReady)) || (current === true && fillReady) ? "true" : undefined}>
             {current === true && fillReady && (
               <svg className="mf-checkbox-tick" data-icon-name="check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                 <motion.path
@@ -902,14 +908,15 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
   },
 );
 export interface RadioGroupProps
-  extends Radio.RadioGroupProps, Omit<AppearanceProps, "variant"> {
+  extends Radio.RadioGroupProps, Omit<AppearanceProps, "variant" | "labelPosition"> {
+  labelPosition?: "end";
   options: ChoiceOption[];
   label: string;
 }
 export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
   function RadioGroup(rawProps, ref) {
     const { options, label, className, value, defaultValue = "", onValueChange, ...props } =
-      useAppearanceProps({ ...rawProps, variant: "outline" });
+      useAppearanceProps({ ...rawProps, labelPosition: "end", variant: "outline" });
     const [selected, setSelected] = useControllable(value === null ? "" : value, defaultValue ?? "", onValueChange);
     const [preview, setPreview] = useState<string | null>(null);
     useEffect(() => {
@@ -953,7 +960,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
 export interface SwitchProps
   extends
     Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onChange" | "value">,
-    Omit<AppearanceProps, "variant"> {
+    Omit<AppearanceProps, "variant" | "labelPosition"> {
+  labelPosition?: "end";
   checked?: boolean;
   defaultChecked?: boolean;
   onCheckedChange?: (value: boolean) => void;
@@ -989,7 +997,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
       onPointerUp,
       onPointerCancel,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "primary", size: rawProps.size ?? defaults.size ?? "md" }, { preserveSize: true });
+    } = useAppearanceProps({ ...rawProps, labelPosition: "end", variant: "primary", size: rawProps.size ?? defaults.size ?? "md" }, { preserveSize: true });
 
     const [active, set] = useControllable(
       checked,
@@ -1152,7 +1160,8 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
     );
   },
 );
-export interface SliderProps extends Slide.SliderProps, Omit<AppearanceProps, "variant"> {
+export interface SliderProps extends Slide.SliderProps, Omit<AppearanceProps, "variant" | "labelPosition"> {
+  labelPosition?: "top";
   label: string;
   showValue?: boolean;
   mode?: "continuous" | "stepped";
@@ -1169,7 +1178,7 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
       onValueChange,
       className,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    } = useAppearanceProps({ ...rawProps, labelPosition: "top", variant: "outline" });
 
     const [current, set] = useControllable(value, defaultValue, onValueChange);
     const [positionReady, setPositionReady] = useState(false);

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   Card,
+  CardGroup,
   List,
   Avatar,
   AvatarGroup,
@@ -9,13 +10,16 @@ import {
   Divider,
   DataTable,
 } from "../../kit/surfaces";
-import { Button } from "../../kit/controls";
+import { Button, ToggleGroup } from "../../kit/controls";
 import { EmptyState } from "../../kit/feedback";
 import { AnimatedIcon } from "../../kit/icons";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type DemoProps, translate } from "./shared";
 export default function SurfacesDemo({ id, states, locale }: DemoProps) {
   const t = translate(locale);
+  const [cardMode, setCardMode] = useState<"single" | "multiple">("single");
+  const [cardValue, setCardValue] = useState("design");
+  const [cardValues, setCardValues] = useState<string[]>(["design"]);
   const [message, setMessage] = useState("");
   const description = states.long
     ? t(
@@ -60,6 +64,20 @@ export default function SurfacesDemo({ id, states, locale }: DemoProps) {
   );
   let demo;
   switch (id) {
+    case "card-group": {
+      const options = [
+        { value: "design", label: t("Design", "طراحی"), description: t("Shape the look and feel.", "ظاهر و حس کار را شکل دهید."), symbol: <AnimatedIcon name="layers" /> },
+        { value: "build", label: t("Build", "ساخت"), description: t("Bring your ideas to life.", "ایده‌ها را به اجرا برسانید."), symbol: "✦" },
+        { value: "launch", label: t("Launch", "انتشار"), description: t("Share what you created.", "ساختهٔ خود را به اشتراک بگذارید."), symbol: "🚀" },
+      ];
+      demo = <div className="demo-stack" style={{ width: "100%", maxWidth: 640 }}>
+        <ToggleGroup label={t("Selection mode", "نوع انتخاب")} value={cardMode} onValueChange={value => setCardMode(value as "single" | "multiple")} options={[{value:"single",label:t("Single", "تکی")},{value:"multiple",label:t("Multiple", "چندتایی")}]} />
+        {cardMode === "single"
+          ? <CardGroup label={t("Choose a focus", "حوزهٔ تمرکز را انتخاب کنید")} options={options} value={cardValue} onValueChange={setCardValue} disabled={states.disabled} />
+          : <CardGroup selectionMode="multiple" label={t("Choose your interests", "علاقه‌مندی‌ها را انتخاب کنید")} options={options} value={cardValues} onValueChange={setCardValues} disabled={states.disabled} />}
+      </div>;
+      break;
+    }
     case "card":
       demo = (
         <div className="demo-cards">

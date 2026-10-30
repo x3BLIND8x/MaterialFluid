@@ -6,15 +6,16 @@ export function usageFor(entry: Entry, appearance?: AppearanceProps) {
     names.add(match[1]);
   const declarations: string[] = [];
   const fixedAppearance = ["forms", "navigation", "surfaces", "feedback", "overlays"].includes(entry.family) || ["toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider"].includes(entry.id);
-  const variantAttribute = fixedAppearance ? "" : ` variant="${appearance?.variant ?? "primary"}"`;
+  const variantAttribute = fixedAppearance ? "" : ` variant="${appearance?.variant ?? "filled"}"`;
   const code = appearance
     ? entry.code
         .replace(
           new RegExp(`<${entry.name}(?=[\\s/>])([^>]*?)>`),
           (_match, attributes: string) => {
-            const clean = attributes.replace(/\s+(?:variant|size)=(?:"[^"]*"|\{[^}]*\})/g, "");
+            const clean = attributes.replace(/\s+(?:variant|size|labelPosition)=(?:"[^"]*"|\{[^}]*\})/g, "");
             const size = entry.name === "NotificationCenter" ? "" : ` size="${appearance.size ?? "md"}"`;
-            return `<${entry.name}${variantAttribute}${size}${clean}>`;
+            const label = !["switch", "checkbox", "radio-group", "slider", "card-group"].includes(entry.id) && appearance.labelPosition && appearance.labelPosition !== "top" ? ` labelPosition="${appearance.labelPosition}"` : "";
+            return `<${entry.name}${variantAttribute}${size}${label}${clean}>`;
           },
         )
     : entry.code;

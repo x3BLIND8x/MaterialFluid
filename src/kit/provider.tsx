@@ -12,6 +12,7 @@ import {
 } from "react";
 import { setRef } from "./utils";
 import { RoundedSelection } from "./rounded-selection";
+import { createTheme as createPreviousTheme } from "./theme-previous";
 
 // Retain the custom selection implementation for optional future use.
 const roundedSelectionEnabled = false;
@@ -25,6 +26,7 @@ import {
   type ThemeMode,
   type MotionMode,
   type Locale,
+  type ColorScheme,
 } from "./theme";
 export interface ButtonMotionSettings {
   colorDuration: number;
@@ -64,6 +66,8 @@ export interface MaterialFluidSettings {
   theme: ThemeMode;
   accentSeed: string;
   colorBehavior: ColorBehavior;
+  colorDesign: "material" | "previous";
+  colorScheme: ColorScheme;
   motion: MotionMode;
   reducedMotion: boolean;
   buttonMotion: ButtonMotionSettings;
@@ -76,6 +80,8 @@ const defaults: MaterialFluidSettings = {
   theme: "system",
   accentSeed: "#eedd96",
   colorBehavior: colorBehaviorDefaults,
+  colorDesign: "material",
+  colorScheme: "tonalSpot",
   motion: "expressive",
   reducedMotion: false,
   buttonMotion: buttonMotionDefaults,
@@ -89,6 +95,8 @@ export interface MaterialFluidProviderProps extends HTMLAttributes<HTMLDivElemen
   theme?: ThemeMode;
   accentSeed?: string;
   colorBehavior?: Partial<ColorBehavior>;
+  colorDesign?: "material" | "previous";
+  colorScheme?: ColorScheme;
   motion?: MotionMode;
   buttonMotion?: Partial<ButtonMotionSettings>;
   textMorph?: Partial<TextMorphSettings>;
@@ -103,6 +111,8 @@ export const MaterialFluidProvider = forwardRef<
     theme = "system",
     accentSeed = "#eedd96",
     colorBehavior,
+    colorDesign = "material",
+    colorScheme = "tonalSpot",
     motion = "expressive",
     buttonMotion,
     textMorph,
@@ -161,8 +171,10 @@ export const MaterialFluidProvider = forwardRef<
     [textMorph],
   );
   const tokens = useMemo(
-    () => createTheme(accentSeed, dark, effectiveColors),
-    [accentSeed, dark, effectiveColors],
+    () => colorDesign === "previous"
+      ? createPreviousTheme(accentSeed, dark, effectiveColors)
+      : createTheme(accentSeed, dark, effectiveColors, colorScheme),
+    [accentSeed, dark, effectiveColors, colorDesign, colorScheme],
   );
   const value = useMemo(
     () => ({
@@ -171,6 +183,8 @@ export const MaterialFluidProvider = forwardRef<
       theme,
       accentSeed,
       colorBehavior: effectiveColors,
+      colorDesign,
+      colorScheme,
       motion,
       reducedMotion: reduced,
       buttonMotion: effectiveButtonMotion,
@@ -183,6 +197,8 @@ export const MaterialFluidProvider = forwardRef<
       theme,
       accentSeed,
       effectiveColors,
+      colorDesign,
+      colorScheme,
       motion,
       reduced,
       effectiveButtonMotion,
@@ -207,6 +223,7 @@ export const MaterialFluidProvider = forwardRef<
           lang={locale}
           dir={dir}
           data-theme={dark ? "dark" : "light"}
+          data-color-design={colorDesign}
           data-motion={reduced ? "reduced" : motion}
           style={{ ...tokens, ...style } as CSSProperties}
         >

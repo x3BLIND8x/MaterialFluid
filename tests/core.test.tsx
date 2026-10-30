@@ -1059,7 +1059,7 @@ describe("range, time, and file selection", () => {
     expect(new FormData(screen.getByTestId("time-form") as HTMLFormElement).get("meeting")).toBe("10:45");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
-  it("shows shortened multiple-file chips and removes the actual selected files", async () => {
+  it("shows full accessible filenames and removes the actual selected files", async () => {
     class Transfer { files: File[] = []; items = { add: (file: File) => this.files.push(file) }; }
     vi.stubGlobal("DataTransfer", Transfer);
     try {
@@ -1072,8 +1072,7 @@ describe("range, time, and file selection", () => {
       Object.defineProperty(input, "files", { configurable: true, writable: true, value: [pdf, image] });
       fireEvent.change(input);
       const remove = screen.getByRole("button", { name: `Remove ${pdf.name}` });
-      expect(remove.textContent).toContain("…");
-      expect(remove.textContent).toContain(".pdf");
+      expect(screen.getByTitle(pdf.name).textContent).toBe(pdf.name);
       await user.click(remove);
       expect(Array.from(input.files ?? []).map(file => file.name)).toEqual(["photo.png"]);
       await user.click(screen.getByRole("button", { name: "Remove photo.png" }));
@@ -1194,8 +1193,9 @@ describe("form polish interactions", () => {
   it("associates the file action with its field and helper", () => {
     render(<MaterialFluidProvider motion="minimal"><FileInput label="Attachments" hint="PDF files only" accept=".pdf" multiple /></MaterialFluidProvider>);
     const action = screen.getByRole("button", { name: "Attachments: Choose files" });
-    const hintId = action.getAttribute("aria-describedby")!;
-    expect(document.getElementById(hintId)?.textContent).toBe("PDF files only");
+    const descriptions = action.getAttribute("aria-describedby")!.split(" ").map(id => document.getElementById(id)?.textContent);
+    expect(descriptions).toContain("PDF files only");
+    expect(descriptions).toContain("Up to 5 files");
   });
 });
 
@@ -1283,5 +1283,24 @@ describe("localized numeric fields and dates", () => {
     const year = screen.getByRole("button", { name: calendar === "persian" ? "۱۴۰۳" : "۲۰۲۴" });
     fireEvent.click(year);
     expect(container.querySelector(".mf-number-value-content")?.textContent).toBe(calendar === "persian" ? "۱۴۰۳" : "۲۰۲۴");
+  });
+});
+
+
+describe("shared label placement", () => {
+  it("uses provider label defaults and preserves explicit overrides", () => {
+    render(<MaterialFluidProvider><ComponentAppearanceProvider labelPosition="end"><TextField label="Default" /><TextField label="Override" labelPosition="start" /></ComponentAppearanceProvider></MaterialFluidProvider>);
+    expect(screen.getByLabelText("Default").closest(".mf-field")?.classList.contains("mf-label--end")).toBe(true);
+    const override = screen.getByLabelText("Override").closest(".mf-field")!;
+    expect(override.classList.contains("mf-label--start")).toBe(true);
+    expect(override.classList.contains("mf-label--end")).toBe(false);
+  });
+
+  it("keeps explicit field placement through nested field components without DOM prop leakage", () => {
+    const { container } = render(<MaterialFluidProvider><TextField label="Title" labelPosition="start" hint="Helper" /><FileInput label="Attachment" labelPosition="bottom" /></MaterialFluidProvider>);
+    expect(screen.getByLabelText("Title").closest(".mf-field")?.classList.contains("mf-label--start")).toBe(true);
+    expect(screen.getByLabelText("Attachment").closest(".mf-field")?.classList.contains("mf-label--bottom")).toBe(true);
+    expect(container.querySelector("[labelposition]")).toBeNull();
+    expect(screen.getByText("Helper")).toBeTruthy();
   });
 });

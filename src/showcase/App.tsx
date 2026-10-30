@@ -6,11 +6,13 @@ import {
   componentVariants,
   type ComponentVariant,
   type ComponentSize,
+  type LabelPosition,
 } from "../kit/appearance";
 import { Button, IconButton, Switch, Toggle, ToggleGroup } from "../kit/controls";
 import { AnimatedIcon } from "../kit/icons";
 import { Drawer, Popover, Tooltip } from "../kit/overlays";
-import { Link, SideNavigation, NavigationRail, TableOfContents, TopAppBar, Breadcrumbs } from "../kit/navigation";
+import { Link, NavigationRail, TableOfContents, TopAppBar, Breadcrumbs } from "../kit/navigation";
+import { Tree } from "../kit/tree";
 import { SearchField, Select } from "../kit/forms";
 import { Spinner } from "../kit/feedback";
 import { catalogue, families, text, type DemoState } from "./catalogue";
@@ -22,6 +24,7 @@ import {
 import { usageFor } from "./usage";
 import { ColorSettings } from "./color-settings";
 import { AccentSeed } from "./accent-seed";
+import { ColorPage } from "./color-page";
 import { fabMotionDefaults, type FABMotionSettings } from "./demos/shared";
 import { FABTuning } from "./fab-tuning";
 import { ButtonTuning } from "./button-tuning";
@@ -58,6 +61,7 @@ export default function App() {
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
   const [route, setRoute] = useState(routeId);
   const [search, setSearch] = useState("");
+  const [expandedFamilies, setExpandedFamilies] = useState<string[]>(() => families.map(group => group.id));
   const [collapsed, setCollapsed] = useState(false);
   const [compactActions, setCompactActions] = useState(() => window.innerWidth < 600);
   const topbar = useRef<HTMLElement>(null);
@@ -65,8 +69,9 @@ export default function App() {
   const [states, setStates] = useState<Partial<Record<DemoState, boolean>>>({});
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
-  const variant: ComponentVariant = "primary";
+  const variant: ComponentVariant = "filled";
   const [size, setSize] = useState<ComponentSize>("md");
+  const [labelPosition, setLabelPosition] = useState<LabelPosition>("top");
   const fixedControls = ["button-group", "toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider", "text-field", "textarea"];
   const [fabMotion, setFabMotion] = useState<FABMotionSettings>(
     () => ({ ...fabMotionDefaults }),
@@ -83,8 +88,8 @@ export default function App() {
     const canvas = [html.style.backgroundColor, document.body.style.backgroundColor, html.style.colorScheme];
     const update = () => {
       const style = getComputedStyle(element);
-      ["--mf-primary-fill", "--mf-surface-container", "--mf-primary", "--mf-surface"].forEach((token, index) => html.style.setProperty(names[index], style.getPropertyValue(token)));
-      const background = style.getPropertyValue("--mf-surface").trim();
+      const background = style.backgroundColor;
+      [style.getPropertyValue("--mf-outline-variant"), background, style.getPropertyValue("--mf-outline"), background].forEach((value, index) => html.style.setProperty(names[index], value));
       html.style.backgroundColor = background;
       document.body.style.backgroundColor = background;
       html.style.colorScheme = element.dataset.theme === "dark" ? "dark" : "light";
@@ -106,6 +111,7 @@ export default function App() {
     fa = locale === "fa";
   const t = (en: string, persian: string) => (fa ? persian : en);
   const entry = catalogue.find((c) => c.id === route) ?? catalogue[0];
+  const colorsPage = route === "colors";
   const family = families.find((f) => f.id === entry.family)!;
   const Demo = demos[entry.family];
   const change = <K extends keyof Preferences>(key: K, value: Preferences[K]) =>
@@ -131,39 +137,37 @@ export default function App() {
       return;
     }
     heading.current?.focus({ preventScroll: true });
-  }, [entry.id]);
+  }, [route]);
   useEffect(() => savePreferences(prefs), [prefs]);
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = fa ? "rtl" : "ltr";
-    document.title = `${fa ? entry.fa : displayName(entry.name)} · MaterialFluid`;
-  }, [locale, fa, entry]);
+    document.title = `${colorsPage ? t("Color system", "سیستم رنگ") : fa ? entry.fa : displayName(entry.name)} · MaterialFluid`;
+  }, [locale, fa, entry, colorsPage]);
   const results = catalogue.filter((c) =>
     `${c.name} ${displayName(c.name)} ${c.fa} ${text(c.description, locale)}`
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
   );
+  useEffect(() => {
+    if (search.trim()) setExpandedFamilies(families.map(group => group.id));
+  }, [search]);
   const nav = (
     <div className="catalogue-navigation">
+      <a href="#/colors" className="palette-nav-link" aria-current={colorsPage ? "page" : undefined}><AnimatedIcon name="palette" size={19} />{t("Color system", "سیستم رنگ")}</a>
       <SearchField className="nav-search" label={t("Search components", "جستجوی کامپوننت‌ها")}
         placeholder={t("Find a component…", "یافتن کامپوننت…")} value={search}
         onChange={event => setSearch(event.target.value)}
         trailing={<span className="nav-search-count">{results.length.toLocaleString(locale)}</span>} />
       <nav aria-label={t("Components", "کامپوننت‌ها")}>
-        {families.map((group) => {
-          const entries = results.filter((c) => c.family === group.id);
-          return entries.length ? (
-            <div className="nav-group" key={group.id}>
-              <h2>{text(group.label, locale)}</h2>
-              <SideNavigation label={text(group.label, locale)} size="sm" value={entry.id}
-                selectionId="active-component" className="catalogue-nav-list"
-                items={entries.map(component => ({ value: component.id,
-                  href: `#/components/${component.id}`, className: "catalogue-link",
-                  label: <><span>{fa ? component.fa : displayName(component.name)}</span>{entry.id === component.id && <AnimatedIcon name={fa ? "arrow-left" : "arrow-right"} size={15} />}</>,
-                }))} />
-            </div>
-          ) : null;
-        })}
+        {results.length > 0 && <Tree className="catalogue-tree" size="sm" label={t("Components", "کامپوننت‌ها")}
+          value={colorsPage ? "" : entry.id} expanded={expandedFamilies} onExpandedChange={setExpandedFamilies}
+          items={families.flatMap(group => {
+            const entries = results.filter(component => component.family === group.id);
+            return entries.length ? [{ value: group.id, label: text(group.label, locale), children: entries.map(component => ({
+              value: component.id, href: `#/components/${component.id}`, label: fa ? component.fa : displayName(component.name),
+            })) }] : [];
+          })} />}
         {!results.length && (
           <p className="nav-no-results" role="status">
             {t(
@@ -188,7 +192,7 @@ export default function App() {
   const next = catalogue[catalogue.indexOf(entry) + 1];
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(usageFor(entry, { variant, size }));
+      await navigator.clipboard.writeText(usageFor(entry, { variant, size, labelPosition }));
       setCopied(true);
       setCopyError(false);
     } catch {
@@ -277,6 +281,10 @@ export default function App() {
                     value={prefs.colorBehavior}
                     onChange={(value) => change("colorBehavior", value)}
                     locale={locale}
+                    colorDesign={prefs.colorDesign}
+                    onColorDesignChange={(value) => change("colorDesign", value)}
+                    colorScheme={prefs.colorScheme}
+                    onColorSchemeChange={(value) => change("colorScheme", value)}
                   />
                   <p className="settings-note">
                     {t(
@@ -323,7 +331,8 @@ export default function App() {
           <IconButton variant="ghost" size="sm" label={collapsed ? t("Expand navigation", "گسترش پیمایش") : t("Collapse navigation", "جمع کردن پیمایش")} aria-expanded={!collapsed} aria-controls="desktop-component-menu" onClick={() => setCollapsed(value => !value)}><AnimatedIcon name={collapsed ? "chevron-right" : "chevron-left"} /></IconButton>
           </div>
           <div id="desktop-component-menu" hidden={collapsed}><LayoutGroup id="catalogue-desktop">{nav}</LayoutGroup></div>
-          {collapsed && <NavigationRail className="collapsed-navigation" label={t("Component families", "گروه‌های کامپوننت‌ها")} value={entry.family} size="sm"
+          {collapsed && <Link href="#/colors" className="palette-collapsed-link" aria-label={t("Color system", "سیستم رنگ")}><AnimatedIcon name="palette" size={22} /></Link>}
+          {collapsed && <NavigationRail className="collapsed-navigation" label={t("Component families", "گروه‌های کامپوننت‌ها")} value={colorsPage ? "" : entry.family} size="sm"
             items={families.map((group, index) => ({ value: group.id, href: `#/components/${catalogue.find(component => component.family === group.id)!.id}`, className: "collapsed-link",
               label: <Tooltip side={fa ? "left" : "right"} content={text(group.label, locale)}><span><AnimatedIcon name={(["touch_app", "edit_note", "tab", "dashboard", "notifications", "layers", "category"] as const)[index]} /><span className="mf-visually-hidden">{text(group.label, locale)}</span></span></Tooltip>,
             }))} />}
@@ -350,10 +359,11 @@ export default function App() {
               <span>MaterialFluid</span>
             </div>
               <Breadcrumbs className="topbar-trail" label={t("Component location", "مسیر کامپوننت")}
-                items={[{label: t("Components", "کامپوننت‌ها"), href: "#/components/button"}, {label: text(family.label, locale), href: `#/components/${catalogue.find(component => component.family === family.id)!.id}`}]} />
+                items={colorsPage ? [{ label: t("Color system", "سیستم رنگ") }] : [{label: t("Components", "کامپوننت‌ها"), href: "#/components/button"}, {label: text(family.label, locale), href: `#/components/${catalogue.find(component => component.family === family.id)!.id}`}]} />
             </>}
             actions={compactActions ? <Popover label={t("Quick settings", "تنظیمات سریع")} className="topbar-overflow" trigger={<IconButton variant="ghost" label={t("More options", "گزینه‌های بیشتر")}><AnimatedIcon name="more_vert" /></IconButton>}>{headerActions}</Popover> : headerActions} />
           <main className="showcase-frame" id="main-content">
+            {colorsPage ? <ColorPage seed={prefs.accentSeed} onSeedChange={seed => change("accentSeed", seed)} onSchemeChange={scheme => change("colorScheme", scheme)} heading={heading} /> : <>
             <div className="component-intro">
               <div>
                 <h1 ref={heading} tabIndex={-1}>
@@ -375,9 +385,10 @@ export default function App() {
             >
               <div className="live-stage">
                 <div className="component-appearance-controls">
-                  <Select id="component-size" label={t("Size", "اندازه")} size="sm" value={size}
+                  <Select id="component-size" labelPosition="start" label={t("Size", "اندازه")} size="sm" value={size}
                     onValueChange={value => setSize(value as ComponentSize)}
                     options={[{ value: "sm", label: t("Small", "کوچک") }, { value: "md", label: t("Medium", "متوسط") }, { value: "lg", label: t("Large", "بزرگ") }]} />
+                  {entry.family === "forms" && <Select id="component-label-position" labelPosition="start" size="sm" label={t("Label", "برچسب")} value={labelPosition} onValueChange={value => setLabelPosition(value as LabelPosition)} options={[{value:"top",label:t("Top", "بالا")},{value:"start",label:t("Start", "ابتدا")}]} />}
                 </div>
                 <DemoBoundary key={entry.id} fa={fa}>
                 <Suspense
@@ -391,7 +402,7 @@ export default function App() {
                   }
                 >
                   {entry.id === "button" || entry.family === "icons" || entry.family === "forms" || entry.family === "navigation" || entry.family === "surfaces" || entry.family === "feedback" || entry.family === "overlays" || fixedControls.includes(entry.id) ? (
-                    <ComponentAppearanceProvider variant={entry.family === "forms" ? "outline" : "primary"} size={size}>
+                    <ComponentAppearanceProvider variant={entry.family === "forms" ? "outline" : "filled"} size={size} labelPosition={labelPosition}>
                       <Demo
                         key={entry.id + JSON.stringify(states) + locale}
                         id={entry.id}
@@ -405,11 +416,11 @@ export default function App() {
                     <div className={`component-variant-examples${entry.id === "icon-button" ? " compact-icon-examples" : ""}`}>
                       {componentVariants.map((value) => {
                         const label = fa
-                          ? { primary: "اصلی", secondary: "ثانویه", tertiary: "سوم", outline: "خطی", ghost: "شفاف", danger: "خطر" }[value]
+                          ? { filled: "پر", tonal: "تونال", outlined: "خطی", ghost: "شفاف", danger: "خطر" }[value]
                           : value[0].toUpperCase() + value.slice(1);
                         return (
                           <section className="component-variant-example" key={value} aria-label={label}>
-                            <ComponentAppearanceProvider variant={value} size={size}>
+                            <ComponentAppearanceProvider variant={value} size={size} labelPosition={labelPosition}>
                               <Demo
                                 key={entry.id + value + JSON.stringify(states) + locale}
                                 id={entry.id}
@@ -510,7 +521,7 @@ export default function App() {
                 tabIndex={0}
                 aria-label={t("Usage example code", "کد نمونه استفاده")}
               >
-                <code>{usageFor(entry, { variant, size })}</code>
+                <code>{usageFor(entry, { variant, size, labelPosition })}</code>
               </pre>
               <div className="copy-status" role="status">
                 {copyError
@@ -597,6 +608,7 @@ export default function App() {
                 </Link>
               )}
             </footer>
+            </>}
           </main>
           <div className="workspace-footer">
             <span>MaterialFluid</span>

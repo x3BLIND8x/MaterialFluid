@@ -10,6 +10,7 @@ import {
   MultiSelect,
   OTPInput,
   FileInput,
+  type FileUploadOptions,
   FormField,
 } from "../../kit/forms";
 import {
@@ -21,6 +22,19 @@ import {
 } from "../../kit/dates";
 import { ToggleGroup, Button } from "../../kit/controls";
 import { type DemoProps, translate } from "./shared";
+function simulateUpload(_file: File, { signal, onProgress }: FileUploadOptions) {
+  return new Promise<void>((resolve, reject) => {
+    let progress = 0;
+    const abort = () => { clearInterval(timer); reject(new DOMException("Cancelled", "AbortError")); };
+    const timer = setInterval(() => {
+      progress += 8;
+      onProgress(Math.min(100, progress));
+      if (progress >= 100) { clearInterval(timer); signal.removeEventListener("abort", abort); resolve(); }
+    }, 180);
+    signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) abort();
+  });
+}
 export default function FormsDemo({ id, states, locale }: DemoProps) {
   const t = translate(locale);
   const [calendar, setCalendar] = useState<CalendarSystem>(
@@ -181,8 +195,8 @@ export default function FormsDemo({ id, states, locale }: DemoProps) {
       break;
     case "file-input":
       demo = <div className="demo-fields">
-        <FileInput {...fieldProps} label={t("Attachment", "پیوست")} accept=".pdf,.png,.jpg" hint={t("Choose or drop a PDF or image.", "یک PDF یا تصویر انتخاب کنید یا بکشید.")} />
-        <FileInput {...fieldProps} multiple label={t("Project files", "فایل‌های پروژه")} accept=".pdf,.png,.jpg" hint={t("Choose multiple files or drop them here.", "چند فایل انتخاب کنید یا اینجا رها کنید.")} />
+        <FileInput {...fieldProps} onUpload={simulateUpload} label={t("Attachment", "پیوست")} accept=".pdf,.png,.jpg" hint={t("Demo uploads are simulated.", "بارگذاری در این نمایش شبیه‌سازی می‌شود.")} />
+        <FileInput {...fieldProps} onUpload={simulateUpload} multiple maxFiles={5} label={t("Project files", "فایل‌های پروژه")} accept=".pdf,.png,.jpg" hint={t("Demo uploads are simulated.", "بارگذاری در این نمایش شبیه‌سازی می‌شود.")} />
       </div>;
       break;
     case "form-field":

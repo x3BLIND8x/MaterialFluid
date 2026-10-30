@@ -128,7 +128,7 @@ function ToggleHeartIcon({
     return () => animation.stop();
   }, [active, duration, easeStrength, reducedMotion, selectedFill]);
   return (
-    <span className="toggle-heart-icon" aria-hidden="true" style={{ color: "inherit" }}>
+    <span className="mf-action-icon" aria-hidden="true" style={{ color: "inherit" }}>
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d={favoriteOutlinePath} />
         <defs>
@@ -246,10 +246,9 @@ export default function ControlsDemo({
               const label =
                 locale === "fa"
                   ? {
-                      primary: "اصلی",
-                      secondary: "ثانویه",
-                      tertiary: "سوم",
-                      outline: "خطی",
+                      filled: "پر",
+                      tonal: "تونال",
+                      outlined: "خطی",
                       ghost: "شفاف",
                       danger: "خطر",
                     }[variant]
@@ -270,6 +269,9 @@ export default function ControlsDemo({
     case "icon-button":
       {
         const { name, label } = {
+          filled: { name: "bell", label: t("Notifications", "اعلان‌ها") },
+          tonal: { name: "heart", label: t("Favorite", "علاقه‌مندی") },
+          outlined: { name: "edit", label: t("Edit", "ویرایش") },
           primary: { name: "bell", label: t("Notifications", "اعلان‌ها") },
           secondary: { name: "heart", label: t("Favorite", "علاقه‌مندی") },
           tertiary: { name: "settings", label: t("Settings", "تنظیمات") },
@@ -279,8 +281,8 @@ export default function ControlsDemo({
         }[variant];
         demo = (
           <div className="demo-row">
-            <IconButton label={label} disabled={states.disabled}>
-              <AnimatedIcon name={name as IconName} size={26} />
+            <IconButton label={label} disabled={states.disabled} loading={states.loading}>
+              <AnimatedIcon name={name as IconName} />
             </IconButton>
           </div>
         );
@@ -392,7 +394,7 @@ export default function ControlsDemo({
               disabled={states.disabled}
               pressed={iconToggleSelected}
               onPressedChange={setIconToggleSelected}
-              className="toggle-icon-only"
+              iconOnly
             >
               <ToggleHeartIcon
                 active={iconToggleSelected}
