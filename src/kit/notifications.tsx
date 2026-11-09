@@ -1,3 +1,5 @@
+import { motionTransition } from "./bounded-motion";
+import { savedMotionPresets } from "./motion-presets";
 import { fitNotificationCount, notificationBudget } from "./notification-layout";
 import { motion } from "motion/react";
 import { createContext, useContext, useState, useCallback, useLayoutEffect, useEffect, useId, useMemo, useRef, type ReactNode, type Ref } from "react";
@@ -89,7 +91,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const store = useMemo(() => ({ notifications, notify, publish, update, dismiss, close, clear, markAllRead, markRead, activateCenter, deactivateCenter }), [notifications, notify, publish, update, dismiss, close, clear, markAllRead, markRead, activateCenter, deactivateCenter]);
   const { locale, dir, motion: mode, reducedMotion } = useMaterialFluid();
   const [centerOpen, setCenterOpen] = useState(false);
-  const active = centerCount ? [] : notifications.filter(item => item.open);
+  const active = centerCount ? [] : [...notifications].reverse().filter(item => item.open);
   const [budget, setBudget] = useState(() => notificationBudget(typeof window === "undefined" ? 800 : window.innerHeight));
   const [heights, setHeights] = useState<Record<string, number>>({});
   const nodes = useRef(new Map<string, HTMLLIElement>());
@@ -105,7 +107,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     const measure = () => {
       const next: Record<string, number> = {};
-      nodes.current.forEach((node, id) => { const height = node.getBoundingClientRect().height; if (height) next[id] = height; });
+      nodes.current.forEach((node, id) => { const height = node.offsetHeight; if (height) next[id] = height; });
       setHeights(current => Object.entries(next).some(([id, height]) => Math.abs((current[id] ?? 0) - height) > .5) ? { ...current, ...next } : current);
     };
     measure();
@@ -118,7 +120,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     <ToastPrimitive.Provider label={fa ? "اعلان" : "Notification"} swipeDirection={dir === "rtl" ? "left" : "right"}>
       {children}
       <Portal>
-        {visible.map(item => <ToastPrimitive.Root key={item.id} ref={element => { if (element) nodes.current.set(item.id, element); else nodes.current.delete(item.id); setRef(item.rootRef, element); }} open duration={item.duration ?? 5000} onOpenChange={open => { if (!open) dismiss(item.id); }} style={{ maxHeight: Math.max(100, budget - (overflow ? 44 : 0)) }} className={cx("mf-toast mf-variant--outline", item.size && `mf-scale--${item.size}`, item.className)} asChild><motion.li layout={mode === "expressive" && !reducedMotion ? "position" : false} initial={false} transition={{ type: "spring", stiffness: 420, damping: 34 }}>
+        {visible.map(item => <ToastPrimitive.Root key={item.id} ref={element => { if (element) nodes.current.set(item.id, element); else nodes.current.delete(item.id); setRef(item.rootRef, element); }} open duration={item.duration ?? 5000} onOpenChange={open => { if (!open) dismiss(item.id); }} style={{ maxHeight: Math.max(100, budget - (overflow ? 44 : 0)) }} className={cx("mf-toast mf-variant--outline", item.size && `mf-scale--${item.size}`, item.className)} asChild><motion.li layout={mode === "expressive" && !reducedMotion ? "position" : false} initial={mode === "expressive" && !reducedMotion ? {x:savedMotionPresets.toast.values.x,y:savedMotionPresets.toast.values.y,scale:savedMotionPresets.toast.values.scale,rotate:savedMotionPresets.toast.values.rotate,opacity:savedMotionPresets.toast.values.opacity,filter:`blur(${savedMotionPresets.toast.values.blur}px)`} : false} animate={{x:0,y:0,scale:1,rotate:0,opacity:1,filter:'blur(0px)'}} transition={mode === "expressive" && !reducedMotion ? {...motionTransition("popup"),opacity:{duration:.15},filter:{duration:.15},delay:savedMotionPresets.toast.values.delay} : {duration:0}}>
           {item.image && <img className="mf-toast-thumbnail" src={item.image.src} alt={item.image.alt} />}
           <div className="mf-notification-content">
             <ToastPrimitive.Title className="mf-toast-title">{item.title}</ToastPrimitive.Title>

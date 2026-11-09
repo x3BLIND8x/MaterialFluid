@@ -1,0 +1,52 @@
+[
+  {
+    "locale": "en",
+    "keyboardExpansion": true,
+    "descriptionNotDuplicated": true,
+    "dimensions": {
+      "width": 312,
+      "scroll": 312,
+      "buttons": [
+        {
+          "width": 265.59600830078125,
+          "parent": 266
+        },
+        {
+          "width": 266,
+          "parent": 266
+        },
+        {
+          "width": 266,
+          "parent": 266
+        }
+      ]
+    },
+    "compactWorks": true,
+    "errors": []
+  },
+  {
+    "locale": "fa",
+    "keyboardExpansion": true,
+    "descriptionNotDuplicated": true,
+    "dimensions": {
+      "width": 312,
+      "scroll": 312,
+      "buttons": [
+        {
+          "width": 265.558837890625,
+          "parent": 266
+        },
+        {
+          "width": 266,
+          "parent": 266
+        },
+        {
+          "width": 266,
+          "parent": 266
+        }
+      ]
+    },
+    "compactWorks": true,
+    "errors": []
+  }
+]

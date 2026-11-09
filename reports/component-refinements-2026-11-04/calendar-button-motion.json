@@ -1,0 +1,26 @@
+[
+  {
+    "locale": "en",
+    "persistentHeader": true,
+    "immediateLabels": true,
+    "dateButtonPressRipple": true,
+    "daySize": {
+      "x": 464,
+      "y": 808.375,
+      "width": 40,
+      "height": 40
+    }
+  },
+  {
+    "locale": "fa",
+    "persistentHeader": true,
+    "immediateLabels": true,
+    "dateButtonPressRipple": true,
+    "daySize": {
+      "x": 248,
+      "y": 808.375,
+      "width": 40,
+      "height": 40
+    }
+  }
+]

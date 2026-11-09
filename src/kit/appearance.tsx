@@ -11,7 +11,7 @@ export const componentVariants = [
 ] as const;
 export const componentSizes = ["sm", "md", "lg"] as const;
 /** Previous color names remain available for existing consumers. */
-export type ComponentVariant = (typeof componentVariants)[number] | "primary" | "secondary" | "tertiary" | "outline" | "danger";
+export type ComponentVariant = (typeof componentVariants)[number] | "emphasize" | "primary" | "secondary" | "tertiary" | "outline" | "danger";
 export type ComponentSize = (typeof componentSizes)[number];
 export type LabelPosition = "top" | "bottom" | "start" | "end" | "none";
 export interface AppearanceProps {
@@ -44,7 +44,7 @@ export function ComponentAppearanceProvider({
 type AppearanceInput = {
   labelPosition?: LabelPosition;
   variant?: ComponentVariant | LegacyVariant;
-  size?: ComponentSize | number;
+  size?: ComponentSize | "xs" | "xl" | number;
   className?: string;
 };
 export function useAppearanceProps<P extends AppearanceInput>(
@@ -62,7 +62,7 @@ export function useAppearanceProps<
   P extends {
     labelPosition?: LabelPosition;
     variant?: ComponentVariant | LegacyVariant;
-    size?: ComponentSize | number;
+    size?: ComponentSize | "xs" | "xl" | number;
     className?: string;
   },
 >(
@@ -76,7 +76,7 @@ export function useAppearanceProps<
   const chosenVariant = variant ?? defaults.variant;
   const normalizedVariant =
     chosenVariant && (aliases[chosenVariant as LegacyVariant] ?? chosenVariant);
-  const existingSize = className?.match(/\bmf-scale--(sm|md|lg)\b/)?.[1] as ComponentSize | undefined;
+  const existingSize = className?.match(/\bmf-scale--(xs|sm|md|lg|xl)\b/)?.[1] as ComponentSize | undefined;
   const chosenSize = size ?? existingSize ?? defaults.size;
   return {
     ...rest,
@@ -86,7 +86,7 @@ export function useAppearanceProps<
       chosenPosition && `mf-label--${chosenPosition}`,
       normalizedVariant && `mf-variant--${normalizedVariant}`,
       typeof chosenSize === "string" && `mf-scale--${chosenSize}`,
-      className?.replace(/\bmf-label--(top|bottom|start|end|none)\b/g, "").replace(/\bmf-scale--(sm|md|lg)\b/g, ""),
+      className?.replace(/\bmf-label--(top|bottom|start|end|none)\b/g, "").replace(/\bmf-scale--(xs|sm|md|lg|xl)\b/g, ""),
     ),
   } as P;
 }

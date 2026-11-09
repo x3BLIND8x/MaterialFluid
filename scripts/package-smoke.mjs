@@ -47,7 +47,7 @@ await writeFile(
 run(["install", "--prefer-offline", "--ignore-scripts", "--no-audit", "--no-fund"], dir);
 await writeFile(
   join(dir, "smoke.mjs"),
-  `import React from 'react';import { renderToStaticMarkup } from 'react-dom/server';import * as kit from 'materialfluid';const html=renderToStaticMarkup(React.createElement(kit.Button,null,'Working'));if(!html.includes('Working'))throw Error('Render failed');const expected=${JSON.stringify(["Button", "IconButton", "FAB", "Toggle", "ToggleGroup", "Checkbox", "RadioGroup", "Switch", "Slider", "TextField", "Textarea", "PasswordField", "NumberField", "SearchField", "Select", "Combobox", "MultiSelect", "OTPInput", "FileInput", "FormField", "Calendar", "DatePicker", "DateRangePicker", "TimePicker", "Tabs", "Breadcrumbs", "Pagination", "TopAppBar", "NavigationRail", "SideNavigation", "Tree", "TableOfContents", "Stepper", "Link", "Card", "CardGroup", "List", "Avatar", "AvatarGroup", "Badge", "Accordion", "Divider", "DataTable", "Alert", "Toast", "Snackbar", "NotificationCenter", "useNotifications", "Progress", "Spinner", "Skeleton", "EmptyState", "Dialog", "AlertDialog", "Drawer", "BottomSheet", "Popover", "Menu", "Tooltip", "AnimatedIcon"])};for(const name of expected)if(!kit[name])throw Error('Missing '+name);console.log(expected.length+' exports and server render passed');`,
+  `import React from 'react';import { renderToStaticMarkup } from 'react-dom/server';import * as kit from 'materialfluid';const html=renderToStaticMarkup(React.createElement(kit.Button,null,'Working'));if(!html.includes('Working'))throw Error('Render failed');const expected=${JSON.stringify(["Foundations", "buttonSizes", "normalizeButtonSize", "SplitButton", "FABMenu", "Chips", "NavigationBar", "NavigationDrawer", "Breadcrumb", "Toolbar", "Carousel", "Sidebar", "CodeBlock", "Shape", "SideSheet", "Table", "Loading", "Button", "IconButton", "FAB", "Toggle", "ToggleGroup", "Checkbox", "RadioGroup", "Switch", "Slider", "TextField", "Textarea", "PasswordField", "NumberField", "SearchField", "Select", "Combobox", "MultiSelect", "OTPInput", "FileInput", "FormField", "Calendar", "DatePicker", "DateRangePicker", "TimePicker", "Tabs", "Breadcrumbs", "Pagination", "TopAppBar", "NavigationRail", "SideNavigation", "Tree", "TableOfContents", "Stepper", "Link", "Card", "CardGroup", "List", "Avatar", "AvatarGroup", "Badge", "Accordion", "Divider", "DataTable", "Alert", "Toast", "Snackbar", "NotificationCenter", "useNotifications", "Progress", "Spinner", "Skeleton", "EmptyState", "Dialog", "AlertDialog", "Drawer", "BottomSheet", "Popover", "Menu", "Tooltip", "AnimatedIcon"])};for(const name of expected)if(!kit[name])throw Error('Missing '+name);console.log(expected.length+' exports and server render passed');`,
 );
 const result = spawnSync(process.execPath, ["smoke.mjs"], {
   cwd: dir,
@@ -55,6 +55,13 @@ const result = spawnSync(process.execPath, ["smoke.mjs"], {
 });
 if (result.status !== 0) throw Error(result.stderr);
 console.log(result.stdout.trim());
+const foundationSmoke = spawnSync(process.execPath, ["--input-type=module", "-e", "const {Foundations:f}=await import('materialfluid'); const tokens=f.createFoundationTheme({colorPreset:'neutral'}); if(tokens['--mf-corner-md']!=='24px'||tokens['--mf-depth-shadow']!=='none'||f.shapeNames.length!==35||f.foundationMotion.press.mass!==1.5)throw Error('Owner foundation mismatch'); console.log('Foundation namespace, owner tokens and 35 shapes passed');"], {cwd:dir,encoding:"utf8"});
+if(foundationSmoke.status!==0)throw Error(foundationSmoke.stderr);
+console.log(foundationSmoke.stdout.trim());
+const elementsSmoke = spawnSync(process.execPath, ["--input-type=module", "-e", "const api = await import('materialfluid/elements'); if (typeof api.defineMaterialFluidButton !== 'function' || typeof api.MaterialFluidButtonElement !== 'function') throw Error('Missing Web Component entry'); console.log('Optional Web Component entry imports safely on the server');"], { cwd: dir, encoding: "utf8" });
+if (elementsSmoke.status !== 0) throw Error(elementsSmoke.stderr);
+console.log(elementsSmoke.stdout.trim());
+
 await writeFile(
   join(dir, "icons-smoke.mjs"),
   `

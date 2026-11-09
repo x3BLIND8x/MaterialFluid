@@ -1,4 +1,6 @@
-import { createMiscColorTokens } from "./misc-colors";
+import { createFoundationTheme } from "./foundations/theme";
+import { MotionPreviewContext } from "./internal-motion";
+import { normalizeNeutralColors, neutralColorDefaults, type NeutralColorSettings, type ColorPreset } from './theme-neutral';
 import { useSizeMotion } from "./size-motion";
 import { NotificationProvider } from "./notifications";
 import {
@@ -14,13 +16,11 @@ import {
 } from "react";
 import { setRef } from "./utils";
 import { RoundedSelection } from "./rounded-selection";
-import { createTheme as createPreviousTheme } from "./theme-previous";
 
 // Retain the custom selection implementation for optional future use.
 const roundedSelectionEnabled = false;
 import { MotionConfig } from "motion/react";
 import {
-  createTheme,
   motionTokens,
   colorBehaviorDefaults,
   normalizeColorBehavior,
@@ -44,13 +44,13 @@ export interface ButtonMotionSettings {
   rippleReleaseSpeed: number;
 }
 export const buttonMotionDefaults: ButtonMotionSettings = {
-  colorDuration: 550,
-  sizeDamping: 40,
-  pressDepth: 6,
-  stiffness: 460,
-  damping: 12,
-  mass: 1,
-  radiusDepthRatio: 5,
+  colorDuration: 330,
+  sizeDamping: 30,
+  pressDepth: 8,
+  stiffness: 700,
+  damping: 20,
+  mass: 1.5,
+  radiusDepthRatio: 4,
   rippleDuration: 550,
   rippleOpacity: 20,
   rippleFastStart: 85,
@@ -66,9 +66,12 @@ export interface MaterialFluidSettings {
   locale: Locale;
   dir: "ltr" | "rtl";
   theme: ThemeMode;
+  resolvedTheme: "light" | "dark";
   accentSeed: string;
   colorBehavior: ColorBehavior;
   colorDesign: "material" | "previous";
+  colorPreset: ColorPreset;
+  neutralColors: NeutralColorSettings;
   colorScheme: ColorScheme;
   motion: MotionMode;
   reducedMotion: boolean;
@@ -80,9 +83,12 @@ const defaults: MaterialFluidSettings = {
   locale: "en",
   dir: "ltr",
   theme: "system",
+  resolvedTheme: "light",
   accentSeed: "#eedd96",
   colorBehavior: colorBehaviorDefaults,
   colorDesign: "material",
+  colorPreset: "standard",
+  neutralColors: neutralColorDefaults,
   colorScheme: "tonalSpot",
   motion: "expressive",
   reducedMotion: false,
@@ -98,10 +104,10 @@ export interface MaterialFluidProviderProps extends HTMLAttributes<HTMLDivElemen
   accentSeed?: string;
   colorBehavior?: Partial<ColorBehavior>;
   colorDesign?: "material" | "previous";
+  colorPreset?: ColorPreset;
+  neutralColors?: Partial<NeutralColorSettings>;
   colorScheme?: ColorScheme;
   motion?: MotionMode;
-  buttonMotion?: Partial<ButtonMotionSettings>;
-  textMorph?: Partial<TextMorphSettings>;
 }
 export const MaterialFluidProvider = forwardRef<
   HTMLDivElement,
@@ -114,10 +120,10 @@ export const MaterialFluidProvider = forwardRef<
     accentSeed = "#eedd96",
     colorBehavior,
     colorDesign = "material",
+    colorPreset = "standard",
+    neutralColors,
     colorScheme = "tonalSpot",
     motion = "expressive",
-    buttonMotion,
-    textMorph,
     className = "",
     style,
     children,
@@ -125,6 +131,7 @@ export const MaterialFluidProvider = forwardRef<
   },
   ref,
 ) {
+  const { buttonMotion, textMorph } = useContext(MotionPreviewContext);
   const [systemDark, setSystemDark] = useState(
     () =>
       typeof matchMedia !== "undefined" &&
@@ -164,6 +171,7 @@ export const MaterialFluidProvider = forwardRef<
     () => normalizeColorBehavior(colorBehavior),
     [colorBehavior],
   );
+  const effectiveNeutralColors = useMemo(() => normalizeNeutralColors(neutralColors), [neutralColors]);
   const effectiveButtonMotion = useMemo(
     () => ({ ...buttonMotionDefaults, ...buttonMotion }),
     [buttonMotion],
@@ -179,19 +187,20 @@ export const MaterialFluidProvider = forwardRef<
     mass: effectiveButtonMotion.mass,
   });
   const tokens = useMemo(
-    () => ({ ...(colorDesign === "previous"
-      ? createPreviousTheme(accentSeed, dark, effectiveColors)
-      : createTheme(accentSeed, dark, effectiveColors, colorScheme)), ...createMiscColorTokens(dark) }),
-    [accentSeed, dark, effectiveColors, colorDesign, colorScheme],
+    () => createFoundationTheme({ seed: accentSeed, dark, colorBehavior: effectiveColors, colorDesign, colorPreset, neutralColors: effectiveNeutralColors, colorScheme }),
+    [accentSeed, dark, effectiveColors, colorDesign, colorScheme, colorPreset, effectiveNeutralColors],
   );
   const value = useMemo(
     () => ({
       locale,
       dir,
       theme,
+      resolvedTheme: dark ? "dark" as const : "light" as const,
       accentSeed,
       colorBehavior: effectiveColors,
       colorDesign,
+      colorPreset,
+      neutralColors: effectiveNeutralColors,
       colorScheme,
       motion,
       reducedMotion: reduced,
@@ -203,9 +212,12 @@ export const MaterialFluidProvider = forwardRef<
       locale,
       dir,
       theme,
+      dark,
       accentSeed,
       effectiveColors,
       colorDesign,
+      colorPreset,
+      effectiveNeutralColors,
       colorScheme,
       motion,
       reduced,
@@ -227,11 +239,14 @@ export const MaterialFluidProvider = forwardRef<
         <div
           {...props}
           ref={providerRef}
+          onPointerDownCapture={event => { event.currentTarget.dataset.inputModality = "pointer"; props.onPointerDownCapture?.(event); }}
+          onKeyDownCapture={event => { if (!event.altKey && !event.ctrlKey && !event.metaKey) event.currentTarget.dataset.inputModality = "keyboard"; props.onKeyDownCapture?.(event); }}
           className={`mf-root ${className}`}
           lang={locale}
           dir={dir}
           data-theme={dark ? "dark" : "light"}
           data-color-design={colorDesign}
+          data-color-preset={colorDesign === "previous" ? "standard" : colorPreset}
           data-motion={reduced ? "reduced" : motion}
           style={{ ...tokens, ...style } as CSSProperties}
         >

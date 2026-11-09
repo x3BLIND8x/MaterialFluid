@@ -1,28 +1,42 @@
 import { selectSize } from "./helpers";
+import { readFileSync } from "node:fs";
+import type { ButtonMotionSettings } from "../../src/kit/provider";
+// Read the shared numeric defaults without importing browser-only color dependencies into Node.
+const defaultsSource = readFileSync(new URL("../../src/kit/provider.tsx", import.meta.url), "utf8")
+  .match(/export const buttonMotionDefaults[^=]*= \{([\s\S]*?)\};/)![1];
+const buttonMotionDefaults = Object.fromEntries(
+  [...defaultsSource.matchAll(/(\w+):\s*([\d.]+)/g)].map(([, name, value]) => [name, Number(value)]),
+) as unknown as ButtonMotionSettings;
+const defaultScale = 1 - buttonMotionDefaults.pressDepth / 100;
+const defaultRadiusReduction = buttonMotionDefaults.pressDepth / 100 * buttonMotionDefaults.radiusDepthRatio;
 import { test, expect } from "@playwright/test";
 
 test("rapid taps restart the press feedback on every click", async ({ page }) => {
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", { name: "Filled", exact: true });
+  const button = page.locator(".live-stage").getByRole("button", { name: "Filled", exact: true });
   await button.hover();
-  const samplesPromise = button.evaluate(async element => {
-    const samples: { time: number; scale: number }[] = [];
-    const until = performance.now() + 650;
-    while (performance.now() < until) {
-      samples.push({ time: performance.now(), scale: new DOMMatrixReadOnly(getComputedStyle(element).transform).a });
-      await new Promise(requestAnimationFrame);
-    }
-    return samples;
+  await button.evaluate(element => {
+    const tracked = element as HTMLButtonElement & { pressTrace: { samples: { time: number; scale: number }[]; starts: number[]; stop: boolean } };
+    const trace: typeof tracked.pressTrace = tracked.pressTrace = { samples: [], starts: [], stop: false };
+    element.addEventListener('pointerdown', () => trace.starts.push(performance.now()));
+    const record = () => {
+      trace.samples.push({ time: performance.now(), scale: new DOMMatrixReadOnly(getComputedStyle(element).transform).a });
+      if (!trace.stop) requestAnimationFrame(record);
+    };
+    requestAnimationFrame(record);
   });
-  const starts: number[] = [];
   for (let i = 0; i < 3; i++) {
-    starts.push(await page.evaluate(() => performance.now()));
     await page.mouse.down();
     await page.waitForTimeout(10);
     await page.mouse.up();
     if (i < 2) await page.waitForTimeout(45);
   }
-  const samples = await samplesPromise;
+  await page.waitForTimeout(150);
+  const { samples, starts } = await button.evaluate(element => {
+    const trace = (element as HTMLButtonElement & { pressTrace: { samples: { time: number; scale: number }[]; starts: number[]; stop: boolean } }).pressTrace;
+    trace.stop = true;
+    return trace;
+  });
   for (const start of starts.slice(1)) {
     const after = samples.filter(sample => sample.time >= start + 10 && sample.time <= start + 100);
     expect(Math.max(...after.map(sample => sample.scale))).toBeGreaterThan(.975);
@@ -66,16 +80,29 @@ test("toggle pill and checkbox also restart on repeated quick clicks", async ({ 
 });
 
 test("resize springs real dimensions and surrounding layout", async ({page}) => {
+  // Keep both the preview and its configuration in view while sampling motion.
+  await page.setViewportSize({ width: 1440, height: 1200 });
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", {name:"Filled",exact:true});
+  const button = page.locator(".live-stage").getByRole("button", { name: "Filled",exact:true});
   await expect(button).toHaveAttribute("data-mf-sized", "true");
   await page.evaluate(() => document.fonts.ready);
   const samplesPromise = button.evaluate(async element => {
-    const samples = [];
+    const read = () => {
+      const rect = element.getBoundingClientRect();
+      return { height: rect.height, center: rect.x + rect.width / 2, container: element.closest(".demo-stack")!.getBoundingClientRect().height };
+    };
+    const samples = [read()];
+    // The configuration panel can require scrolling/opening a menu. Start the
+    // recording at the actual size mutation so those UI steps cannot exhaust it.
+    await new Promise<void>(resolve => {
+      const observer = new MutationObserver(() => {
+        if (element.classList.contains("mf-scale--sm")) { observer.disconnect(); resolve(); }
+      });
+      observer.observe(element, { attributes: true, attributeFilter: ["class"] });
+    });
     const start = performance.now();
     while (performance.now()-start < 1200) {
-      const rect = element.getBoundingClientRect();
-      samples.push({height:rect.height, center:rect.x+rect.width/2, container:element.closest(".demo-stack")!.getBoundingClientRect().height});
+      samples.push(read());
       await new Promise(requestAnimationFrame);
     }
     return samples;
@@ -84,13 +111,17 @@ test("resize springs real dimensions and surrounding layout", async ({page}) => 
   const samples = await samplesPromise;
   expect(new Set(samples.map(s => s.height.toFixed(2))).size).toBeGreaterThan(5);
   expect(new Set(samples.map(s => s.container.toFixed(2))).size).toBeGreaterThan(5);
-  expect(Math.min(...samples.map(s=>s.height))).toBeGreaterThanOrEqual(27.9);
+  const dampingRatio = buttonMotionDefaults.sizeDamping / (2 * Math.sqrt(buttonMotionDefaults.stiffness * buttonMotionDefaults.mass));
+  const overshoot = dampingRatio < 1 ? Math.exp(-Math.PI * dampingRatio / Math.sqrt(1 - dampingRatio ** 2)) : 0;
+  // The authored size spring is underdamped; bound its physical overshoot rather than requiring none.
+  const expectedFloor = 28 - (samples[0].height - 28) * overshoot;
+  expect(Math.min(...samples.map(s=>s.height))).toBeGreaterThanOrEqual(expectedFloor - .5);
   await expect.poll(async () => (await button.boundingBox())!.height).toBeCloseTo(28, 1);
 });
 
 test("hover fades in both modes without replaying the center color reveal", async ({page}) => {
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", {name:"Filled",exact:true});
+  const button = page.locator(".live-stage").getByRole("button", { name: "Filled",exact:true});
   await button.hover();
   await expect(button).toHaveCSS("transition-property", "background-color, color, border-color");
   await expect(button.locator(".mf-button-color-reveal")).toHaveCount(0);
@@ -104,8 +135,7 @@ test("button spring timing stays symmetric and preserves corners on long holds",
   page,
 }) => {
   await page.goto("/#/components/button");
-  const button = page.getByRole("button", {
-    name: "Filled",
+  const button = page.locator(".live-stage").getByRole("button", { name: "Filled",
     exact: true,
   });
   const measure = () =>
@@ -154,7 +184,7 @@ test("button spring timing stays symmetric and preserves corners on long holds",
     expect(sample.skewY).toBe(0);
     const expectedRadius = Math.max(
       6,
-      parseFloat(initial.radius) * Math.min(1, 1 - (1 - sample.x) * 5),
+      parseFloat(initial.radius) * Math.min(1, 1 - (1 - sample.x) * buttonMotionDefaults.radiusDepthRatio),
     );
     expect(sample.radius).toBeCloseTo(expectedRadius, 1);
   }
@@ -162,14 +192,14 @@ test("button spring timing stays symmetric and preserves corners on long holds",
   expect(Math.min(...samples.map((sample) => sample.x))).toBeLessThan(0.948);
   await expect
     .poll(async () => (await measure()).width)
-    .toBeCloseTo(initial.width * 0.94, 0);
+    .toBeCloseTo(initial.width * defaultScale, 0);
   // Keep holding beyond the spring settling time: the old radius override persisted here.
   await page.waitForTimeout(1800);
   const held = await measure();
   await expect(button.locator(".mf-button-ripple")).toHaveCSS("opacity", "0.2");
-  expect(held.height).toBeCloseTo(initial.height * 0.94, 0);
+  expect(held.height).toBeCloseTo(initial.height * defaultScale, 0);
   expect(parseFloat(held.radius)).toBeCloseTo(
-    parseFloat(initial.radius) * 0.7,
+    parseFloat(initial.radius) * (1 - defaultRadiusReduction),
     1,
   );
   await button.screenshot({
@@ -186,8 +216,8 @@ test("button spring timing stays symmetric and preserves corners on long holds",
   await page.keyboard.down("Enter");
   await expect
     .poll(async () => (await measure()).width)
-    .toBeCloseTo(initial.width * 0.94, 0);
-  await expect.poll(async () => (await measure()).height).toBeCloseTo(initial.height * 0.94, 0);
+    .toBeCloseTo(initial.width * defaultScale, 0);
+  await expect.poll(async () => (await measure()).height).toBeCloseTo(initial.height * defaultScale, 0);
   await page.keyboard.up("Enter");
   await expect
     .poll(async () => (await measure()).width)
@@ -210,7 +240,7 @@ test("button spring timing stays symmetric and preserves corners on long holds",
         0.2,
     );
   expect(parseFloat((await measure()).radius)).toBeCloseTo(
-    parseFloat(initial.radius) * (1 - 0.3 * rippleProgress),
+    parseFloat(initial.radius) * (1 - defaultRadiusReduction * rippleProgress),
     0,
   );
   await expect(button.locator(".mf-button-ripple")).toHaveCSS("opacity", "0.2");
@@ -232,69 +262,20 @@ test("button spring timing stays symmetric and preserves corners on long holds",
   await page.mouse.up();
 });
 
-test("temporary tuning updates the actual button and reset restores defaults", async ({
-  page,
-}) => {
-  await page.goto("/#/components/button");
-  await page.getByRole("button", {name:"Advanced", exact:true}).click();
-  await expect(
-    page
-      .locator(".demo-button-tuning")
-      .getByRole("slider", { name: "Ripple release speed (×)", exact: true }),
-  ).toHaveAttribute("aria-valuenow", "2");
-  const depth = page.getByRole("slider", {
-    name: "Press depth (%)",
-    exact: true,
-  });
-  await depth.focus();
-  await page.keyboard.press("End");
-  await expect(depth).toHaveAttribute("aria-valuenow", "20");
-  const button = page.getByRole("button", {
-    name: "Filled",
-    exact: true,
-  });
-  const initial = (await button.boundingBox())!;
-  await button.hover();
-  await page.mouse.down();
-  await expect
-    .poll(async () => (await button.boundingBox())!.width)
-    .toBeCloseTo(initial.width * 0.8, 0);
-  await page.mouse.up();
-  await page.getByRole("button", { name: "Reset tuning", exact: true }).click();
-  await expect(depth).toHaveAttribute("aria-valuenow", "6");
-  await page.screenshot({
-    path: ".impeccable/review/button-tuning-desktop.png",
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "More options" }).click();
-  await page.getByRole("button", { name: "Switch to Persian" }).click();
-  await page.keyboard.press("Escape");
-  await page.screenshot({
-    path: ".impeccable/review/button-tuning-mobile-fa.png",
-    fullPage: true,
-  });
+test("component pages keep the authored defaults without Advanced controls", async ({page}) => {
+  for (const route of ["button", "fab", "toggle", "animated-icon"]) {
+    await page.goto(`/#/components/${route}`);
+    await expect(page.locator(".showcase-canvas")).toBeVisible();
+    await expect(page.locator(".advanced-tuning")).toHaveCount(0);
+    await expect(page.getByRole("button", {name:"Advanced",exact:true})).toHaveCount(0);
+  }
 });
 
 test("quick release finishes the ripple before fading it out", async ({
   page,
 }) => {
   await page.goto("/#/components/button");
-  await page.getByRole("button", {name:"Advanced", exact:true}).click();
-  const duration = page.getByRole("slider", {
-    name: "Ripple duration (ms)",
-    exact: true,
-  });
-  await duration.focus();
-  await page.keyboard.press("End");
-  const ease = page.getByRole("slider", {
-    name: "Ripple fast-start strength (%)",
-    exact: true,
-  });
-  await expect(ease).toHaveAttribute("aria-valuenow", "85");
-  await ease.focus();
-  await page.keyboard.press("Home");
-  const button = page.getByRole("button", {
-    name: "Filled",
+  const button = page.locator(".live-stage").getByRole("button", { name: "Filled",
     exact: true,
   });
   await button.hover();
@@ -303,12 +284,18 @@ test("quick release finishes the ripple before fading it out", async ({
   const ripple = button.locator(".mf-button-ripple");
   const scale = () =>
     ripple.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
-  const atRelease = await scale();
+  expect(await scale()).toBeGreaterThan(0);
+  const finish = ripple.evaluate(async el => {
+    const samples: {scale:number;opacity:number}[]=[];
+    while (el.isConnected) {
+      samples.push({scale:new DOMMatrix(getComputedStyle(el).transform).a,opacity:Number(getComputedStyle(el).opacity)});
+      await new Promise(requestAnimationFrame);
+    }
+    return samples;
+  });
   await page.mouse.up();
-  await page.waitForTimeout(180);
-  await expect(ripple).toHaveCSS("opacity", "0.2");
-  expect(await scale()).toBeGreaterThan(atRelease);
-  await expect.poll(scale).toBeGreaterThan(0.99);
+  const frames=await finish;
+  expect(frames.some(frame=>frame.scale>=.99 && frame.opacity>=.19)).toBe(true);
   await expect(ripple).toHaveCount(0);
 });
 
@@ -317,8 +304,7 @@ test("minimal rapid clicks preserve the existing radius progress", async ({
 }) => {
   await page.goto("/#/components/button");
   await page.getByRole("button", { name: "Fluid", exact: true }).click();
-  const button = page.getByRole("button", {
-    name: "Filled",
+  const button = page.locator(".live-stage").getByRole("button", { name: "Filled",
     exact: true,
   });
   const radius = () =>
@@ -362,8 +348,7 @@ for (const minimal of [false, true]) {
     await page.goto("/#/components/button");
     if (minimal)
       await page.getByRole("button", { name: "Fluid", exact: true }).click();
-    const button = page.getByRole("button", {
-      name: "Filled",
+    const button = page.locator(".live-stage").getByRole("button", { name: "Filled",
       exact: true,
     });
     await button.evaluate((el) => {
@@ -392,14 +377,7 @@ for (const minimal of [false, true]) {
       await expect(button).toHaveAttribute("data-activations", String(++count));
       await expect(button.locator(".mf-button-ripple")).toHaveCount(0);
     }
-    await page.getByRole("button", {name:"Advanced", exact:true}).click();
-    const depth = page.getByRole("slider", {
-      name: "Press depth (%)",
-      exact: true,
-    });
-    await depth.focus();
-    await page.keyboard.press("ArrowRight");
-    await expect(depth).toHaveAttribute("aria-valuenow", "7");
+
   });
 }
 
@@ -413,8 +391,7 @@ test.describe("touch press", () => {
     page,
   }) => {
     await page.goto("/#/components/button");
-    const button = page.getByRole("button", {
-      name: "Filled",
+    const button = page.locator(".live-stage").getByRole("button", { name: "Filled",
       exact: true,
     });
     await button.scrollIntoViewIfNeeded();
@@ -428,8 +405,8 @@ test.describe("touch press", () => {
     });
     await expect
       .poll(async () => (await button.boundingBox())!.width)
-      .toBeCloseTo(initial.width * 0.94, 0);
-    await expect.poll(async () => (await button.boundingBox())!.height).toBeCloseTo(initial.height * 0.94, 0);
+      .toBeCloseTo(initial.width * defaultScale, 0);
+    await expect.poll(async () => (await button.boundingBox())!.height).toBeCloseTo(initial.height * defaultScale, 0);
     await expect
       .poll(async () =>
         parseFloat(

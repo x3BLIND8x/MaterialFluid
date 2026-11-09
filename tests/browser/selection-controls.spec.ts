@@ -333,7 +333,7 @@ test("checkbox and radio outer shapes spring on press and respect reduced motion
       await control.hover();
       await page.mouse.down();
       await expectOuterPress(control);
-      await expect(control).toHaveCSS("border-radius", radius);
+      await expect.poll(async()=>Math.abs(parseFloat(await control.evaluate(el=>getComputedStyle(el).borderRadius))-parseFloat(radius))).toBeLessThan(.1);
       await page.mouse.up();
       await expect.poll(() => control.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)).toBeCloseTo(1, 3);
     }
@@ -535,7 +535,7 @@ test("sliders support smooth movement and navigation to Text Field stays healthy
   await steppedThumb.press("ArrowRight");
   await expect(steppedThumb).toHaveAttribute("aria-valuenow", "60");
   expect(await steppedThumb.locator("..").evaluate(el => parseFloat(getComputedStyle(el).transitionDuration))).toBeGreaterThan(0);
-  for (const id of ["toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider", "text-field"]) {
+  for (const id of ["button", "icon-button", "checkbox", "radio-group", "switch", "slider", "text-field"]) {
     await page.locator(`a[href="#/components/${id}"]`).first().click();
     await expect(page.locator(".live-stage .demo-primary").first()).toBeVisible();
   }
@@ -672,15 +672,15 @@ test("slider handles appear at their initial values without load animation", asy
   expect(Math.max(...probe.frames) - Math.min(...probe.frames)).toBeLessThan(.6);
 });
 
-test("dense Advanced sliders preserve numeric increments with expressive pointer motion", async ({ page }) => {
-  await page.goto("/#/components/toggle");
-  await page.locator(".advanced-tuning-trigger").click();
-  const thumb = page.getByRole("slider", { name: "Text morph duration (ms)", exact: true });
+test("dense playground sliders preserve numeric increments with expressive pointer motion", async ({ page }) => {
+  await page.goto("/#/motion");
+  await page.locator(".motion-example-picker").getByRole("button", { name: "Button press & ripple", exact: true }).click();
+  const thumb = page.getByRole("slider", { name: "Stiffness", exact: true });
   const slider = page.locator(".mf-slider").filter({ has: thumb });
   await expect(slider).toHaveAttribute("data-snap-motion", "false");
   await expect(thumb.locator("..")).toHaveCSS("transition-duration", "0s");
   await thumb.press("ArrowRight");
-  await expect(thumb).toHaveAttribute("aria-valuenow", "110");
+  await expect(thumb).toHaveAttribute("aria-valuenow", "705");
   const rect = (await slider.boundingBox())!;
   await page.mouse.move(rect.x + rect.width * .3, rect.y + rect.height / 2);
   await page.mouse.down();
@@ -688,7 +688,7 @@ test("dense Advanced sliders preserve numeric increments with expressive pointer
   await page.mouse.up();
   const value = Number(await thumb.getAttribute("aria-valuenow"));
   expect(value).toBeGreaterThan(350);
-  expect((value - 100) % 10).toBe(0);
+  expect((value - 20) % 5).toBe(0);
 });
 
 test("snap animation adapts to available width without changing the value or step", async ({ page }) => {

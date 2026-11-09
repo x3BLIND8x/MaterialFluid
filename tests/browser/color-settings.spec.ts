@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("action color adjustments persist and reset without changing other roles", async ({page}) => {
+  await page.addInitScript(()=>{if(!localStorage.getItem("materialfluid.preferences"))localStorage.setItem("materialfluid.preferences",JSON.stringify({colorPreset:"standard",theme:"light"}));});
   await page.goto("/#/components/button");
   const button = page.locator(".demo-primary .mf-button.mf-variant--filled");
   const read = () => button.evaluate(el => getComputedStyle(el).backgroundColor);
@@ -24,9 +25,9 @@ test("accent selection is hue-only, persists, and resets to the original gold", 
   const seed=()=>page.locator(".mf-root").evaluate(el=>getComputedStyle(el).getPropertyValue("--mf-accent-seed").trim());
   await page.getByRole("button", {name:"Showcase preferences",exact:true}).click();
   const hue=page.getByRole("slider",{name:"Accent hue",exact:true});
-  await hue.focus();await page.keyboard.press("Home");await expect.poll(seed).toBe("#ff0000");
-  await page.keyboard.press("ArrowRight");await expect.poll(seed).toBe("#ff0400");
-  await page.reload();await expect.poll(seed).toBe("#ff0400");
+  await hue.focus();await page.keyboard.press("Home");await expect.poll(seed).toBe("#ee9696");
+  await page.keyboard.press("ArrowRight");await expect.poll(seed).toBe("#ee9796");
+  await page.reload();await expect.poll(seed).toBe("#ee9796");
   await page.getByRole("button", {name:"Showcase preferences",exact:true}).click();
   await page.locator(".accent-control").getByRole("button",{name:"Reset",exact:true}).click();
   await expect.poll(seed).toBe("#eedd96");
@@ -46,6 +47,7 @@ for(const theme of ["light","dark"]) test(`Material selections use shared primar
 test("mobile Persian palette controls scroll, mirror and keep values clear of labels", async ({
   page,
 }) => {
+  await page.addInitScript(()=>{if(!localStorage.getItem("materialfluid.preferences"))localStorage.setItem("materialfluid.preferences",JSON.stringify({colorPreset:"standard"}));});
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/components/button");
   await page.getByRole("button", { name: "More options" }).click();
@@ -115,6 +117,7 @@ test("danger uses solid red and white foregrounds in actions and surfaces", asyn
       ["icon-button", ".mf-icon-button", "error-fill", "on-error-fill"],
     ]) {
       await page.goto(`/#/components/${route}`);
+      await page.locator('.mf-toggle-group button[data-value="danger"]').click();
       const component = page.locator(`.demo-primary ${selector}.mf-variant--danger`).first();
       await expect
         .poll(() =>

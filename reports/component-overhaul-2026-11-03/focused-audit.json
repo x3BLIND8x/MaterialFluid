@@ -1,0 +1,79 @@
+[
+  {
+    "id": "dialog",
+    "scale": "1",
+    "class": "mf-dialog mf-motion-surface mf-label--top mf-variant--outline mf-scale--md mf-label--top mf-variant--outline mf-scale--md",
+    "rect": {
+      "x": 470,
+      "y": 317.75,
+      "width": 500,
+      "height": 414.5,
+      "top": 317.75,
+      "right": 970,
+      "bottom": 732.25,
+      "left": 470
+    }
+  },
+  {
+    "id": "alert-dialog",
+    "scale": "1",
+    "class": "mf-dialog mf-motion-surface mf-alert-dialog mf-label--top mf-variant--outline mf-scale--md mf-label--top mf-variant--outline mf-scale--md",
+    "rect": {
+      "x": 470,
+      "y": 420.375,
+      "width": 500,
+      "height": 209.25,
+      "top": 420.375,
+      "right": 970,
+      "bottom": 629.625,
+      "left": 470
+    }
+  },
+  {
+    "id": "drawer",
+    "scale": "1",
+    "class": "mf-dialog mf-motion-surface mf-motion-no-scale mf-label--top mf-variant--outline mf-scale--md mf-drawer mf-drawer--end mf-label--top mf-variant--outline mf-scale--md",
+    "rect": {
+      "x": 1028,
+      "y": 12,
+      "width": 400,
+      "height": 1026,
+      "top": 12,
+      "right": 1428,
+      "bottom": 1038,
+      "left": 1028
+    }
+  },
+  {
+    "id": "bottom-sheet",
+    "scale": "1",
+    "class": "mf-dialog mf-motion-surface mf-motion-no-scale mf-label--top mf-variant--outline mf-scale--md mf-bottom-sheet mf-label--top mf-variant--outline mf-scale--md",
+    "rect": {
+      "x": 400,
+      "y": 558,
+      "width": 640,
+      "height": 480,
+      "top": 558,
+      "right": 1040,
+      "bottom": 1038,
+      "left": 400
+    }
+  },
+  {
+    "id": "toggle-reset",
+    "passed": true
+  },
+  {
+    "id": "chart-visible-tooltip",
+    "passed": true
+  },
+  {
+    "id": "data-table-initial-widths",
+    "sizes": [
+      64,
+      668,
+      120,
+      120
+    ]
+  }
+]

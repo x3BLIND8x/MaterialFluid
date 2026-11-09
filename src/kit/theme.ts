@@ -1,3 +1,5 @@
+import { createDynamicScheme } from "./foundations/color-engine";
+import { settledSpring } from "./motion-engine";
 import {
   argbFromHex,
   hexFromArgb,
@@ -5,13 +7,12 @@ import {
   Contrast,
   lstarFromArgb,
   Hct,
-  SchemeTonalSpot,
   DynamicScheme,
 } from "@material/material-color-utilities";
 export type ThemeMode = "light" | "dark" | "system";
 export type MotionMode = "expressive" | "minimal";
 export type Locale = "en" | "fa";
-export const colorSchemes = ["tonalSpot"] as const;
+export const colorSchemes = ["tonalSpot", "expressive", "vibrant", "neutral", "monochrome", "fidelity", "content", "rainbow", "fruitSalad"] as const;
 export type ColorScheme = (typeof colorSchemes)[number];
 export interface ColorBehavior {
   primarySaturation: number;
@@ -136,7 +137,7 @@ export function normalizeColorBehavior(
   ) as unknown as ColorBehavior;
 }
 export const motionTokens = {
-  spring: { type: "spring" as const, stiffness: 430, damping: 32, mass: 0.8 },
+  spring: settledSpring({ type: "spring" as const, stiffness: 430, damping: 32, mass: 0.8 }),
   quick: 0.16,
   surface: 0.28,
 };
@@ -144,14 +145,15 @@ export function createTheme(
   seed = "#eedd96",
   dark = false,
   colorBehavior?: Partial<ColorBehavior>,
-  _colorScheme: ColorScheme = "tonalSpot",
+  colorScheme: ColorScheme = "tonalSpot",
 ): Record<string, string> {
   if (!/^#[0-9a-f]{6}$/i.test(seed))
     throw new Error("Accent seed must be a six-digit hex color.");
   const behavior = normalizeColorBehavior(colorBehavior);
   const strength = behavior.contrast / 100;
   const sourceColorHct = Hct.fromInt(argbFromHex(seed));
-  const base = new SchemeTonalSpot(sourceColorHct, dark, strength, "2025");
+  const variant = colorScheme === "tonalSpot" ? "tonal-spot" : colorScheme === "fruitSalad" ? "fruit-salad" : colorScheme;
+  const base = createDynamicScheme(seed, variant, dark, strength);
   const adjustPalette = (source: TonalPalette, saturation: number, defaultSaturation: number, hueShift = 0) =>
     TonalPalette.fromHueAndChroma((source.hue + hueShift + 360) % 360, source.chroma * saturation / defaultSaturation);
   const palette = {

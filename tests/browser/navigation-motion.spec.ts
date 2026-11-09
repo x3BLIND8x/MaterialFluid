@@ -40,8 +40,10 @@ for (const [route, scope, target] of [
 test("showcase uses kit fields, Toggle and navigation", async ({page}) => {
   await page.goto("/");
   await expect(page.locator(".nav-search .mf-input-wrap")).toBeVisible();
-  await expect(page.locator("#component-size")).toHaveAttribute("role","combobox");
+  await expect(page.locator('.mf-toggle-group[aria-label="Size"]')).toBeVisible();
   await expect(page.getByRole("button",{name:"Fluid",exact:true})).toHaveClass(/mf-toggle/);
+  await expect(page.locator(".page-sections")).toHaveCount(0);
+  await page.getByRole("tab", {name:"Documentation",exact:true}).click();
   await expect(page.locator(".page-sections .mf-tree-selection")).toBeVisible();
   await expect(page.locator(".catalogue-tree").first()).toHaveClass(/mf-tree/);
   await page.getByRole("button",{name:"Fluid",exact:true}).click();
@@ -67,7 +69,12 @@ test("tabs stay compact and rounded, pagination has readable selected ink, and t
 test("TOC jumps to its document sections and menu anchors stay stationary during a hold", async ({page}) => {
   await page.goto("/#/components/table-of-contents");
   await page.locator(".demo-primary .mf-toc").getByRole("treeitem", {name:"Structure"}).click();
-  await expect.poll(() => page.locator("#toc-demo-structure").evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(350);
+  await expect(page.locator("#toc-demo-structure")).toBeInViewport();
+  await expect.poll(() => page.locator("#toc-demo-structure").evaluate(el => {
+    const target = el.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(el).scrollMarginTop) || 0);
+    const limit = document.documentElement.scrollHeight - window.innerHeight;
+    return Math.abs(window.scrollY - Math.min(Math.max(0, target), limit));
+  })).toBeLessThan(3);
   await page.goto("/#/components/menu");
   const trigger = page.locator(".demo-primary button").filter({hasText:"Actions"});
   await expect(trigger).toHaveClass(/mf-variant--primary/);

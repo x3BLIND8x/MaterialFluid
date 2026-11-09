@@ -1,5 +1,7 @@
+import { boundedMotionCurve } from "./bounded-motion";
+import { useCurveValue } from "./curve-value";
 import { useLayoutEffect, type CSSProperties, type RefObject } from "react";
-import { spring, useSpring, useMotionValueEvent } from "motion/react";
+import { useMotionValueEvent } from "motion/react";
 
 /** Explicit pixel sizes (Spinner/icons) use the same spring as CSS-size variants. */
 export function useSizeDimensions(
@@ -13,8 +15,8 @@ export function useSizeDimensions(
     style?: CSSProperties;
   },
 ) {
-  const { expressive, stiffness, damping, mass, style } = options;
-  const dimension = useSpring(size, { stiffness, damping, mass });
+  const { expressive, style } = options;
+  const dimension = useCurveValue(size);
   const update = () => {
     if (!node.current) return;
     if (style?.width === undefined)
@@ -25,7 +27,7 @@ export function useSizeDimensions(
   useMotionValueEvent(dimension, "change", update);
   useLayoutEffect(() => {
     if (expressive && !node.current?.closest("[data-mf-sized]"))
-      dimension.set(size);
+      dimension.setTarget(size);
     else dimension.jump(size);
     if (node.current) {
       if (style?.width === undefined)
@@ -188,22 +190,9 @@ export function useSizeMotion(
       }
       if (!targets.length) return;
       // Sample once, then let native animations share the same spring timeline.
-      const generator = spring({
-        keyframes: [0, 1],
-        stiffness,
-        damping,
-        mass,
-        restDelta: 0.001,
-        restSpeed: 0.01,
-      });
-      const samples: number[] = [];
-      let duration = 0;
-      for (; duration < 3000; duration += 1000 / 60) {
-        const state = generator.next(duration);
-        samples.push(state.value);
-        if (state.done) break;
-      }
-      samples[samples.length - 1] = 1;
+      const curve = boundedMotionCurve("resize");
+      const samples = curve.points.map(([, value]) => value);
+      const duration = curve.duration;
       for (const { element, metrics } of targets) {
         const frames = samples.map((progress) =>
           Object.fromEntries(

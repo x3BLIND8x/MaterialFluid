@@ -1,3 +1,4 @@
+import { motionTransition } from "./bounded-motion";
 import { useCallback, useEffect, useRef } from "react";
 import { animate, type MotionValue } from "motion/react";
 
@@ -29,7 +30,7 @@ export function useButtonPressAnimation(
     sequence.current++;
     if (releaseTimer.current !== null) clearTimeout(releaseTimer.current);
     releaseTimer.current = null;
-    const { expressive, depth, stiffness, damping, mass } = options.current;
+    const { expressive, depth } = options.current;
     if (!expressive) return;
     holding.current = true;
     pressedAt.current = performance.now();
@@ -40,7 +41,7 @@ export function useButtonPressAnimation(
       animation.current = animate(scale, [from, 1, depth], { duration: .08, times: [0, .25, 1], ease: "easeOut" });
     } else {
       animation.current = animate(scale, depth,
-        { type: "spring", stiffness, damping, mass, restDelta: .0001, restSpeed: .001 });
+        motionTransition("press"));
     }
   }, [scale]);
 
@@ -52,9 +53,8 @@ export function useButtonPressAnimation(
     const returnToRest = () => {
       if (sequence.current !== current) return;
       animation.current?.stop();
-      const { stiffness, damping, mass } = options.current;
       animation.current = animate(scale, 1,
-        { type: "spring", stiffness, damping, mass, restDelta: .0001, restSpeed: .001 });
+        motionTransition("press"));
       releaseTimer.current = null;
     };
     if (elapsed < QUICK_PRESS_THRESHOLD_MS) {

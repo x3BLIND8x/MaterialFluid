@@ -3,10 +3,10 @@ import { test, expect } from "@playwright/test";
 test("optional icon pack loads on demand, paginates, and preserves source contours", async ({ page }) => {
   let loadedPack = false;
   page.on("response", response => {
-    if (response.url().includes("/src/kit/material-icons.ts")) loadedPack = true;
+    if (response.url().includes("/src/kit/material-icons.ts") || /\/assets\/material-icons-[^/]+\.js/.test(response.url())) loadedPack = true;
   });
   await page.goto("/#/components/button");
-  await expect(page.getByRole("button", {name: "Filled", exact: true})).toBeVisible();
+  await expect(page.locator(".button-preview-form > button")).toBeVisible();
   expect(loadedPack).toBe(false);
   await page.goto("/#/components/animated-icon");
   await expect(page.locator(".icon-gallery-tile")).toHaveCount(48);

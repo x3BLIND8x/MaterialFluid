@@ -1,6 +1,10 @@
-import { animate, useMotionValue, useMotionValueEvent } from "motion/react";
+import { ButtonCompositionContext, MotionPreviewContext } from "./internal-motion";
+import { motionEngine, dialogMotionDefaults } from "./motion-engine";
+import { animate, motion, useMotionValue, useMotionValueEvent, type Transition } from "motion/react";
+import { savedMotionPresets } from "./motion-presets";
+import { settledSpring } from "./motion-engine";
 import { useAppearanceProps, type AppearanceProps } from "./appearance";
-import { forwardRef, useRef, useState, useEffect, cloneElement, isValidElement, type ReactNode, type HTMLAttributes } from "react";
+import { forwardRef, useRef, useState, useEffect, useLayoutEffect, createContext, useContext, isValidElement, type ReactNode, type HTMLAttributes } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as AlertPrimitive from "@radix-ui/react-alert-dialog";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
@@ -21,9 +25,13 @@ export interface DialogProps
   description?: ReactNode;
   footer?: ReactNode;
   dragHandle?: ReactNode;
+  motionScale?: boolean;
+  /** Slide edge surfaces upward from below the viewport. */
+  motionFromBottom?: boolean;
 }
 export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
   function Dialog(rawProps, ref) {
+    const { dialog: motionSettings } = useContext(MotionPreviewContext);
     const {
       trigger,
       open,
@@ -33,12 +41,15 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       description,
       footer,
       dragHandle,
+      motionScale = true,
+      motionFromBottom = false,
       children,
       className,
       ...props
     } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
-    const { locale } = useMaterialFluid();
+    const { locale, motion: mode, reducedMotion } = useMaterialFluid();
+    const content = useRef<HTMLDivElement | null>(null);
     return (
       <DialogPrimitive.Root
         open={open}
@@ -52,10 +63,34 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
           <DialogPrimitive.Overlay className="mf-overlay" />
           <DialogPrimitive.Content
             {...props}
-            ref={ref}
+            ref={node => { content.current = node; setRef(ref, node); }}
+            tabIndex={-1}
+            onOpenAutoFocus={event => {
+              const first = content.current?.querySelector<HTMLElement>('.mf-dialog-body :is(input:not([type="hidden"]),textarea,select,button,a[href],[tabindex="0"]):not(:disabled):not([tabindex="-1"]), .mf-dialog-footer button:not(:disabled)');
+              if (first) { event.preventDefault(); first.focus({ preventScroll: true }); }
+            }}
+            onKeyDown={event => {
+              props.onKeyDown?.(event);
+              if (event.defaultPrevented || event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey || !event.currentTarget.contains(event.target as Node)) return;
+              const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button,input:not([type="hidden"]),textarea,select,a[href],[tabindex],[contenteditable="true"]')).filter(item => {
+                if (item.tabIndex < 0 || item.matches(':disabled,[aria-disabled="true"]') || item.closest('[hidden],[inert],[aria-hidden="true"]')) return false;
+                for (let parent: HTMLElement | null = item; parent && parent !== event.currentTarget; parent = parent.parentElement) {
+                  const css = getComputedStyle(parent);
+                  if (css.display === "none" || css.visibility === "hidden") return false;
+                }
+                return true;
+              });
+              if (!items.length) return;
+              event.preventDefault();
+              const index = items.indexOf(document.activeElement as HTMLElement);
+              const next = items[(index + (event.shiftKey ? -1 : 1) + items.length) % items.length];
+              queueMicrotask(() => { if (next.isConnected) next.focus({ preventScroll: true }); });
+            }}
             {...(!description ? { "aria-describedby": undefined } : {})}
-            className={cx("mf-dialog", className)}
+            className={cx("mf-dialog mf-motion-surface", !motionScale && "mf-motion-no-scale", className)}
+            asChild
           >
+            <motion.div {...motionEngine.dialog(mode === "expressive" && !reducedMotion, motionSettings, motionScale, motionFromBottom && typeof window !== "undefined" ? window.innerHeight : 0)}>
             {dragHandle}
             <div className="mf-dialog-heading">
               <DialogPrimitive.Title>{title}</DialogPrimitive.Title>
@@ -72,20 +107,30 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
             )}
             <div className="mf-dialog-body">{children}</div>
             {footer && <div className="mf-dialog-footer">{footer}</div>}
+            </motion.div>
           </DialogPrimitive.Content>
         </Portal>
       </DialogPrimitive.Root>
     );
   },
 );
-export interface AlertDialogProps extends Omit<DialogProps, "footer" | "dragHandle"> {
+export interface AlertDialogProps extends Omit<DialogProps, "footer" | "dragHandle" | "motionScale" | "motionFromBottom"> {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm?: () => void;
   destructive?: boolean;
 }
+export interface AlertDialogMotionSettings {
+  stiffness: number;
+  damping: number;
+  mass: number;
+  initialScale: number;
+  fadeDuration: number;
+}
+export const alertDialogMotionDefaults: AlertDialogMotionSettings = dialogMotionDefaults;
 export const AlertDialog = forwardRef<HTMLDivElement, AlertDialogProps>(
   function AlertDialog(rawProps, ref) {
+    const { dialog: motionSettings } = useContext(MotionPreviewContext);
     const {
       trigger,
       open,
@@ -102,7 +147,9 @@ export const AlertDialog = forwardRef<HTMLDivElement, AlertDialogProps>(
       ...props
     } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
-    const { locale } = useMaterialFluid();
+    const { locale, motion: mode, reducedMotion } = useMaterialFluid();
+    const expressive = mode === "expressive" && !reducedMotion;
+    const config = { ...alertDialogMotionDefaults, ...motionSettings };
     return (
       <AlertPrimitive.Root
         open={open}
@@ -117,7 +164,11 @@ export const AlertDialog = forwardRef<HTMLDivElement, AlertDialogProps>(
           <AlertPrimitive.Content
             {...props}
             ref={ref}
-            className={cx("mf-dialog", className)}
+            className={cx("mf-dialog mf-motion-surface", "mf-alert-dialog", className)}
+            asChild
+          >
+          <motion.div
+            {...motionEngine.dialog(expressive, config)}
           >
             <AlertPrimitive.Title>{title}</AlertPrimitive.Title>
             <AlertPrimitive.Description className="mf-muted">
@@ -140,6 +191,7 @@ export const AlertDialog = forwardRef<HTMLDivElement, AlertDialogProps>(
                 </Button>
               </AlertPrimitive.Action>
             </div>
+          </motion.div>
           </AlertPrimitive.Content>
         </Portal>
       </AlertPrimitive.Root>
@@ -174,6 +226,7 @@ export const Drawer = forwardRef<HTMLDivElement, DrawerProps>(function Drawer(
       ref={ref}
       open={visible}
       onOpenChange={setVisible}
+      motionScale={false}
       className={cx("mf-drawer", `mf-drawer--${side}`, className)}
       onPointerDown={(e) => {
         props.onPointerDown?.(e);
@@ -216,7 +269,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, DialogProps>(function Bott
     if (visible) { settling.current?.stop(); offset.set(0); setExpanded(false); element.current?.removeAttribute("data-drag-dismiss"); }
   }, [visible, offset]);
   useEffect(() => () => settling.current?.stop(), []);
-  const settle = () => { settling.current?.stop(); settling.current = animate(offset, 0, { duration: expressive ? .22 : 0, ease: [.2, 0, 0, 1] }); };
+  const settle = () => { settling.current?.stop(); settling.current = animate(offset, 0, motionEngine.layout(expressive)); };
   const end = (event: React.PointerEvent<HTMLDivElement>, cancel = false) => {
     const start = pointer.current;
     if (!start || start.id !== event.pointerId) return;
@@ -232,7 +285,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, DialogProps>(function Bott
       settle();
     }
   };
-  return <Dialog {...props} ref={node => { element.current = node; setRef(ref, node); }} open={visible} onOpenChange={setVisible}
+  return <Dialog {...props} motionScale={false} motionFromBottom ref={node => { element.current = node; setRef(ref, node); }} open={visible} onOpenChange={setVisible}
     className={cx("mf-bottom-sheet", className)} data-expanded={expanded || undefined}
     dragHandle={<button type="button" className="mf-sheet-grip" aria-label={locale === "fa" ? "تغییر اندازه برگه" : "Resize sheet"} aria-expanded={expanded}
       onClick={event => { if (event.detail && !moved.current) setExpanded(value => !value); moved.current = false; }}
@@ -287,6 +340,7 @@ export const Popover = forwardRef<HTMLDivElement, PopoverProps>(
       ...props
     } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
+    const { motion: mode, reducedMotion } = useMaterialFluid();
     return (
       <PopoverPrimitive.Root
         open={open}
@@ -301,9 +355,12 @@ export const Popover = forwardRef<HTMLDivElement, PopoverProps>(
             side={side}
             sideOffset={8}
             aria-label={label}
-            className={cx("mf-floating mf-popover", className)}
+            className={cx("mf-floating mf-popover mf-motion-popup", className)}
+            asChild
           >
+            <motion.div {...motionEngine.popup(mode === "expressive" && !reducedMotion)}>
             {children}
+            </motion.div>
           </PopoverPrimitive.Content>
         </Portal>
       </PopoverPrimitive.Root>
@@ -323,27 +380,44 @@ export interface MenuProps extends AppearanceProps {
   items: MenuItem[];
   label?: string;
   className?: string;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
+export interface MenuMotionSettings {
+  x: number; y: number; scale: number; rotate: number; opacity: number; blur: number; transition: Transition;
+}
+const savedMenu = savedMotionPresets.menu.values;
+export const menuMotionDefaults: MenuMotionSettings = {
+  x: savedMenu.x, y: savedMenu.y, scale: savedMenu.scale, rotate: savedMenu.rotate, opacity: savedMenu.opacity, blur: savedMenu.blur,
+  transition: settledSpring({type:'spring',stiffness:savedMenu.stiffness,damping:savedMenu.damping,mass:savedMenu.mass,velocity:savedMenu.velocity,restDelta:savedMenu.restDelta,restSpeed:savedMenu.restSpeed,delay:savedMenu.delay}),
+};
 export const Menu = forwardRef<HTMLDivElement, MenuProps>(
   function Menu(rawProps, ref) {
-    const { trigger, items, label, className } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    const { menu: motionSettings } = useContext(MotionPreviewContext);
+    const { trigger, items, label, className, open, defaultOpen, onOpenChange } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
-    const { dir } = useMaterialFluid();
+    const { dir, motion: mode, reducedMotion } = useMaterialFluid();
+    const [isOpen, setOpen] = useControllable(open, defaultOpen ?? false, onOpenChange);
+    const expressive = mode === "expressive" && !reducedMotion;
+    const config = {...menuMotionDefaults,...motionSettings};
+    const entrance = {x:config.x,y:config.y,scale:config.scale,rotate:config.rotate,opacity:config.opacity,filter:`blur(${config.blur}px)`};
     const keyboardOpen = useRef(false);
     // Keep the popup anchor stationary while retaining the button's radius/ripple feedback.
-    const stationaryTrigger = isValidElement(trigger) && (trigger.type === Button || trigger.type === IconButton)
-      ? cloneElement(trigger as React.ReactElement<React.ComponentProps<typeof Button>>, { pressMotion: { scale: 1 } })
-      : trigger;
+    const composition = useContext(ButtonCompositionContext);
+    const triggerComposition = isValidElement(trigger) && (trigger.type === Button || trigger.type === IconButton)
+      ? { ...composition, press: false } : composition;
     return (
-      <MenuPrimitive.Root dir={dir}>
-        <MenuPrimitive.Trigger asChild onPointerDown={event => {
+      <MenuPrimitive.Root dir={dir} modal={false} open={isOpen} onOpenChange={setOpen}>
+        <ButtonCompositionContext.Provider value={triggerComposition}><MenuPrimitive.Trigger asChild onPointerDown={event => {
           // Motion synthesizes pointer events for keyboard press feedback. Radix
           // handles that activation on keydown, so do not toggle it twice.
           if (!event.pointerType) event.preventDefault();
           else keyboardOpen.current = false;
-        }} onKeyDown={event => { if (["Enter", " ", "ArrowDown"].includes(event.key)) keyboardOpen.current = true; }}>{stationaryTrigger}</MenuPrimitive.Trigger>
+        }} onKeyDown={event => { if (["Enter", " ", "ArrowDown"].includes(event.key)) keyboardOpen.current = true; }}>{trigger}</MenuPrimitive.Trigger></ButtonCompositionContext.Provider>
         <Portal className={className}>
-          <MenuPrimitive.Content
+          {isOpen && <MenuPrimitive.Content
+            forceMount asChild
             ref={ref}
             onFocusCapture={event => {
               if (keyboardOpen.current && event.target === event.currentTarget) {
@@ -352,9 +426,10 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(
             }}
             sideOffset={8}
             aria-label={label}
-            className={cx("mf-floating mf-menu", className)}
+            className={cx("mf-floating mf-menu mf-menu-motion", className)}
           >
-            {items.map((item) => (
+            <motion.div initial={expressive ? entrance : false} animate={{x:0,y:0,scale:1,rotate:0,opacity:1,filter:'blur(0px)'}} exit={expressive ? entrance : {opacity:1}} transition={expressive ? config.transition : {duration:0}}>
+            <TooltipScope>{items.map((item) => (
               <MenuPrimitive.Item
                 key={item.id}
                 disabled={item.disabled}
@@ -367,8 +442,9 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(
                 {item.icon}
                 {item.label}
               </MenuPrimitive.Item>
-            ))}
-          </MenuPrimitive.Content>
+            ))}</TooltipScope>
+            </motion.div>
+          </MenuPrimitive.Content>}
         </Portal>
       </MenuPrimitive.Root>
     );
@@ -381,6 +457,25 @@ export interface TooltipProps extends AppearanceProps {
   delayDuration?: number;
   side?: "top" | "bottom" | "left" | "right";
 }
+const TooltipSurface = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(function TooltipSurface({children,className,style,id,role,...props},ref){
+  const content=useRef<HTMLSpanElement>(null),[width,setWidth]=useState(0);
+  const {motion:mode,reducedMotion}=useMaterialFluid();
+  useLayoutEffect(()=>{
+    const element=content.current;if(!element)return;
+    const measure=()=>setWidth(element.getBoundingClientRect().width);
+    measure();
+    if(typeof ResizeObserver==="undefined")return;
+    const observer=new ResizeObserver(measure);observer.observe(element);
+    return ()=>observer.disconnect();
+  },[children]);
+  return <div {...props} ref={ref} style={{...style,width,display:"flex",justifyContent:"center"}}>
+    <motion.div id={id} role={role} className={className} {...motionEngine.tooltip(mode==="expressive"&&!reducedMotion,width)} style={{padding:0,borderWidth:0,minWidth:0,boxSizing:"border-box",overflow:"hidden",flexShrink:0}}>
+      <span ref={content} className="mf-tooltip-content">{children}</span>
+    </motion.div>
+  </div>;
+});
+const TooltipScopeContext = createContext(false);
+export function TooltipScope({children}:{children:ReactNode}) { return <TooltipScopeContext.Provider value={true}>{children}</TooltipScopeContext.Provider>; }
 export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   function Tooltip(rawProps, ref) {
     const {
@@ -391,10 +486,27 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
       className,
     } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
+    const suppressed = useContext(TooltipScopeContext);
+    const triggerElement = useRef<HTMLElement | null>(null);
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+    useEffect(() => {
+      const node = triggerElement.current;
+      if (!node) return;
+      const closeForPopup = () => { if (node.matches('[aria-expanded="true"]') || node.querySelector('[aria-expanded="true"]')) setTooltipOpen(false); };
+      const observer = new MutationObserver(closeForPopup);
+      observer.observe(node, {subtree:true, attributes:true, attributeFilter:['aria-expanded']});
+      return () => observer.disconnect();
+    }, [children]);
+    if (suppressed) return <>{children}</>;
     return (
       <TooltipPrimitive.Provider delayDuration={delayDuration}>
-        <TooltipPrimitive.Root>
-          <TooltipPrimitive.Trigger asChild>
+        <TooltipPrimitive.Root open={tooltipOpen} onOpenChange={next => {
+          const node = triggerElement.current;
+          setTooltipOpen(next && !node?.matches('[aria-expanded="true"]') && !node?.querySelector('[aria-expanded="true"]'));
+        }}>
+          <TooltipPrimitive.Trigger asChild ref={node => { triggerElement.current = node; }}
+            onFocus={event => { if (!event.currentTarget.contains(event.target)) event.preventDefault(); }}
+          >
             {children}
           </TooltipPrimitive.Trigger>
           <Portal className={className}>
@@ -402,9 +514,10 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
               ref={ref}
               side={side}
               sideOffset={6}
-              className={cx("mf-tooltip", className)}
+              className={cx("mf-tooltip mf-motion-popup", className)}
+              asChild
             >
-              {content}
+              <TooltipSurface>{content}</TooltipSurface>
             </TooltipPrimitive.Content>
           </Portal>
         </TooltipPrimitive.Root>

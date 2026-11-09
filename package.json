@@ -1,6 +1,6 @@
 {
   "name": "materialfluid",
-  "version": "0.11.0",
+  "version": "0.2.0",
   "description": "Material-inspired React components with fluid motion and English/Persian support",
   "type": "module",
   "license": "MIT",
@@ -9,7 +9,8 @@
     "README.md",
     "THIRD_PARTY_NOTICES.md",
     "LICENSE",
-    "VALIDATION.md"
+    "VALIDATION.md",
+    "licenses/expressive-MIT.txt"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,7 +25,11 @@
     },
     "./styles.css": "./dist/styles.css",
     "./fonts.css": "./dist/fonts.css",
-    "./fonts/*": "./dist/fonts/*"
+    "./fonts/*": "./dist/fonts/*",
+    "./elements": {
+      "types": "./dist/elements.d.ts",
+      "import": "./dist/elements.js"
+    }
   },
   "sideEffects": [
     "**/*.css"

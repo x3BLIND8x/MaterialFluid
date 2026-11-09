@@ -1,0 +1,262 @@
+[
+  {
+    "locale": "en",
+    "samples": [
+      {
+        "opacity": 0.406524,
+        "clip": "inset(0px 50% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.518235,
+        "clip": "inset(0px 50% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.681415,
+        "clip": "inset(0px 46.6581% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.81684,
+        "clip": "inset(0px 42.1314% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.921522,
+        "clip": "inset(0px 37.8072% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.987518,
+        "clip": "inset(0px 33.5502% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 29.6236% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 25.7956% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 22.21% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 15.5892% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 12.5854% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 9.86322% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 7.36561% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 5.17549% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 3.29463% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 1.77238% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0.696282% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0.0987281% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      }
+    ]
+  },
+  {
+    "locale": "fa",
+    "samples": [
+      {
+        "opacity": 0,
+        "clip": "inset(0px 50% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.0758298,
+        "clip": "inset(0px 50% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.286905,
+        "clip": "inset(0px 50% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.47896,
+        "clip": "inset(0px 50% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.644014,
+        "clip": "inset(0px 47.8099% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.787001,
+        "clip": "inset(0px 43.1943% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.901076,
+        "clip": "inset(0px 38.7622% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 0.976693,
+        "clip": "inset(0px 34.5224% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 30.4966% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 26.5999% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 23.0245% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 19.5634% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 16.3081% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 13.2722% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 10.4531% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 7.87717% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 5.65252% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 3.71934% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 2.12278% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0.920077% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0.195573% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      },
+      {
+        "opacity": 1,
+        "clip": "inset(0px 0% round 12px)",
+        "transform": "none"
+      }
+    ]
+  }
+]

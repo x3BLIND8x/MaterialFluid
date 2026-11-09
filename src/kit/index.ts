@@ -1,3 +1,4 @@
+import "./foundations/type.css";
 import "./styles.css";
 import "./appearance.css";
 import "./material-colors.css";
@@ -16,7 +17,21 @@ export * from "./feedback";
 export * from "./overlays";
 
 export * from "./rolling-number";
+export * as Shadcn from "./shadcn";
 export * from "./icon-swap";
 
 export * from "./misc-colors";
 export * from "./component-policy";
+
+export { motionEngine, dialogMotionDefaults } from "./motion-engine";
+
+export { MorphingLabel } from "./morphing-label";
+
+export * from "./theme-neutral";
+
+export * from "./compositions";
+export { DataTable as Table } from "./surfaces";
+export { Spinner as Loading } from "./feedback";
+export { Carousel, CodeBlock, Sidebar } from "./shadcn/patterns";
+
+export * as Foundations from "./foundations";

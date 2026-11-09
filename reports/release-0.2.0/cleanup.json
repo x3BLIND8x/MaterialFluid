@@ -1,0 +1,1572 @@
+[
+  {
+    "Path": ".cache\\animation-reference",
+    "Files": 15,
+    "Bytes": 230131.0
+  },
+  {
+    "Path": ".cache\\color-fix-rollback-test",
+    "Files": 4,
+    "Bytes": 2139.0
+  },
+  {
+    "Path": ".cache\\compact",
+    "Files": 20,
+    "Bytes": 886118.0
+  },
+  {
+    "Path": ".cache\\compact-dist",
+    "Files": 16,
+    "Bytes": 2716455.0
+  },
+  {
+    "Path": ".cache\\expressive-reference",
+    "Files": 287,
+    "Bytes": 3407078.0
+  },
+  {
+    "Path": ".cache\\foundation-declarations-final",
+    "Files": 68,
+    "Bytes": 161665.0
+  },
+  {
+    "Path": ".cache\\logo-gold-rollback-test",
+    "Files": 4,
+    "Bytes": 2162.0
+  },
+  {
+    "Path": ".cache\\material-colors-rollback-test",
+    "Files": 4,
+    "Bytes": 2169.0
+  },
+  {
+    "Path": ".cache\\package-smoke",
+    "Files": 11608,
+    "Bytes": 53848277.0
+  },
+  {
+    "Path": ".cache\\pre-heroui-recovery-20261103T054354Z",
+    "Files": 445,
+    "Bytes": 43119043.0
+  },
+  {
+    "Path": ".cache\\select-primary",
+    "Files": 5,
+    "Bytes": 24121.0
+  },
+  {
+    "Path": ".cache\\smoke-packs",
+    "Files": 39,
+    "Bytes": 82546051.0
+  },
+  {
+    "Path": ".cache\\action-consistency-visual.mjs",
+    "Files": 1,
+    "Bytes": 587.0
+  },
+  {
+    "Path": ".cache\\action-icon-button-lg.png",
+    "Files": 1,
+    "Bytes": 14026.0
+  },
+  {
+    "Path": ".cache\\action-icon-button-md.png",
+    "Files": 1,
+    "Bytes": 12802.0
+  },
+  {
+    "Path": ".cache\\action-icon-button-sm.png",
+    "Files": 1,
+    "Bytes": 10680.0
+  },
+  {
+    "Path": ".cache\\action-toggle-group-lg.png",
+    "Files": 1,
+    "Bytes": 19719.0
+  },
+  {
+    "Path": ".cache\\action-toggle-group-md.png",
+    "Files": 1,
+    "Bytes": 17870.0
+  },
+  {
+    "Path": ".cache\\action-toggle-group-sm.png",
+    "Files": 1,
+    "Bytes": 13620.0
+  },
+  {
+    "Path": ".cache\\action-toggle-lg.png",
+    "Files": 1,
+    "Bytes": 11216.0
+  },
+  {
+    "Path": ".cache\\action-toggle-md.png",
+    "Files": 1,
+    "Bytes": 10271.0
+  },
+  {
+    "Path": ".cache\\action-toggle-sm.png",
+    "Files": 1,
+    "Bytes": 9289.0
+  },
+  {
+    "Path": ".cache\\audit-component-overhaul.mjs",
+    "Files": 1,
+    "Bytes": 5988.0
+  },
+  {
+    "Path": ".cache\\button-additions-detector.json",
+    "Files": 1,
+    "Bytes": 4.0
+  },
+  {
+    "Path": ".cache\\button-config-first.png",
+    "Files": 1,
+    "Bytes": 314979.0
+  },
+  {
+    "Path": ".cache\\button-defaults-detector.json",
+    "Files": 1,
+    "Bytes": 3.0
+  },
+  {
+    "Path": ".cache\\button-group-desktop.png",
+    "Files": 1,
+    "Bytes": 82915.0
+  },
+  {
+    "Path": ".cache\\button-group-mobile.png",
+    "Files": 1,
+    "Bytes": 38226.0
+  },
+  {
+    "Path": ".cache\\calendar-before.cpuprofile",
+    "Files": 1,
+    "Bytes": 169330.0
+  },
+  {
+    "Path": ".cache\\calendar-before.json",
+    "Files": 1,
+    "Bytes": 785.0
+  },
+  {
+    "Path": ".cache\\calendar-before.png",
+    "Files": 1,
+    "Bytes": 93547.0
+  },
+  {
+    "Path": ".cache\\calendar-only-en.png",
+    "Files": 1,
+    "Bytes": 180131.0
+  },
+  {
+    "Path": ".cache\\calendar-only-fa.png",
+    "Files": 1,
+    "Bytes": 102573.0
+  },
+  {
+    "Path": ".cache\\calendar-perf.mjs",
+    "Files": 1,
+    "Bytes": 1609.0
+  },
+  {
+    "Path": ".cache\\calendar-row-change-four-weeks.png",
+    "Files": 1,
+    "Bytes": 14104.0
+  },
+  {
+    "Path": ".cache\\calendar-row-change.png",
+    "Files": 1,
+    "Bytes": 14005.0
+  },
+  {
+    "Path": ".cache\\card-emoji-fixed-fa.png",
+    "Files": 1,
+    "Bytes": 22533.0
+  },
+  {
+    "Path": ".cache\\card-emoji-fixed-lg.png",
+    "Files": 1,
+    "Bytes": 29562.0
+  },
+  {
+    "Path": ".cache\\card-emoji-fixed-md.png",
+    "Files": 1,
+    "Bytes": 28102.0
+  },
+  {
+    "Path": ".cache\\card-emoji-fixed-sm.png",
+    "Files": 1,
+    "Bytes": 25921.0
+  },
+  {
+    "Path": ".cache\\card-group-multiple.png",
+    "Files": 1,
+    "Bytes": 29934.0
+  },
+  {
+    "Path": ".cache\\card-group-single.png",
+    "Files": 1,
+    "Bytes": 29449.0
+  },
+  {
+    "Path": ".cache\\card-group-visual.mjs",
+    "Files": 1,
+    "Bytes": 935.0
+  },
+  {
+    "Path": ".cache\\card-row-fa.png",
+    "Files": 1,
+    "Bytes": 22445.0
+  },
+  {
+    "Path": ".cache\\card-row-lg.png",
+    "Files": 1,
+    "Bytes": 28889.0
+  },
+  {
+    "Path": ".cache\\card-row-md.png",
+    "Files": 1,
+    "Bytes": 27337.0
+  },
+  {
+    "Path": ".cache\\card-row-sm.png",
+    "Files": 1,
+    "Bytes": 25907.0
+  },
+  {
+    "Path": ".cache\\card-row-visual.mjs",
+    "Files": 1,
+    "Bytes": 1000.0
+  },
+  {
+    "Path": ".cache\\check-after-dark-lg.png",
+    "Files": 1,
+    "Bytes": 1525.0
+  },
+  {
+    "Path": ".cache\\check-after-dark-md.png",
+    "Files": 1,
+    "Bytes": 1358.0
+  },
+  {
+    "Path": ".cache\\check-after-dark-sm.png",
+    "Files": 1,
+    "Bytes": 1127.0
+  },
+  {
+    "Path": ".cache\\check-after-light-lg.png",
+    "Files": 1,
+    "Bytes": 1418.0
+  },
+  {
+    "Path": ".cache\\check-after-light-md.png",
+    "Files": 1,
+    "Bytes": 1334.0
+  },
+  {
+    "Path": ".cache\\check-after-light-sm.png",
+    "Files": 1,
+    "Bytes": 1048.0
+  },
+  {
+    "Path": ".cache\\check-algorithm-components.mjs",
+    "Files": 1,
+    "Bytes": 1059.0
+  },
+  {
+    "Path": ".cache\\check-all-readability.mjs",
+    "Files": 1,
+    "Bytes": 2526.0
+  },
+  {
+    "Path": ".cache\\check-before.png",
+    "Files": 1,
+    "Bytes": 1712.0
+  },
+  {
+    "Path": ".cache\\check-bleed.png",
+    "Files": 1,
+    "Bytes": 1712.0
+  },
+  {
+    "Path": ".cache\\check-calendar-caption.mjs",
+    "Files": 1,
+    "Bytes": 1729.0
+  },
+  {
+    "Path": ".cache\\check-calendar-motion.mjs",
+    "Files": 1,
+    "Bytes": 2347.0
+  },
+  {
+    "Path": ".cache\\check-carousel-checkbox.mjs",
+    "Files": 1,
+    "Bytes": 1799.0
+  },
+  {
+    "Path": ".cache\\check-completed-segments.mjs",
+    "Files": 1,
+    "Bytes": 1265.0
+  },
+  {
+    "Path": ".cache\\check-dialog-selection.mjs",
+    "Files": 1,
+    "Bytes": 3612.0
+  },
+  {
+    "Path": ".cache\\check-drawer-touch.mjs",
+    "Files": 1,
+    "Bytes": 2314.0
+  },
+  {
+    "Path": ".cache\\check-expansion-radius.mjs",
+    "Files": 1,
+    "Bytes": 1021.0
+  },
+  {
+    "Path": ".cache\\check-motion-defaults.mjs",
+    "Files": 1,
+    "Bytes": 4631.0
+  },
+  {
+    "Path": ".cache\\check-motion-playground.mjs",
+    "Files": 1,
+    "Bytes": 5867.0
+  },
+  {
+    "Path": ".cache\\check-neutral-seed.mjs",
+    "Files": 1,
+    "Bytes": 3173.0
+  },
+  {
+    "Path": ".cache\\check-radius-sizes.mjs",
+    "Files": 1,
+    "Bytes": 1646.0
+  },
+  {
+    "Path": ".cache\\check-refinements.mjs",
+    "Files": 1,
+    "Bytes": 2779.0
+  },
+  {
+    "Path": ".cache\\check-remaining-motion.mjs",
+    "Files": 1,
+    "Bytes": 4412.0
+  },
+  {
+    "Path": ".cache\\check-selection-drag.mjs",
+    "Files": 1,
+    "Bytes": 3655.0
+  },
+  {
+    "Path": ".cache\\check-selection-press.mjs",
+    "Files": 1,
+    "Bytes": 3408.0
+  },
+  {
+    "Path": ".cache\\check-shadcn-collection.mjs",
+    "Files": 1,
+    "Bytes": 5126.0
+  },
+  {
+    "Path": ".cache\\check-shadcn-variants.mjs",
+    "Files": 1,
+    "Bytes": 7072.0
+  },
+  {
+    "Path": ".cache\\check-single-clip.png",
+    "Files": 1,
+    "Bytes": 1334.0
+  },
+  {
+    "Path": ".cache\\check-spring-alert.mjs",
+    "Files": 1,
+    "Bytes": 2952.0
+  },
+  {
+    "Path": ".cache\\check-spring-settling.mjs",
+    "Files": 1,
+    "Bytes": 2320.0
+  },
+  {
+    "Path": ".cache\\check-tooltip-center.mjs",
+    "Files": 1,
+    "Bytes": 1874.0
+  },
+  {
+    "Path": ".cache\\check-tooltip-width.mjs",
+    "Files": 1,
+    "Bytes": 2271.0
+  },
+  {
+    "Path": ".cache\\check-trace-fix.mjs",
+    "Files": 1,
+    "Bytes": 2409.0
+  },
+  {
+    "Path": ".cache\\check-trace-review.mjs",
+    "Files": 1,
+    "Bytes": 3092.0
+  },
+  {
+    "Path": ".cache\\checkbox-design-check.json",
+    "Files": 1,
+    "Bytes": 21584.0
+  },
+  {
+    "Path": ".cache\\choice-motion-design-check.json",
+    "Files": 1,
+    "Bytes": 577.0
+  },
+  {
+    "Path": ".cache\\compact-types.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 295905.0
+  },
+  {
+    "Path": ".cache\\compare-m3e-crawl.mjs",
+    "Files": 1,
+    "Bytes": 660.0
+  },
+  {
+    "Path": ".cache\\compare-m3e-pages.mjs",
+    "Files": 1,
+    "Bytes": 1123.0
+  },
+  {
+    "Path": ".cache\\component-check.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 210524.0
+  },
+  {
+    "Path": ".cache\\component-lib.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 151460.0
+  },
+  {
+    "Path": ".cache\\component-project.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 211410.0
+  },
+  {
+    "Path": ".cache\\component-reference.html",
+    "Files": 1,
+    "Bytes": 110071.0
+  },
+  {
+    "Path": ".cache\\component-views-detector.json",
+    "Files": 1,
+    "Bytes": 27016.0
+  },
+  {
+    "Path": ".cache\\confirm-latest-foundations.mjs",
+    "Files": 1,
+    "Bytes": 1017.0
+  },
+  {
+    "Path": ".cache\\confirm-readability.mjs",
+    "Files": 1,
+    "Bytes": 2166.0
+  },
+  {
+    "Path": ".cache\\current-selected-motion-defaults.json",
+    "Files": 1,
+    "Bytes": 8179.0
+  },
+  {
+    "Path": ".cache\\debug-chart.mjs",
+    "Files": 1,
+    "Bytes": 828.0
+  },
+  {
+    "Path": ".cache\\detail-card.png",
+    "Files": 1,
+    "Bytes": 80806.0
+  },
+  {
+    "Path": ".cache\\detail-checkbox.png",
+    "Files": 1,
+    "Bytes": 77602.0
+  },
+  {
+    "Path": ".cache\\detail-date-picker.png",
+    "Files": 1,
+    "Bytes": 83179.0
+  },
+  {
+    "Path": ".cache\\detail-dialog.png",
+    "Files": 1,
+    "Bytes": 72242.0
+  },
+  {
+    "Path": ".cache\\detail-number-field.png",
+    "Files": 1,
+    "Bytes": 84273.0
+  },
+  {
+    "Path": ".cache\\detail-radio-group.png",
+    "Files": 1,
+    "Bytes": 81497.0
+  },
+  {
+    "Path": ".cache\\detail-switch.png",
+    "Files": 1,
+    "Bytes": 101881.0
+  },
+  {
+    "Path": ".cache\\detail-toast.png",
+    "Files": 1,
+    "Bytes": 98776.0
+  },
+  {
+    "Path": ".cache\\diagnose-carousel.mjs",
+    "Files": 1,
+    "Bytes": 1090.0
+  },
+  {
+    "Path": ".cache\\diagnose-motion.mjs",
+    "Files": 1,
+    "Bytes": 787.0
+  },
+  {
+    "Path": ".cache\\dialog-diagnose.mjs",
+    "Files": 1,
+    "Bytes": 1261.0
+  },
+  {
+    "Path": ".cache\\document-shadcn-review.mjs",
+    "Files": 1,
+    "Bytes": 11383.0
+  },
+  {
+    "Path": ".cache\\examine-expansion.mjs",
+    "Files": 1,
+    "Bytes": 1818.0
+  },
+  {
+    "Path": ".cache\\examine-file-upload.mjs",
+    "Files": 1,
+    "Bytes": 614.0
+  },
+  {
+    "Path": ".cache\\expanded-combobox-desktop.png",
+    "Files": 1,
+    "Bytes": 89104.0
+  },
+  {
+    "Path": ".cache\\expanded-combobox-mobile.png",
+    "Files": 1,
+    "Bytes": 33422.0
+  },
+  {
+    "Path": ".cache\\expansion-reference-closed.png",
+    "Files": 1,
+    "Bytes": 24078.0
+  },
+  {
+    "Path": ".cache\\expansion-reference-open.png",
+    "Files": 1,
+    "Bytes": 36800.0
+  },
+  {
+    "Path": ".cache\\expansion-reference.html",
+    "Files": 1,
+    "Bytes": 301473.0
+  },
+  {
+    "Path": ".cache\\field-sizing-after-desktop.png",
+    "Files": 1,
+    "Bytes": 83201.0
+  },
+  {
+    "Path": ".cache\\field-sizing-after-mobile.png",
+    "Files": 1,
+    "Bytes": 87928.0
+  },
+  {
+    "Path": ".cache\\field-sizing-before-desktop.png",
+    "Files": 1,
+    "Bytes": 84981.0
+  },
+  {
+    "Path": ".cache\\field-sizing-before-mobile.png",
+    "Files": 1,
+    "Bytes": 89248.0
+  },
+  {
+    "Path": ".cache\\field-sizing.html",
+    "Files": 1,
+    "Bytes": 142.0
+  },
+  {
+    "Path": ".cache\\field-sizing.tsx",
+    "Files": 1,
+    "Bytes": 1558.0
+  },
+  {
+    "Path": ".cache\\field-small-en-combobox.png",
+    "Files": 1,
+    "Bytes": 20545.0
+  },
+  {
+    "Path": ".cache\\field-small-en-multi-select.png",
+    "Files": 1,
+    "Bytes": 11977.0
+  },
+  {
+    "Path": ".cache\\field-small-en-select.png",
+    "Files": 1,
+    "Bytes": 9511.0
+  },
+  {
+    "Path": ".cache\\field-small-fa-combobox.png",
+    "Files": 1,
+    "Bytes": 20327.0
+  },
+  {
+    "Path": ".cache\\field-small-fa-multi-select.png",
+    "Files": 1,
+    "Bytes": 10511.0
+  },
+  {
+    "Path": ".cache\\field-small-fa-select.png",
+    "Files": 1,
+    "Bytes": 8126.0
+  },
+  {
+    "Path": ".cache\\field-small-inspect.mjs",
+    "Files": 1,
+    "Bytes": 1396.0
+  },
+  {
+    "Path": ".cache\\file-upload-reference.png",
+    "Files": 1,
+    "Bytes": 87273.0
+  },
+  {
+    "Path": ".cache\\final-shadcn-trace.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 151469.0
+  },
+  {
+    "Path": ".cache\\focus-filter.mjs",
+    "Files": 1,
+    "Bytes": 938.0
+  },
+  {
+    "Path": ".cache\\focused-overhaul.mjs",
+    "Files": 1,
+    "Bytes": 2771.0
+  },
+  {
+    "Path": ".cache\\foundation-baseline.mjs",
+    "Files": 1,
+    "Bytes": 1427.0
+  },
+  {
+    "Path": ".cache\\foundation-detector.json",
+    "Files": 1,
+    "Bytes": 4701.0
+  },
+  {
+    "Path": ".cache\\foundation-diagnose.mjs",
+    "Files": 1,
+    "Bytes": 1583.0
+  },
+  {
+    "Path": ".cache\\icon-before-lg.png",
+    "Files": 1,
+    "Bytes": 13978.0
+  },
+  {
+    "Path": ".cache\\icon-before-md.png",
+    "Files": 1,
+    "Bytes": 12812.0
+  },
+  {
+    "Path": ".cache\\icon-before-sm.png",
+    "Files": 1,
+    "Bytes": 10753.0
+  },
+  {
+    "Path": ".cache\\icon-polished-lg.png",
+    "Files": 1,
+    "Bytes": 13978.0
+  },
+  {
+    "Path": ".cache\\icon-polished-md.png",
+    "Files": 1,
+    "Bytes": 12814.0
+  },
+  {
+    "Path": ".cache\\icon-polished-sm.png",
+    "Files": 1,
+    "Bytes": 10680.0
+  },
+  {
+    "Path": ".cache\\icon-visual.mjs",
+    "Files": 1,
+    "Bytes": 522.0
+  },
+  {
+    "Path": ".cache\\inspect-ancestors.mjs",
+    "Files": 1,
+    "Bytes": 437.0
+  },
+  {
+    "Path": ".cache\\inspect-button.mjs",
+    "Files": 1,
+    "Bytes": 459.0
+  },
+  {
+    "Path": ".cache\\inspect-calendar.mjs",
+    "Files": 1,
+    "Bytes": 935.0
+  },
+  {
+    "Path": ".cache\\inspect-colors.mjs",
+    "Files": 1,
+    "Bytes": 730.0
+  },
+  {
+    "Path": ".cache\\inspect-details.mjs",
+    "Files": 1,
+    "Bytes": 714.0
+  },
+  {
+    "Path": ".cache\\inspect-expansion.mjs",
+    "Files": 1,
+    "Bytes": 598.0
+  },
+  {
+    "Path": ".cache\\inspect-foundation-motion.mjs",
+    "Files": 1,
+    "Bytes": 764.0
+  },
+  {
+    "Path": ".cache\\inspect-minimal.mjs",
+    "Files": 1,
+    "Bytes": 592.0
+  },
+  {
+    "Path": ".cache\\inspect-old-surface.mjs",
+    "Files": 1,
+    "Bytes": 706.0
+  },
+  {
+    "Path": ".cache\\inspect-own-button.mjs",
+    "Files": 1,
+    "Bytes": 477.0
+  },
+  {
+    "Path": ".cache\\inspect-rail.mjs",
+    "Files": 1,
+    "Bytes": 736.0
+  },
+  {
+    "Path": ".cache\\inspect-reference-button.mjs",
+    "Files": 1,
+    "Bytes": 515.0
+  },
+  {
+    "Path": ".cache\\inspect-reference-presets.mjs",
+    "Files": 1,
+    "Bytes": 780.0
+  },
+  {
+    "Path": ".cache\\inspect-roles.mjs",
+    "Files": 1,
+    "Bytes": 847.0
+  },
+  {
+    "Path": ".cache\\inspect-segmented.mjs",
+    "Files": 1,
+    "Bytes": 687.0
+  },
+  {
+    "Path": ".cache\\inspect-tab.mjs",
+    "Files": 1,
+    "Bytes": 820.0
+  },
+  {
+    "Path": ".cache\\inspect-trace.mjs",
+    "Files": 1,
+    "Bytes": 772.0
+  },
+  {
+    "Path": ".cache\\interaction-overhaul.mjs",
+    "Files": 1,
+    "Bytes": 4041.0
+  },
+  {
+    "Path": ".cache\\last-pre-heroui-recovery.txt",
+    "Files": 1,
+    "Bytes": 87.0
+  },
+  {
+    "Path": ".cache\\lib.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 147392.0
+  },
+  {
+    "Path": ".cache\\localized-fields-desktop.png",
+    "Files": 1,
+    "Bytes": 47900.0
+  },
+  {
+    "Path": ".cache\\localized-fields-mobile.png",
+    "Files": 1,
+    "Bytes": 45683.0
+  },
+  {
+    "Path": ".cache\\localized-fields.html",
+    "Files": 1,
+    "Bytes": 182.0
+  },
+  {
+    "Path": ".cache\\localized-fields.tsx",
+    "Files": 1,
+    "Bytes": 1206.0
+  },
+  {
+    "Path": ".cache\\m3e-reference-index.json",
+    "Files": 1,
+    "Bytes": 19767.0
+  },
+  {
+    "Path": ".cache\\m3e-reference-pages.json",
+    "Files": 1,
+    "Bytes": 554298.0
+  },
+  {
+    "Path": ".cache\\material-button.png",
+    "Files": 1,
+    "Bytes": 77122.0
+  },
+  {
+    "Path": ".cache\\material-checkbox.png",
+    "Files": 1,
+    "Bytes": 77623.0
+  },
+  {
+    "Path": ".cache\\material-material-color-utilities-0.4.0.tgz",
+    "Files": 1,
+    "Bytes": 176709.0
+  },
+  {
+    "Path": ".cache\\material-select.png",
+    "Files": 1,
+    "Bytes": 74978.0
+  },
+  {
+    "Path": ".cache\\material-slider.png",
+    "Files": 1,
+    "Bytes": 76899.0
+  },
+  {
+    "Path": ".cache\\material-tabs.png",
+    "Files": 1,
+    "Bytes": 89938.0
+  },
+  {
+    "Path": ".cache\\materialfluid-public-api.txt",
+    "Files": 1,
+    "Bytes": 15793.0
+  },
+  {
+    "Path": ".cache\\md3-icon-_icon-button.scss",
+    "Files": 1,
+    "Bytes": 21826.0
+  },
+  {
+    "Path": ".cache\\md3-icon-api.ts",
+    "Files": 1,
+    "Bytes": 8911.0
+  },
+  {
+    "Path": ".cache\\md3-icon-config.ts",
+    "Files": 1,
+    "Bytes": 5669.0
+  },
+  {
+    "Path": ".cache\\md3-icon-icon-button.ts",
+    "Files": 1,
+    "Bytes": 4765.0
+  },
+  {
+    "Path": ".cache\\md3-icon-toggle.ts",
+    "Files": 1,
+    "Bytes": 7510.0
+  },
+  {
+    "Path": ".cache\\md3-icon-types.ts",
+    "Files": 1,
+    "Bytes": 12227.0
+  },
+  {
+    "Path": ".cache\\menu-tooltip-progress.mjs",
+    "Files": 1,
+    "Bytes": 1650.0
+  },
+  {
+    "Path": ".cache\\nav-before-navigation-rail.png",
+    "Files": 1,
+    "Bytes": 7267.0
+  },
+  {
+    "Path": ".cache\\nav-before-pagination.png",
+    "Files": 1,
+    "Bytes": 3763.0
+  },
+  {
+    "Path": ".cache\\nav-before-stepper.png",
+    "Files": 1,
+    "Bytes": 6176.0
+  },
+  {
+    "Path": ".cache\\nav-before-tabs.png",
+    "Files": 1,
+    "Bytes": 14570.0
+  },
+  {
+    "Path": ".cache\\nav-before.mjs",
+    "Files": 1,
+    "Bytes": 718.0
+  },
+  {
+    "Path": ".cache\\nav-confirm-fa-labels.png",
+    "Files": 1,
+    "Bytes": 15515.0
+  },
+  {
+    "Path": ".cache\\nav-confirm-fa-pagination.png",
+    "Files": 1,
+    "Bytes": 7805.0
+  },
+  {
+    "Path": ".cache\\nav-confirm.mjs",
+    "Files": 1,
+    "Bytes": 1162.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-navigation-rail.png",
+    "Files": 1,
+    "Bytes": 13401.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-pagination.png",
+    "Files": 1,
+    "Bytes": 9771.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-select.png",
+    "Files": 1,
+    "Bytes": 15552.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-side-navigation.png",
+    "Files": 1,
+    "Bytes": 14396.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-stepper.png",
+    "Files": 1,
+    "Bytes": 12093.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-table-of-contents.png",
+    "Files": 1,
+    "Bytes": 36082.0
+  },
+  {
+    "Path": ".cache\\nav-final-en-tabs.png",
+    "Files": 1,
+    "Bytes": 20783.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-navigation-rail.png",
+    "Files": 1,
+    "Bytes": 11519.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-pagination.png",
+    "Files": 1,
+    "Bytes": 7938.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-select.png",
+    "Files": 1,
+    "Bytes": 11976.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-side-navigation.png",
+    "Files": 1,
+    "Bytes": 12135.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-stepper.png",
+    "Files": 1,
+    "Bytes": 9457.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-table-of-contents.png",
+    "Files": 1,
+    "Bytes": 33275.0
+  },
+  {
+    "Path": ".cache\\nav-final-fa-tabs.png",
+    "Files": 1,
+    "Bytes": 15510.0
+  },
+  {
+    "Path": ".cache\\nav-inspect.mjs",
+    "Files": 1,
+    "Bytes": 984.0
+  },
+  {
+    "Path": ".cache\\neutral-release.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 151724.0
+  },
+  {
+    "Path": ".cache\\parameter-latency.mjs",
+    "Files": 1,
+    "Bytes": 1888.0
+  },
+  {
+    "Path": ".cache\\profile-calendar.mjs",
+    "Files": 1,
+    "Bytes": 1781.0
+  },
+  {
+    "Path": ".cache\\progress-segmented-continuous.png",
+    "Files": 1,
+    "Bytes": 1479.0
+  },
+  {
+    "Path": ".cache\\progress-segmented-final.png",
+    "Files": 1,
+    "Bytes": 1614.0
+  },
+  {
+    "Path": ".cache\\progress-segmented-probe.png",
+    "Files": 1,
+    "Bytes": 1963.0
+  },
+  {
+    "Path": ".cache\\progress-segmented-status-1200.png",
+    "Files": 1,
+    "Bytes": 7445.0
+  },
+  {
+    "Path": ".cache\\progress-segmented-status-390.png",
+    "Files": 1,
+    "Bytes": 7160.0
+  },
+  {
+    "Path": ".cache\\progress-stages-1200.png",
+    "Files": 1,
+    "Bytes": 3945.0
+  },
+  {
+    "Path": ".cache\\progress-stages-390.png",
+    "Files": 1,
+    "Bytes": 4086.0
+  },
+  {
+    "Path": ".cache\\progress-stages-mobile-final.png",
+    "Files": 1,
+    "Bytes": 3734.0
+  },
+  {
+    "Path": ".cache\\rail-held.png",
+    "Files": 1,
+    "Bytes": 86130.0
+  },
+  {
+    "Path": ".cache\\read-motion-defaults.py",
+    "Files": 1,
+    "Bytes": 2636.0
+  },
+  {
+    "Path": ".cache\\reference-motion.json",
+    "Files": 1,
+    "Bytes": 326853.0
+  },
+  {
+    "Path": ".cache\\reference-open-dom.html",
+    "Files": 1,
+    "Bytes": 311827.0
+  },
+  {
+    "Path": ".cache\\reference-whole-open.png",
+    "Files": 1,
+    "Bytes": 35296.0
+  },
+  {
+    "Path": ".cache\\restore-before-heroui.py",
+    "Files": 1,
+    "Bytes": 4286.0
+  },
+  {
+    "Path": ".cache\\restored-showcase.err.log",
+    "Files": 1,
+    "Bytes": 6284.0
+  },
+  {
+    "Path": ".cache\\restored-showcase.out.log",
+    "Files": 1,
+    "Bytes": 223717.0
+  },
+  {
+    "Path": ".cache\\review-foundations.mjs",
+    "Files": 1,
+    "Bytes": 993.0
+  },
+  {
+    "Path": ".cache\\review-shadcn.mjs",
+    "Files": 1,
+    "Bytes": 1960.0
+  },
+  {
+    "Path": ".cache\\review-workbenches.mjs",
+    "Files": 1,
+    "Bytes": 1447.0
+  },
+  {
+    "Path": ".cache\\segmented-before.png",
+    "Files": 1,
+    "Bytes": 88914.0
+  },
+  {
+    "Path": ".cache\\select-icon-desktop.png",
+    "Files": 1,
+    "Bytes": 75069.0
+  },
+  {
+    "Path": ".cache\\select-icon-mobile.png",
+    "Files": 1,
+    "Bytes": 36250.0
+  },
+  {
+    "Path": ".cache\\select-size-before.png",
+    "Files": 1,
+    "Bytes": 9537.0
+  },
+  {
+    "Path": ".cache\\select-size-inspect.mjs",
+    "Files": 1,
+    "Bytes": 798.0
+  },
+  {
+    "Path": ".cache\\selected-motion-defaults.json",
+    "Files": 1,
+    "Bytes": 2663.0
+  },
+  {
+    "Path": ".cache\\shape-diagnose.mjs",
+    "Files": 1,
+    "Bytes": 946.0
+  },
+  {
+    "Path": ".cache\\size-close-trace.mjs",
+    "Files": 1,
+    "Bytes": 1037.0
+  },
+  {
+    "Path": ".cache\\size-open-before.png",
+    "Files": 1,
+    "Bytes": 15841.0
+  },
+  {
+    "Path": ".cache\\slider-design-check.json",
+    "Files": 1,
+    "Bytes": 31120.0
+  },
+  {
+    "Path": ".cache\\slider-final-1440.png",
+    "Files": 1,
+    "Bytes": 81447.0
+  },
+  {
+    "Path": ".cache\\slider-final-390.png",
+    "Files": 1,
+    "Bytes": 44669.0
+  },
+  {
+    "Path": ".cache\\slider-final-held-1440.png",
+    "Files": 1,
+    "Bytes": 80849.0
+  },
+  {
+    "Path": ".cache\\slider-final-held-390.png",
+    "Files": 1,
+    "Bytes": 43969.0
+  },
+  {
+    "Path": ".cache\\slider-motion.html",
+    "Files": 1,
+    "Bytes": 126.0
+  },
+  {
+    "Path": ".cache\\slider-motion.tsx",
+    "Files": 1,
+    "Bytes": 656.0
+  },
+  {
+    "Path": ".cache\\slider-new-1440.png",
+    "Files": 1,
+    "Bytes": 80940.0
+  },
+  {
+    "Path": ".cache\\slider-new-390.png",
+    "Files": 1,
+    "Bytes": 43480.0
+  },
+  {
+    "Path": ".cache\\slider-new-held.png",
+    "Files": 1,
+    "Bytes": 81883.0
+  },
+  {
+    "Path": ".cache\\slider-reference-held.png",
+    "Files": 1,
+    "Bytes": 67089.0
+  },
+  {
+    "Path": ".cache\\slider-reference-live-dom.txt",
+    "Files": 1,
+    "Bytes": 4615.0
+  },
+  {
+    "Path": ".cache\\slider-reference-live.png",
+    "Files": 1,
+    "Bytes": 63029.0
+  },
+  {
+    "Path": ".cache\\slider-reference.html",
+    "Files": 1,
+    "Bytes": 313273.0
+  },
+  {
+    "Path": ".cache\\slider-reference.png",
+    "Files": 1,
+    "Bytes": 95280.0
+  },
+  {
+    "Path": ".cache\\slider-revised-held.png",
+    "Files": 1,
+    "Bytes": 81073.0
+  },
+  {
+    "Path": ".cache\\slider-revised-mobile.png",
+    "Files": 1,
+    "Bytes": 33792.0
+  },
+  {
+    "Path": ".cache\\slider-start-prototype.png",
+    "Files": 1,
+    "Bytes": 19863.0
+  },
+  {
+    "Path": ".cache\\slider.tsbuildinfo",
+    "Files": 1,
+    "Bytes": 205815.0
+  },
+  {
+    "Path": ".cache\\small-upload-ref.mjs",
+    "Files": 1,
+    "Bytes": 677.0
+  },
+  {
+    "Path": ".cache\\small-upload-reference-page.png",
+    "Files": 1,
+    "Bytes": 55364.0
+  },
+  {
+    "Path": ".cache\\small-upload-reference.png",
+    "Files": 1,
+    "Bytes": 33897.0
+  },
+  {
+    "Path": ".cache\\small-upload-row-ref.mjs",
+    "Files": 1,
+    "Bytes": 527.0
+  },
+  {
+    "Path": ".cache\\small-upload-row-reference.png",
+    "Files": 1,
+    "Bytes": 32000.0
+  },
+  {
+    "Path": ".cache\\spotlight-reference.png",
+    "Files": 1,
+    "Bytes": 9731.0
+  },
+  {
+    "Path": ".cache\\spring-reference.png",
+    "Files": 1,
+    "Bytes": 72172.0
+  },
+  {
+    "Path": ".cache\\switch-end-prototype.png",
+    "Files": 1,
+    "Bytes": 41602.0
+  },
+  {
+    "Path": ".cache\\toggle-final-1440.png",
+    "Files": 1,
+    "Bytes": 83517.0
+  },
+  {
+    "Path": ".cache\\toggle-final-390.png",
+    "Files": 1,
+    "Bytes": 43969.0
+  },
+  {
+    "Path": ".cache\\toggle-group-desktop.png",
+    "Files": 1,
+    "Bytes": 82045.0
+  },
+  {
+    "Path": ".cache\\toggle-group-mobile.png",
+    "Files": 1,
+    "Bytes": 40865.0
+  },
+  {
+    "Path": ".cache\\trace-broken-mobile.png",
+    "Files": 1,
+    "Bytes": 54626.0
+  },
+  {
+    "Path": ".cache\\trace-broken.png",
+    "Files": 1,
+    "Bytes": 109044.0
+  },
+  {
+    "Path": ".cache\\tree-ancestor-active.png",
+    "Files": 1,
+    "Bytes": 81057.0
+  },
+  {
+    "Path": ".cache\\tree-ancestor-outline.png",
+    "Files": 1,
+    "Bytes": 2251.0
+  },
+  {
+    "Path": ".cache\\upload-confirm.mjs",
+    "Files": 1,
+    "Bytes": 1076.0
+  },
+  {
+    "Path": ".cache\\upload-current.png",
+    "Files": 1,
+    "Bytes": 47286.0
+  },
+  {
+    "Path": ".cache\\upload-demo.png",
+    "Files": 1,
+    "Bytes": 26624.0
+  },
+  {
+    "Path": ".cache\\upload-final-desktop.png",
+    "Files": 1,
+    "Bytes": 46291.0
+  },
+  {
+    "Path": ".cache\\upload-final-mobile.png",
+    "Files": 1,
+    "Bytes": 45698.0
+  },
+  {
+    "Path": ".cache\\upload-inspect.mjs",
+    "Files": 1,
+    "Bytes": 1251.0
+  },
+  {
+    "Path": ".cache\\upload-mobile.png",
+    "Files": 1,
+    "Bytes": 45884.0
+  },
+  {
+    "Path": ".cache\\upload-polish-dark.png",
+    "Files": 1,
+    "Bytes": 58533.0
+  },
+  {
+    "Path": ".cache\\upload-polish-desktop.png",
+    "Files": 1,
+    "Bytes": 52461.0
+  },
+  {
+    "Path": ".cache\\upload-polish-final-dark.png",
+    "Files": 1,
+    "Bytes": 58574.0
+  },
+  {
+    "Path": ".cache\\upload-polish-final-desktop.png",
+    "Files": 1,
+    "Bytes": 52418.0
+  },
+  {
+    "Path": ".cache\\upload-polish-final-mobile.png",
+    "Files": 1,
+    "Bytes": 42925.0
+  },
+  {
+    "Path": ".cache\\upload-polish-final-narrow.png",
+    "Files": 1,
+    "Bytes": 40405.0
+  },
+  {
+    "Path": ".cache\\upload-polish-inspect.mjs",
+    "Files": 1,
+    "Bytes": 1507.0
+  },
+  {
+    "Path": ".cache\\upload-polish-mobile.png",
+    "Files": 1,
+    "Bytes": 42942.0
+  },
+  {
+    "Path": ".cache\\upload-polish-narrow.png",
+    "Files": 1,
+    "Bytes": 41342.0
+  },
+  {
+    "Path": ".cache\\upload-ref.mjs",
+    "Files": 1,
+    "Bytes": 405.0
+  },
+  {
+    "Path": ".cache\\upload-small-desktop.png",
+    "Files": 1,
+    "Bytes": 29235.0
+  },
+  {
+    "Path": ".cache\\upload-small-inspect.mjs",
+    "Files": 1,
+    "Bytes": 895.0
+  },
+  {
+    "Path": ".cache\\upload-small-mobile.png",
+    "Files": 1,
+    "Bytes": 29648.0
+  },
+  {
+    "Path": ".cache\\v011-button-group-desktop.png",
+    "Files": 1,
+    "Bytes": 192260.0
+  },
+  {
+    "Path": ".cache\\v011-button-group-mobile.png",
+    "Files": 1,
+    "Bytes": 105487.0
+  },
+  {
+    "Path": ".cache\\v011-date-picker-desktop.png",
+    "Files": 1,
+    "Bytes": 175669.0
+  },
+  {
+    "Path": ".cache\\v011-date-picker-mobile.png",
+    "Files": 1,
+    "Bytes": 97941.0
+  },
+  {
+    "Path": ".cache\\verify-calendar-only.mjs",
+    "Files": 1,
+    "Bytes": 1647.0
+  },
+  {
+    "Path": ".cache\\verify-localized-fields.mjs",
+    "Files": 1,
+    "Bytes": 1940.0
+  },
+  {
+    "Path": ".cache\\verify-v011.mjs",
+    "Files": 1,
+    "Bytes": 709.0
+  },
+  {
+    "Path": ".cache\\verify-whole-expansion.mjs",
+    "Files": 1,
+    "Bytes": 1566.0
+  },
+  {
+    "Path": ".cache\\verify.config.ts",
+    "Files": 1,
+    "Bytes": 203.0
+  },
+  {
+    "Path": ".cache\\whole-expansion-desktop.png",
+    "Files": 1,
+    "Bytes": 90404.0
+  },
+  {
+    "Path": ".cache\\whole-expansion-mobile.png",
+    "Files": 1,
+    "Bytes": 34808.0
+  },
+  {
+    "Path": "scripts\\inspect-browser.mjs",
+    "Files": 1,
+    "Bytes": 1924.0
+  },
+  {
+    "Path": "scripts\\inspect-material-icons.mjs",
+    "Files": 1,
+    "Bytes": 1375.0
+  },
+  {
+    "Path": "scripts\\review-fixes.mjs",
+    "Files": 1,
+    "Bytes": 1446.0
+  },
+  {
+    "Path": "scripts\\generate-shadcn-collection.mjs",
+    "Files": 1,
+    "Bytes": 5593.0
+  },
+  {
+    "Path": "src\\showcase\\shadcn\\Page.tsx",
+    "Files": 1,
+    "Bytes": 9444.0
+  },
+  {
+    "Path": "src\\showcase\\shadcn\\catalogue.ts",
+    "Files": 1,
+    "Bytes": 6668.0
+  },
+  {
+    "Path": "src\\showcase\\shadcn\\examples.tsx",
+    "Files": 1,
+    "Bytes": 24602.0
+  },
+  {
+    "Path": "src\\showcase\\shadcn\\reference.css",
+    "Files": 1,
+    "Bytes": 2388.0
+  },
+  {
+    "Path": "M3E-COMPARISON.md",
+    "Files": 1,
+    "Bytes": 21855.0
+  },
+  {
+    "Path": "materialfluid-0.11.0.tgz",
+    "Files": 1,
+    "Bytes": 1947759.0
+  },
+  {
+    "Path": ".impeccable\\review",
+    "Files": 231,
+    "Bytes": 12454681.0
+  },
+  {
+    "Path": "test-results",
+    "Files": 2,
+    "Bytes": 24381.0
+  }
+]

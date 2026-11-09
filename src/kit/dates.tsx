@@ -1,3 +1,4 @@
+import { ButtonCompositionContext } from "./internal-motion";
 import { useAppearanceProps, type AppearanceProps, type ComponentSize } from "./appearance";
 import {
   forwardRef,
@@ -9,13 +10,14 @@ import {
   useMemo,
   useRef,
   type RefObject,
+  type ComponentPropsWithoutRef,
   useId,
   useState,
   type HTMLAttributes,
   type ReactNode,
   type ButtonHTMLAttributes,
 } from "react";
-import { DateLib, DayPicker, type MonthCaptionProps, type WeekProps } from "react-day-picker";
+import { DateLib, DayPicker, type MonthCaptionProps, type DayButtonProps, type WeekProps } from "react-day-picker";
 import {
   getDateLib as getPersianDateLib,
   faIR as jalaliFa,
@@ -23,6 +25,8 @@ import {
 } from "react-day-picker/persian";
 import { enUS, faIR } from "react-day-picker/locale";
 import * as Pop from "@radix-ui/react-popover";
+import { motion } from "motion/react";
+import { motionEngine } from "./motion-engine";
 import { useMaterialFluid } from "./provider";
 import { useControllable, useLatest, cx, setRef } from "./utils";
 import { FormField, TextField, NumberField, type TextFieldProps, type FieldAppearanceProps } from "./forms";
@@ -32,6 +36,14 @@ import { Button, IconButton, ToggleGroup } from "./controls";
 import { Portal } from "./portal";
 import { FieldTriggerIcon } from "./field-trigger-icon";
 import { localizeDigits } from "./numerals";
+const PickerContent = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<typeof Pop.Content>>(
+  function PickerContent({ children, className, ...props }, ref) {
+    const { motion: mode, reducedMotion } = useMaterialFluid();
+    return <Pop.Content {...props} ref={ref} className={cx(className, "mf-motion-popup")} asChild>
+      <motion.div {...motionEngine.popup(mode === "expressive" && !reducedMotion)}>{children}</motion.div>
+    </Pop.Content>;
+  },
+);
 function CalendarNavButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
   const navigation = useContext(CalendarNavigation);
   const { dir } = useMaterialFluid();
@@ -45,13 +57,20 @@ const CalendarNavigation = createContext<{
   monthButton: RefObject<HTMLButtonElement | null>; yearButton: RefObject<HTMLButtonElement | null>; disabled?: boolean;
   size: ComponentSize; showOutsideDays: boolean;
 } | null>(null);
-function CalendarCaption({ calendarMonth, displayIndex: _displayIndex, children: _children, ...props }: MonthCaptionProps) {
+function CalendarCaption({ date }: { date: Date }) {
   const navigation = useContext(CalendarNavigation);
-  if (!navigation) return <div {...props} />;
-  return <div {...props}>
-    <Button ref={navigation.monthButton} variant="ghost" size={navigation.size} disabled={navigation.disabled} aria-expanded={navigation.view === "months"} onClick={() => navigation.openView("months")}>{navigation.library.format(calendarMonth.date, "LLLL")}</Button>
-    <Button ref={navigation.yearButton} variant="ghost" size={navigation.size} disabled={navigation.disabled} aria-expanded={navigation.view === "year"} onClick={() => navigation.openView("year")}>{navigation.library.format(calendarMonth.date, "yyyy")}</Button>
-  </div>;
+  if (!navigation) return null;
+  return <ButtonCompositionContext.Provider value={{ size: false, color: false, press: true, ripple: true }}><div className="mf-calendar-caption">
+    <Button ref={navigation.monthButton} aria-label={navigation.library.format(date, "LLLL")} variant="ghost" size={navigation.size} disabled={navigation.disabled} aria-expanded={navigation.view === "months"} onClick={() => navigation.openView("months")}>{navigation.library.format(date, "LLLL")}</Button>
+    <Button ref={navigation.yearButton} aria-label={navigation.library.format(date, "yyyy")} variant="ghost" size={navigation.size} disabled={navigation.disabled} aria-expanded={navigation.view === "year"} onClick={() => navigation.openView("year")}>{navigation.library.format(date, "yyyy")}</Button>
+  </div></ButtonCompositionContext.Provider>;
+}
+// Keep DayPicker's animation lifecycle marker, without cloning interactive captions.
+function CalendarCaptionMarker({calendarMonth:_month,displayIndex:_index,children:_children,...props}:MonthCaptionProps){return <div {...props}/>;}
+function CalendarDayButton({day:_day,modifiers,...props}:DayButtonProps){
+  const ref=useRef<HTMLButtonElement>(null),navigation=useContext(CalendarNavigation);
+  useEffect(()=>{if(modifiers.focused)ref.current?.focus();},[modifiers.focused]);
+  return <ButtonCompositionContext.Provider value={{ size: false, color: false, press: true, ripple: true }}><Button {...props} ref={ref} size={navigation?.size??"md"} variant="ghost"/></ButtonCompositionContext.Provider>;
 }
 function CalendarChevron({ orientation = "left" }: { orientation?: "up" | "down" | "left" | "right" }) {
   const { dir } = useMaterialFluid();
@@ -63,7 +82,7 @@ function CalendarWeek({ week, ...props }: WeekProps) {
   if (!navigation?.showOutsideDays && week.days.every(day => day.outside)) return <></>;
   return <tr {...props} />;
 }
-const calendarComponents = { MonthCaption: CalendarCaption, PreviousMonthButton: CalendarNavButton, NextMonthButton: CalendarNavButton, Chevron: CalendarChevron, Week: CalendarWeek };
+const calendarComponents = { MonthCaption: CalendarCaptionMarker, DayButton: CalendarDayButton, PreviousMonthButton: CalendarNavButton, NextMonthButton: CalendarNavButton, Chevron: CalendarChevron, Week: CalendarWeek };
 
 /** Format and localize once; DayPicker must not wrap the Jalali formatter again. */
 function createCalendarLibrary(calendar: CalendarSystem, locale: "en" | "fa") {
@@ -262,6 +281,11 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(
       <CalendarNavigation.Provider value={{ library, view, openView, monthButton, yearButton, disabled, size, showOutsideDays }}>
       <div {...props} ref={node => { container.current = node; if (typeof ref === "function") ref(node); else if (ref) ref.current = node; }} className={cx("mf-calendar-wrap", className)} data-calendar-view={view}
         onKeyDown={event => { props.onKeyDown?.(event); if (event.key === "Escape" && view !== "days") { event.preventDefault(); event.stopPropagation(); closeView(); } }}>
+        <div className="mf-calendar-header">
+          <CalendarNavButton className="rdp-button_previous" aria-label={locale==="fa"?"ماه قبل":"Go to the Previous Month"} aria-disabled={disabled||!!(minimum&&month<=library.startOfMonth(minimum))} disabled={disabled||!!(minimum&&month<=library.startOfMonth(minimum))} onClick={()=>navigate(library.addMonths(month,-1))}/>
+          <CalendarCaption date={month}/>
+          <CalendarNavButton className="rdp-button_next" aria-label={locale==="fa"?"ماه بعد":"Go to the Next Month"} aria-disabled={disabled||!!(maximum&&month>=library.startOfMonth(maximum))} disabled={disabled||!!(maximum&&month>=library.startOfMonth(maximum))} onClick={()=>navigate(library.addMonths(month,1))}/>
+        </div>
         <AutoHeight className="mf-calendar-size">
         {selection === "single" ? (
           <DayPicker
@@ -341,10 +365,10 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           <FieldTriggerIcon />
         </Pop.Trigger>
       <Portal className={className}>
-        <Pop.Content aria-label={label} className="mf-floating mf-date-popover" sideOffset={8} align="start"
+        <PickerContent aria-label={label} className="mf-floating mf-date-popover" sideOffset={8} align="start"
           onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }}>
           <PickerCalendar showOutsideDays={false} key={`${calendar}-${selected?.slice(0, 7) ?? "empty"}`} calendar={calendar} min={min} max={max} disabled={disabled} value={selected} onValueChange={chooseDate} />
-        </Pop.Content>
+        </PickerContent>
       </Portal>
       </Pop.Root>
     </FormField>;
@@ -407,7 +431,7 @@ export const DateRangePicker = forwardRef<
           <FieldTriggerIcon />
         </Pop.Trigger>
         <Portal className={className}>
-          <Pop.Content
+          <PickerContent
             aria-label={label} className="mf-floating mf-date-popover"
             sideOffset={8}
             align="start"
@@ -421,7 +445,7 @@ export const DateRangePicker = forwardRef<
               range={range}
               onRangeChange={set}
             />
-          </Pop.Content>
+          </PickerContent>
         </Portal>
       </Pop.Root>
     </FormField>
@@ -476,7 +500,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
           trailing={<IconButton variant="ghost" size="sm" label={t("Choose time", "انتخاب زمان")} disabled={props.disabled || props.readOnly} onClick={() => changeOpen(!open)}><AnimatedIcon name="chevron-down" size={28} /></IconButton>} />
       </div>
       <Portal className={props.className}>
-        <Pop.Content id={panelId} role="dialog" aria-label={t("Set time", "تنظیم زمان")} className="mf-floating mf-time-popover" sideOffset={8} align="start"
+        <PickerContent id={panelId} role="dialog" aria-label={t("Set time", "تنظیم زمان")} className="mf-floating mf-time-popover" sideOffset={8} align="start"
           onInteractOutside={event => { if (anchor.current?.contains(event.target as Node)) event.preventDefault(); }}
           onCloseAutoFocus={event => { event.preventDefault(); input.current?.focus(); }}>
           <div className="mf-time-goal-grid" data-seconds={hasSeconds || undefined} dir="ltr">
@@ -487,7 +511,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
           </div>
           {hourFormat === 12 && <ToggleGroup className="mf-time-period" label={t("Period", "بازه زمانی")} value={period} onValueChange={setPeriod} options={[{ value: "AM", label: "AM" }, { value: "PM", label: "PM" }]} />}
           <div className="mf-time-actions"><Button variant="ghost" size="sm" onClick={() => setOpen(false)}>{t("Cancel", "انصراف")}</Button><Button variant="primary" size="sm" disabled={!valid || props.disabled || props.readOnly} onClick={apply}>{t("Apply time", "تأیید زمان")}</Button></div>
-        </Pop.Content>
+        </PickerContent>
       </Portal>
     </Pop.Root>;
   },

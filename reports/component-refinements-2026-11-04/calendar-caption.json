@@ -1,0 +1,152 @@
+[
+  {
+    "locale": "en",
+    "baseline": [
+      627.375,
+      627.375
+    ],
+    "positions": [
+      {
+        "hidden": true,
+        "text": "October2026",
+        "y": [
+          628.75,
+          628.75
+        ]
+      },
+      {
+        "hidden": false,
+        "text": "November2026",
+        "y": [
+          627.375,
+          627.375
+        ]
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "baseline": [
+      627.375,
+      627.375
+    ],
+    "positions": [
+      {
+        "hidden": true,
+        "text": "November2026",
+        "y": [
+          627.375,
+          627.375
+        ]
+      },
+      {
+        "hidden": false,
+        "text": "December2026",
+        "y": [
+          627.375,
+          627.375
+        ]
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "baseline": [
+      627.375,
+      627.375
+    ],
+    "positions": [
+      {
+        "hidden": true,
+        "text": "December2026",
+        "y": [
+          627.375,
+          627.375
+        ]
+      },
+      {
+        "hidden": false,
+        "text": "January2027",
+        "y": [
+          627.375,
+          627.375
+        ]
+      }
+    ]
+  },
+  {
+    "locale": "fa",
+    "baseline": [
+      627.375,
+      627.375
+    ],
+    "positions": [
+      {
+        "hidden": true,
+        "text": "مهر۱۴۰۵",
+        "y": [
+          628.75,
+          628.75
+        ]
+      },
+      {
+        "hidden": false,
+        "text": "آبان۱۴۰۵",
+        "y": [
+          627.375,
+          627.375
+        ]
+      }
+    ]
+  },
+  {
+    "locale": "fa",
+    "baseline": [
+      627.375,
+      627.375
+    ],
+    "positions": [
+      {
+        "hidden": true,
+        "text": "آبان۱۴۰۵",
+        "y": [
+          627.375,
+          627.375
+        ]
+      },
+      {
+        "hidden": false,
+        "text": "آذر۱۴۰۵",
+        "y": [
+          627.375,
+          627.375
+        ]
+      }
+    ]
+  },
+  {
+    "locale": "fa",
+    "baseline": [
+      627.375,
+      627.375
+    ],
+    "positions": [
+      {
+        "hidden": true,
+        "text": "آذر۱۴۰۵",
+        "y": [
+          627.375,
+          627.375
+        ]
+      },
+      {
+        "hidden": false,
+        "text": "دی۱۴۰۵",
+        "y": [
+          627.375,
+          627.375
+        ]
+      }
+    ]
+  }
+]

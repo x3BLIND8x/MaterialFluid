@@ -1,3 +1,5 @@
+import { MotionPreviewContext } from "./internal-motion";
+import { motionTransition } from "./bounded-motion";
 import { useSizePolicy } from "./appearance";
 import { identityColor, miscColorStyle, statusColors, type MiscColor } from "./misc-colors";
 import { Tooltip } from "./overlays";
@@ -11,9 +13,11 @@ import {
 import {
   forwardRef,
   useState,
+  useContext,
   useRef,
   useId,
   useEffect,
+  useLayoutEffect,
   Children,
   type HTMLAttributes,
   type ReactNode,
@@ -35,10 +39,11 @@ import {
   type ColumnSizingState,
   type Column,
 } from "@tanstack/react-table";
-import { cx, setRef } from "./utils";
+import { cx, setRef, useControllable } from "./utils";
+import { motion } from "motion/react";
 import { useMaterialFluid } from "./provider";
 import { Button, Checkbox } from "./controls";
-import { SearchField, FormField } from "./forms";
+import { SearchField, FormField, Select } from "./forms";
 import { AnimatedIcon } from "./icons";
 import { EmptyState } from "./feedback";
 export interface CardProps
@@ -242,14 +247,19 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function
 
 export interface BadgeProps
   extends HTMLAttributes<HTMLSpanElement>, AppearanceProps {
+  /** A notification dot keeps its accessible name without displaying text. */
+  presentation?: "label" | "dot";
   color?: MiscColor;
   tone?: "neutral" | "primary" | "success" | "error" | "warning" | "info";
 }
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   function Badge(rawProps, ref) {
+    const { locale } = useMaterialFluid();
     const {
       tone = "primary",
       color,
+      presentation = "label",
+      children,
       className,
       ...props
     } = useAppearanceProps(useSizePolicy("badge", { ...rawProps, variant: "outline" }));
@@ -258,69 +268,121 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       <span
         {...props}
         ref={ref}
+        data-presentation={presentation}
+        role={props.role ?? (presentation === "dot" ? "img" : undefined)}
+        aria-label={props['aria-label'] ?? (presentation === "dot" ? (typeof children === "string" ? children : locale === "fa" ? "اعلان جدید" : "New notification") : undefined)}
         data-color={color ?? (tone in statusColors ? statusColors[tone as keyof typeof statusColors] : undefined)}
         style={{ ...((color || tone in statusColors) ? miscColorStyle(color ?? statusColors[tone as keyof typeof statusColors]) : {}), ...props.style }}
         className={cx("mf-badge", `mf-tone--${tone}`, className)}
-      />
+      >{presentation === "label" ? children : null}</span>
     );
   },
 );
-export interface AccordionProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "dir">, AppearanceProps {
-  dir?: "ltr" | "rtl";
-  items: {
-    value: string;
-    title: ReactNode;
-    content: ReactNode;
-    disabled?: boolean;
-  }[];
-  defaultValue?: string;
-  value?: string;
-  onValueChange?: (value: string) => void;
+interface AccordionBaseProps extends Omit<HTMLAttributes<HTMLDivElement>,"dir">, AppearanceProps {
+ dir?:"ltr"|"rtl";
+ items:{value:string;title:ReactNode;content:ReactNode;disabled?:boolean}[];
 }
+export type AccordionProps = AccordionBaseProps & (
+ {type?:"single";value?:string;defaultValue?:string;onValueChange?:(value:string)=>void}
+ | {type:"multiple";value?:string[];defaultValue?:string[];onValueChange?:(value:string[])=>void}
+);
+export interface AccordionMotionSettings {
+  stiffness: number;
+  damping: number;
+  mass: number;
+  previewHeight: number;
+  revealBlur: number;
+  revealDuration: number;
+}
+export const accordionMotionDefaults: AccordionMotionSettings = {
+  stiffness: 500,
+  damping: 30,
+  mass: 1.5,
+  previewHeight: 10,
+  revealBlur: 5,
+  revealDuration: .2,
+};
 export const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
   function Accordion(rawProps, ref) {
-    const { items, className, ...props } = useAppearanceProps({ ...rawProps, variant: "outline" });
-
-    const { dir } = useMaterialFluid();
-    return (
-      <AccordionPrimitive.Root
-        dir={dir}
-        {...props}
-        ref={ref}
-        type="single"
-        collapsible
-        className={cx("mf-accordion", className)}
-      >
-        {items.map((item) => (
-          <AccordionPrimitive.Item
-            key={item.value}
-            value={item.value}
-            disabled={item.disabled}
-            className="mf-accordion-item"
-          >
-            <AccordionPrimitive.Header>
-              <AccordionPrimitive.Trigger className="mf-accordion-trigger">
-                {item.title}
-                <AnimatedIcon name="chevron-down" size={18} />
-              </AccordionPrimitive.Trigger>
-            </AccordionPrimitive.Header>
-            <AccordionPrimitive.Content className="mf-accordion-content">
-              <div className="mf-accordion-inner">{item.content}</div>
-            </AccordionPrimitive.Content>
-          </AccordionPrimitive.Item>
-        ))}
-      </AccordionPrimitive.Root>
-    );
+    const { accordion: motionSettings } = useContext(MotionPreviewContext);
+    const {items,className,value,defaultValue,onValueChange:_onValueChange,type="single",...props}=useAppearanceProps({...rawProps,variant:"outline"});
+    const [selected,setSelected]=useControllable<string|string[]>(value,defaultValue??(type==="multiple"?[]:""),next=>{
+      if(rawProps.type==="multiple")rawProps.onValueChange?.(Array.isArray(next)?next:[]);
+      else rawProps.onValueChange?.(typeof next==="string"?next:"");
+    });
+    const {dir}=useMaterialFluid();
+    const children=items.map(item=><SpringAccordionItem key={item.value} item={item} open={Array.isArray(selected)?selected.includes(item.value):selected===item.value} settings={motionSettings}/>);
+    const shared={...props,dir,ref,className:cx("mf-accordion",className)};
+    return type==="multiple"?<AccordionPrimitive.Root {...shared} type="multiple" value={Array.isArray(selected)?selected:[]} onValueChange={setSelected}>{children}</AccordionPrimitive.Root>
+      :<AccordionPrimitive.Root {...shared} type="single" collapsible value={typeof selected==="string"?selected:""} onValueChange={setSelected}>{children}</AccordionPrimitive.Root>;
   },
 );
+
+function SpringAccordionItem({ item, open, settings }: { item: AccordionProps["items"][number]; open: boolean; settings?: Partial<AccordionMotionSettings> }) {
+  const { motion: mode, reducedMotion } = useMaterialFluid();
+  const expressive = mode === "expressive" && !reducedMotion;
+  const config = { ...accordionMotionDefaults, ...settings };
+  const [holding, setHolding] = useState(false);
+  const [contentVisible, setContentVisible] = useState(open);
+  const inner = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+  useLayoutEffect(() => {
+    const element = inner.current;
+    if (!element) return;
+    const measure = () => setContentHeight(element.offsetHeight);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => { if (open) setContentVisible(true); }, [open]);
+  const start = () => {
+    if (item.disabled) return;
+    if (!open) setContentVisible(false);
+    setHolding(true);
+  };
+  const stop = () => { setHolding(false); };
+  const spring = expressive
+    ? motionTransition("resize")
+    : { duration: 0 };
+  return (
+    <AccordionPrimitive.Item value={item.value} disabled={item.disabled} className="mf-accordion-item">
+      <AccordionPrimitive.Header>
+        <AccordionPrimitive.Trigger asChild className="mf-accordion-trigger">
+          <button onPointerDown={event => { if (event.button === 0) start(); }}
+            onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onBlur={stop}
+            onKeyDown={event => { if (!event.repeat && (event.key === " " || event.key === "Enter")) start(); }}
+            onKeyUp={event => { if (event.key === " " || event.key === "Enter") stop(); }}>
+            {item.title}<AnimatedIcon name="chevron-down" size={18} />
+          </button>
+        </AccordionPrimitive.Trigger>
+      </AccordionPrimitive.Header>
+      <AccordionPrimitive.Content forceMount asChild className="mf-accordion-content" aria-hidden={!open} inert={!open}>
+        <motion.div initial={false}
+          style={{ height: "max(0px, var(--mf-accordion-height, 0) * 1px)" }}
+          animate={{ "--mf-accordion-height": open ? contentHeight : expressive && holding ? config.previewHeight : 0 }} transition={spring}
+          onAnimationComplete={() => { if (!open) setContentVisible(false); }}>
+          <motion.div ref={inner} className="mf-accordion-inner" initial={false}
+            style={{ visibility: open || (contentVisible && !holding) ? "visible" : "hidden" }}
+            animate={open && expressive
+              ? { opacity: [0, 1], filter: [`blur(${config.revealBlur}px)`, "blur(0px)"] }
+              : { opacity: 1, filter: "blur(0px)" }}
+            transition={{ duration: open && expressive ? config.revealDuration : 0 }}>
+            {item.content}
+          </motion.div>
+        </motion.div>
+      </AccordionPrimitive.Content>
+    </AccordionPrimitive.Item>
+  );
+}
 export const Divider = forwardRef<
   HTMLHRElement,
-  HTMLAttributes<HTMLHRElement> & AppearanceProps
+  HTMLAttributes<HTMLHRElement> & AppearanceProps & {orientation?:"horizontal"|"vertical";decorative?:boolean}
 >(function Divider(rawProps, ref) {
-  const { className, ...props } = useAppearanceProps(useSizePolicy("divider", { ...rawProps, variant: "outline" }));
+  const { className, orientation="horizontal", decorative=false, ...props } = useAppearanceProps(useSizePolicy("divider", { ...rawProps, variant: "outline" }));
 
-  return <hr {...props} ref={ref} className={cx("mf-divider", className)} />;
+  return <hr {...props} ref={ref} role={decorative?"none":undefined} aria-orientation={decorative?undefined:orientation} data-orientation={orientation} className={cx("mf-divider", className)} />;
 });
 export interface DataTableProps<T> extends AppearanceProps {
   data: T[];
@@ -329,6 +391,8 @@ export interface DataTableProps<T> extends AppearanceProps {
   pageSize?: number;
   caption: string;
   loading?: boolean;
+  stripe?: "none" | "rows" | "columns";
+  autoSize?: boolean;
   selectable?: boolean;
   filterable?: boolean;
   onSelectionChange?: (rows: T[]) => void;
@@ -346,6 +410,8 @@ export function DataTable<T>(rawProps: DataTableProps<T>) {
     pageSize = 5,
     caption,
     loading = false,
+    stripe,
+    autoSize = true,
     selectable = true,
     filterable = false,
     onSelectionChange,
@@ -354,6 +420,7 @@ export function DataTable<T>(rawProps: DataTableProps<T>) {
 
   const { locale, dir } = useMaterialFluid();
   const fa = locale === "fa";
+  const [localStripe, setLocalStripe] = useState<"none"|"rows"|"columns">("none");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [filter, setFilter] = useState("");
   const [selection, setSelection] = useState<RowSelectionState>({});
@@ -399,8 +466,23 @@ export function DataTable<T>(rawProps: DataTableProps<T>) {
     probe.remove();
     setColumnSizing(current => ({ ...current, [column.id]: Math.min(column.columnDef.maxSize ?? 900, Math.max(column.columnDef.minSize ?? 120, Math.ceil(width))) }));
   };
+  useEffect(() => {
+    if (!autoSize || !container.current) return;
+    let cancelled=false;
+    const fit=()=>{
+      if(cancelled||!container.current)return;
+      const probe=document.createElement('span');probe.className='mf-table-measure';container.current.append(probe);
+      probe.textContent='M';if(!probe.getBoundingClientRect().width){probe.remove();return;}
+      const measure=(value:unknown)=>{probe.textContent=String(value??'');return probe.getBoundingClientRect().width;};
+      const sizes:ColumnSizingState={};
+      table.getVisibleLeafColumns().forEach(column=>{let width=measure(labelFor(column))+(filterable?104:64);for(const row of table.getPreFilteredRowModel().flatRows.slice(0,1000))width=Math.max(width,measure(row.getValue(column.id))+40);sizes[column.id]=Math.ceil(Math.max(column.columnDef.minSize??120,Math.min(column.columnDef.maxSize??900,width)));});
+      probe.remove();setColumnSizing(sizes);
+    };
+    fit();void document.fonts?.ready.then(fit);
+    return ()=>{cancelled=true;};
+  }, [data, columns, loading, autoSize, filterable]);
   return (
-    <div ref={container} className={cx("mf-data-table", className)} aria-busy={loading}>
+    <div ref={container} className={cx("mf-data-table", className)} data-stripe={stripe ?? localStripe} aria-busy={loading}>
       <div className="mf-table-toolbar">
         <SearchField
           label={fa ? "جستجو در جدول" : "Filter rows"}
@@ -408,6 +490,7 @@ export function DataTable<T>(rawProps: DataTableProps<T>) {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
+        <Select size="sm" label={fa?"رنگ‌بندی جدول":"Striping"} value={stripe??localStripe} onValueChange={value=>setLocalStripe(value as "none"|"rows"|"columns")} options={[{value:"none",label:fa?"بدون رنگ‌بندی":"None"},{value:"rows",label:fa?"ردیف‌های فرد":"Odd rows"},{value:"columns",label:fa?"ستون‌های فرد":"Odd columns"}]}/>
         {selectable && (
           <span className="mf-muted" role="status">
             {table.getSelectedRowModel().rows.length.toLocaleString(locale)}{" "}

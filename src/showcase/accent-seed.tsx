@@ -1,5 +1,10 @@
 import { Slider, Button } from "../kit/controls";
 
+const defaultSeed = "#eedd96";
+const defaultChannels = [1, 3, 5].map(offset => parseInt(defaultSeed.slice(offset, offset + 2), 16));
+const brightness = Math.max(...defaultChannels);
+const minimum = Math.min(...defaultChannels);
+
 /** HSV hue, independent of the saved seed's saturation and brightness. */
 export function seedHue(seed: string): number {
   const [r, g, b] = [1, 3, 5].map(
@@ -17,9 +22,13 @@ export function seedHue(seed: string): number {
   return Math.round((sector * 60 + 360) % 360) % 360;
 }
 
-/** The top-right corner of an HSV picker: saturation 100%, brightness 100%. */
+/** Rotate the owner's seed hue while retaining its HSV saturation/brightness. */
 export function seedFromHue(hue: number): string {
-  const h = (((hue % 360) + 360) % 360) / 60;
+  const normalized = ((hue % 360) + 360) % 360;
+  // The integer label rounds 48.409…° to 48°. Preserve the original precision
+  // at that displayed value so moving away and back restores every theme token.
+  if (normalized === seedHue(defaultSeed)) return defaultSeed;
+  const h = normalized / 60;
   const x = 1 - Math.abs((h % 2) - 1);
   const rgb =
     h < 1
@@ -35,7 +44,7 @@ export function seedFromHue(hue: number): string {
               : [1, 0, x];
   return `#${rgb
     .map((channel) =>
-      Math.round(channel * 255)
+      Math.round(minimum + channel * (brightness - minimum))
         .toString(16)
         .padStart(2, "0"),
     )
@@ -64,7 +73,7 @@ export function AccentSeed({
           aria-hidden="true"
         />
         <output dir="ltr">{hue.toLocaleString(fa ? "fa" : "en")}°</output>
-        <Button variant="ghost" size="sm" onClick={() => onChange("#eedd96")}>
+        <Button variant="ghost" size="sm" onClick={() => onChange(defaultSeed)}>
           {fa ? "بازنشانی" : "Reset"}
         </Button>
       </div>
@@ -81,8 +90,8 @@ export function AccentSeed({
       />
       <p className="settings-note">
         {fa
-          ? "فقط فام را انتخاب کنید؛ اشباع و روشنایی همیشه ۱۰۰٪ هستند."
-          : "Choose a hue. New selections always use 100% saturation and brightness."}
+          ? "فام را تغییر دهید؛ اشباع و روشنایی رنگ طلایی پیش‌فرض حفظ می‌شوند. انتخاب ۴۸ درجه رنگ اصلی را دقیقاً برمی‌گرداند."
+          : "Change the hue while keeping the default gold's saturation and brightness. Selecting 48° restores the exact original color."}
       </p>
     </section>
   );

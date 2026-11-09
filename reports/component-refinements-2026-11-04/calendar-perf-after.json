@@ -1,0 +1,17 @@
+{
+  "metrics": {
+    "LayoutCount": 143,
+    "LayoutDuration": 0.049912,
+    "RecalcStyleCount": 180,
+    "ScriptDuration": 0.52436,
+    "TaskDuration": 1.117934
+  },
+  "times": [
+    0.9000000059604645,
+    0.20000001788139343,
+    0.20000001788139343,
+    0.19999998807907104
+  ],
+  "probes": 77,
+  "layoutReads": 523
+}

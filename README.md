@@ -1,6 +1,10 @@
 # MaterialFluid
 
-A Material-inspired React/TypeScript kit with fluid interaction motion, English/Persian support, and a 58-page showcase.
+The showcase has one 45-component catalogue grouped into Actions, Selection & input, Navigation, Containment and Communication. Every entry uses MaterialFluid's shared components, theme and fluid motion. Component APIs remain available except for the explicitly removed motion-tuning and independent Button icon-size options.
+
+A Material-inspired React/TypeScript kit with fluid interaction motion, English/Persian support, and a 45-page showcase.
+
+Open **Motion playground** in the sidebar (`#/motion`) for ten interactive animation studies. Tune physics, timing and component parameters with sliders or exact numeric inputs; use presets, replay, reset, copy configuration, or export all settings as JSON. Each example saves separately on the current device. The playground does not change other pages' defaults. Component studies use private preview settings; they do not expose public tuning props.
 
 ## Open the local showcase
 
@@ -10,7 +14,7 @@ On Windows, double-click **Open Showcase.cmd**. It installs dependencies when ne
 
 Requires Node.js 22.12 or newer and npm. Initial dependency installation needs internet; normal local use loads fonts/icons from this project.
 
-To prepare a clean transfer archive for another computer, run `npm run handoff`. It creates `MaterialFluid-v0.11.zip` with the source project inside and excludes caches, installed dependencies, build outputs, and test artifacts.
+To prepare a clean transfer archive for another computer, run `npm run handoff`. It creates `MaterialFluid-v0.2.0.zip` with the source project inside and excludes caches, installed dependencies, build outputs, and test artifacts.
 
 ```sh
 npm ci --cache .cache/npm
@@ -25,7 +29,7 @@ The command above runs the development server without automatically opening a br
 npm run build
 npm pack
 # From another project:
-npm install /path/to/materialfluid-0.11.0.tgz
+npm install /path/to/materialfluid-0.2.0.tgz
 ```
 
 The library builds to `dist`; the separate showcase builds to `showcase-dist`. No package is published automatically. React and ReactDOM are peer dependencies.
@@ -71,9 +75,9 @@ All visible surfaces, controls and focus boundaries use rounded geometry, includ
 
 All controls support conventional native attributes or their documented primitive attributes. Components with state offer controlled and uncontrolled APIs; see the exported TypeScript declarations and individual showcase pages. Icon-only buttons require `label`. `AnimatedIcon` is decorative unless supplied a `label`.
 
-The Icons page contains all **4,301 official Material Symbols Rounded** plus 21 compatibility aliases. Thin, fill-invariant symbols use generated stroke reveal masks over Google's original contours. Solid and mixed pictograms use center-out filling (`fillDuration`, seconds, default 0.4; `fillEaseStrength`, default 0.85). This geometric classification is a heuristic, not a guarantee of semantic interpretation; see `src/kit/icon-generation-report.json`. For example, Rounded Filled `content_copy` includes a solid rectangle and uses center-fill. Wi-Fi/Bluetooth alone retain hand-authored state/slash drawings (350ms, 70ms stagger, 150ms slash delay). Use `<Switch label="Wi-Fi" icon="wifi" />` or `icon="bluetooth"`; `iconMotion` configures timing.
+The Icons page contains all **4,301 official Material Symbols Rounded** plus 21 compatibility aliases. Thin, fill-invariant symbols use generated stroke reveal masks over Google's original contours. Solid and mixed pictograms use center-out filling (fixed 0.4s duration and 0.85 easing strength). This geometric classification is a heuristic, not a guarantee of semantic interpretation; see `src/kit/icon-generation-report.json`. For example, Rounded Filled `content_copy` includes a solid rectangle and uses center-fill. Wi-Fi/Bluetooth alone retain hand-authored state/slash drawings (350ms, 70ms stagger, 150ms slash delay). Use `<Switch label="Wi-Fi" icon="wifi" />` or `icon="bluetooth"`; connection timing remains fixed to the authored defaults.
 
-Action-icon previews are currently paused, including click and keyboard activation. Connection-switch icons retain their independent state animations. Minimal/reduced modes show final glyphs. The gallery searches and paginates the complete pack, with temporary timing controls. The full pack loads only on that route. The core package includes 45 default glyphs; register any additional icons before rendering:
+Action-icon previews are currently paused, including click and keyboard activation. Connection-switch icons retain their independent state animations. Minimal/reduced modes show final glyphs. The gallery searches and paginates the complete pack, without temporary timing controls. The full pack loads on demand in the gallery or component icon picker. The core package includes 45 default glyphs; register any additional icons before rendering:
 
 ```tsx
 import { AnimatedIcon, registerMaterialIcons } from 'materialfluid';
@@ -177,7 +181,7 @@ receive the missing defaults without losing existing tuning.
 
 ## Shared variants and sizes
 
-Button and action-icon pages show Filled, Tonal, Outlined, Ghost and Danger together; other families use their single approved treatment, with one shared Size selector
+Button and IconButton pages provide grouped Example Presets, Appearance, Content and Behavior. Their five sizes include XS through XL. IconButton adds narrow/default/wide widths. Emphasize is a toggle with Primary colors in both states; Tonal, Outlined and Ghost/Text use Primary when selected. A null selectedIcon animates the same Material symbol from outline to fill; a separate selectedIcon swaps artwork, and IconButton selectedLabel can name the selected action. Working React and optional Web Component code lives in Documentation. Other families use their single approved treatment, with one shared Size selector
 and no Variant selector. Icons keeps one catalogue and shows all five selected-icon
 previews together. Internal icon animations are temporarily disabled globally;
 the animation implementation remains available for later reactivation.
@@ -219,14 +223,7 @@ Explicit component props override group defaults; popup content retains the same
 appearance when rendered through a portal. The showcase has variant/size controls
 on each page. Each component exposes its supported sizes from the shared policy; there is no global density setting.
 
-Button variant/accent/theme changes reveal the new color in a crisp circle from
-the center. Hover does not trigger this reveal. `colorMotion={{duration: 0.55}}`
-tunes it (seconds); `false` disables it. Button size changes spring the real layout
-dimensions and padding, so surrounding containers follow the transition. These
-springs inherit press stiffness/mass with a smoother damping default of 40.
-Use `sizeMotion={{stiffness:460,damping:40,mass:1}}` to tune sizing independently.
-Hover uses a short color fade in both motion modes. Minimal mode uses
-brief fades and immediate geometry; system reduced motion suppresses movement.
+Button variant/accent/theme changes reveal the new color in a crisp circle from the center. Hover uses a short color fade. Size changes spring the real layout dimensions and padding, so surrounding containers follow. Authored defaults are fixed: press depth 8%, stiffness 700, damping 20, mass 1.5, size damping 30, radius-depth ratio 4, color duration 330ms, ripple duration 550ms, opacity 20%, fast-start strength 85% and release speed 2×. Minimal and system reduced-motion behavior remain available. Components expose no per-button or provider motion-tuning API.
 
 
 ## Simplified selection controls
@@ -252,7 +249,7 @@ Switch dragging snaps the thumb to the nearest endpoint with a short eased trans
 
 Toggle Group labels remain stationary while the selection pill slides behind them.
 
-Toggle → Advanced text morph includes Fade (0–100%). Zero keeps text fully opaque during blur; 100 fades it out at the swap. Toggle and FAB text use the same duration, blur and fade settings. Library consumers can share these with `MaterialFluidProvider textMorph={{ duration: 100, blur: 6, fade: 0 }}` (milliseconds, pixels, percent). Reset restores the shared defaults.
+Toggle and FAB text share the authored 100ms duration, 6px blur and 0% fade defaults. Component pages expose no Advanced panels or text-morph tuning API.
 
 Checkbox ticks draw in over 180ms once the fill visibly covers the whole checkbox, without waiting for spring settling. Partial minus marks remain immediate. Radio rings and dots share one SVG coordinate system at every size. Switch thumbs anticipate a click with a small movement on press and complete the snap on release. Sliders initialize at their values without load animation.
 
@@ -304,12 +301,104 @@ Tree's `iconMode` accepts `"all"`, `"none"`, or `"parents"` for top-level icons 
 
 Size changes across the kit share Button’s sizing spring through `MaterialFluidProvider`, including fields, navigation, surfaces, Spinner and icons. Minimal/reduced motion applies sizes immediately. FileInput supports only `sm` and `md`. Progress and Spinner use linear/circular Material Expressive waves, which pause when hidden or offscreen.
 
-Progress also supports `presentation="segmented"` and `presentation="status"`:
+Progress supports continuous or segmented waves. Either can show a status row:
 
 ```tsx
 <Progress label="Upload" value={30} presentation="segmented" segments={8} />
-<Progress label="Update" value={30} presentation="status"
+<Progress label="Update" value={30} presentation="wavy" showStatus
   status="Update in progress…" remaining="8s left" />
 ```
 
 The Wave presentation uses the supplied [wavy-slider reference](https://github.com/mahozad/wavy-slider) settings: a 60px wavelength, 20px height, 31px/s toward the tail, 5px stroke, 20px inactive track, and incremental amplitude. Override these with the `wave` prop (`ProgressWaveOptions`). Remaining time is application-provided; the component does not estimate it.
+
+
+The shared `motionEngine` exports dialog, popup, tooltip, layout and range-spring recipes. Dialog and AlertDialog use the saved playground defaults; Drawer and BottomSheet use the same dialog configuration without scaling. Range resizing shares Slider physics. Controls, fields, navigation and compositions retain their family-specific motion through shared helpers and unit-aware spring settling.
+
+AspectRatio preserves a numeric width/height ratio (for example `16 / 9` or `3 / 4`) while media crops with `object-fit: cover`. Attachment accepts the same `ratio` with inline/card layouts. Chart offers `variant="bar" | "line" | "area" | "pie"`, optional secondary values, and pointer/focus tooltips. Table and DataTable accept `stripe="none" | "rows" | "columns"`; DataTable auto-fits on data load unless `autoSize={false}`. Resizable accepts `snapPoints={[25, 50, 75]}` in percentages.
+
+```tsx
+<Progress label="Processing" value={45} presentation="segmented" showStatus
+  segments={[{ value: 20, label: "Initialization" }, { value: 80, label: "Processing" }]} />
+```
+
+ToggleGroup uses primary selection colors. Clicking its active value returns to its initial/default value; an optional group without an initial value clears. Controlled groups should use `defaultValue` to specify an explicit reset value.
+
+
+Carousel supports mouse/touch dragging with spring pagination and `orientation="horizontal" | "vertical"`. Horizontal mode supports RTL and preserves vertical page scrolling. Checkbox changes from rounded rectangular when empty to circular when checked or indeterminate. The collection's Drawer uses BottomSheet with an upward spring entrance from below the viewport and no scale change. Reduced motion opens it at rest.
+
+Additional shared APIs include Accordion `type="multiple"` (array values), Tabs and Separator `orientation`, Field `orientation="vertical" | "horizontal" | "responsive"`, ScrollArea `orientation="vertical" | "horizontal" | "both"`, Item `variant="muted"`, CodeBlock `lineNumbers` / `wrap`, and Resizable `orientation="vertical"`. `Shadcn.DateRangePicker` reuses the original date-range control.
+
+Badge supports compact text and notification dots. Supply a meaningful accessible name for a dot:
+
+```tsx
+<Badge size="sm">New</Badge>
+<Badge presentation="dot" size="sm" tone="error" aria-label="Unread messages" />
+```
+
+Small notification dots measure 6px; Medium dots measure 8px. They inherit Badge's semantic color pairs. Composed `Shadcn.Input` controls with an `id` should have an associated `Shadcn.Label`, explicit `label`, or `aria-label`.
+
+Trace uses the original Accordion for diagnostic expansion, including its spring/blur reveal and small held preview without title press/ripple. Steps without output have no expander. Timeline connects status nodes and panels; Compact uses a flat divided activity list without connectors.
+
+
+The optional `colorPreset="neutral"` uses neutral light/dark surfaces with high-lightness seed-derived primary fills and paired dark foregrounds. The showcase starts with this preset; choose **Original palette** in preferences to restore the existing color design. The library provider retains its existing `standard` default.
+
+```tsx
+<MaterialFluidProvider colorPreset="neutral" accentSeed="#7d9dff"
+  neutralColors={{ surfaceTint: 0, accentStrength: 100 }}>
+  <Button>Continue</Button>
+</MaterialFluidProvider>
+```
+
+`neutralColors.surfaceTint` and `accentStrength` range from 0 to 100 and default to 0/100. Surface tint adds a restrained seed tint to neutral layers; accent strength controls primary chroma while retaining an HCT tone of 86 in both themes. Text/link accent roles use darker tones in light mode for readability. Zero accent strength produces grayscale fills. Semantic status colors remain independent. `createNeutralTheme` and `normalizeNeutralColors` are exported for custom integrations. These are MaterialFluid tokens inspired by shadcn's neutral hierarchy, with stronger functional boundaries and readable text rather than exact upstream color parity.
+
+## Button configuration and optional Web Component
+
+Button now supports XS/Small/Medium/Large/XL, registered icon names or React icon nodes, logical icon placement, icon dimensions inherited from the Appearance size, controlled/uncontrolled toggle selection, active/disabled states, loading labels and determinate/indeterminate progress. Square and Elevated variants are excluded. The showcase's Example Presets, Appearance, Content and Behavior controls update both code formats.
+
+```tsx
+import { Button } from "materialfluid";
+<Button toggle defaultSelected icon="check" onSelectedChange={selected => console.log(selected)}>Save</Button>
+<Button progress={65} loading loadingText="Uploading">Upload</Button>
+<Button size="xl" icon="check" iconPosition="end">Continue</Button>
+```
+
+The optional element entry uses the same implementation and the package's React/React DOM peers. Load styles and fonts once in a bundler-based project, then explicitly register the element:
+
+```js
+import { defineMaterialFluidButton } from "materialfluid/elements";
+import "materialfluid/styles.css";
+import "materialfluid/fonts.css";
+defineMaterialFluidButton();
+```
+
+```html
+<mf-button toggle selected icon="check" value="save">Save</mf-button>
+```
+
+Use `registerMaterialIcons` with `materialfluid/icons` when choosing symbols outside the core pack; the showcase generates that registration for the selected symbol. SVG React nodes remain supported; icon strings are registry names rather than unsanitized HTML.
+
+The element exposes reflected `text`, `icon`, `variant`, `size`, `toggle`, `selected`, `disabled`, `loading`, `type`, `name` and `value` properties, alongside their attributes. Additional attributes include `icon-position`, `toggle-on-click`, `active`, `loading-text`, `progress`, `show-progress`, `indeterminate`, `progress-label`, `aria-label`, `form`, `theme`, `locale`, `motion`, `accent-seed` and `color-preset`. `await element.updateComplete` waits for attribute-driven rendering. A toggle emits a bubbling `change` event with `{ selected, value }`; native click and forwarded focus/blur events remain available. `element.focus()` and `element.click()` delegate to the native inner button. Native inner buttons submit/reset their ancestor or explicitly associated forms.
+
+For imperative integrations, the element supplies `getValue/setValue`, `enable/disable/isDisabled`, `getText/setText`, `getIcon/setIcon/hasIcon`, `getVariant/setVariant`, `getSize/setSize`, `setActive`, `setSelected/isSelected`, `setAriaLabel`, `addClass`, `showProgress/hideProgress`, `setProgress`, `setIndeterminate` and `setLoading`. Progress/loading methods have `Sync` counterparts; async methods resolve after rendering. Removing the element cleans up its renderer; `destroy()` removes it. Use standard `addEventListener/removeEventListener` for event subscriptions. React consumers use controlled props, native DOM refs and normal lifecycle/event handlers for the same cases.
+
+Component icon timing and stroke parameters are fixed to their authored defaults. Button icons inherit the selected appearance size; Button has no independent `iconSize` or ripple option. `active` keeps the hover background visible without changing selection or activation.
+
+Catalogue pages separate **Configuration** (live preview and settings) from **Documentation** (React/Web Component code, API and behavior notes). Keyboard-focused Button and IconButton use the Active background with the visible focus ring; selection remains independent. Animation uses Motion (`motion/react`) and CSS transitions/keyframes, with no GSAP dependency.
+
+
+## Foundations
+
+The sidebar now includes Color, Typography, Shape, Motion and Accessibility. Existing component designs remain, with the same owner fonts, palette presets, radii and motion settings. Tonal Spot is still the default; nine Material color algorithms are available. Motion uses the authored MaterialFluid press/resize/dialog/popup curves and honors system reduced motion, including changes during a running foundation animation. There is no elevation system.
+
+```tsx
+import { Foundations, MaterialFluidProvider } from "materialfluid";
+const theme = Foundations.createFoundationTheme({seed:"#eedd96", colorPreset:"neutral"});
+const css = Foundations.foundationThemeToCss({colorScheme:"tonalSpot"});
+<MaterialFluidProvider colorScheme="expressive">
+  <p className="mf-type-body-large">Your content</p>
+</MaterialFluidProvider>
+```
+
+`Foundations` also exposes `foundationTypeScale`, `foundationFonts`, `foundationCorners`, `foundationSpacing`, `foundationInteraction`, `foundationMotionEngine`, `foundationMotionCurve`, `shapeNames`, `shapePaths`, `shapeMask`, `morphFoundationShape`, `contrastRatio`, `foregroundForColor` and `auditFoundationColors`. Shape utilities are additive; the existing Shape component and the other components keep their current designs. `useMaterialFluid().resolvedTheme` reports the active light/dark theme when the configured theme is system. The selected upstream source, license and adaptations are recorded in THIRD_PARTY_NOTICES.md and the foundation report.
+
+Foundation workbenches include smooth non-spring typography, subscript/superscript, per-line rounded highlighting, keycaps, continuous shape morphs, finite spatial curves and functional accessibility examples. Button toggles are limited to Tonal, Outlined and Ghost/Text; progress inherits the icon slot's size and position. Local evidence and limits: [2026-11-09 review](reports/foundation-workbenches-2026-11-09/REVIEW.md).

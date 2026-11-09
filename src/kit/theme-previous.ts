@@ -1,3 +1,4 @@
+import { settledSpring } from "./motion-engine";
 import {
   argbFromHex,
   hexFromArgb,
@@ -108,7 +109,7 @@ export function normalizeColorBehavior(
   ) as unknown as ColorBehavior;
 }
 export const motionTokens = {
-  spring: { type: "spring" as const, stiffness: 430, damping: 32, mass: 0.8 },
+  spring: settledSpring({ type: "spring" as const, stiffness: 430, damping: 32, mass: 0.8 }),
   quick: 0.16,
   surface: 0.28,
 };

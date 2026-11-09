@@ -1,0 +1,21 @@
+.mf-chips,
+.mf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.mf-toolbar {
+  padding: 8px;
+  border: 1px solid var(--mf-outline-variant);
+  border-radius: calc(var(--mf-ui-radius, 24px) + 9px);
+  background: var(--mf-surface-container);
+  color: var(--mf-on-surface);
+}
+.mf-shape {
+  display: block;
+  width: 120px;
+  max-width: 100%;
+  height: auto;
+  fill: var(--mf-primary);
+}

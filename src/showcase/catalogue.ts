@@ -21,18 +21,19 @@ export interface Entry {
   family: Family;
   description: [string, string];
   code: string;
+  demoId?: string;
+  demoFamily?: Family;
+  custom?: boolean;
   props: PropDoc[];
   states: DemoState[];
   notes: [string, string];
 }
 export const families: { id: Family; label: [string, string] }[] = [
-  { id: "controls", label: ["Controls", "کنترل‌ها"] },
-  { id: "forms", label: ["Forms & dates", "فرم‌ها و تاریخ"] },
+  { id: "controls", label: ["Actions", "اقدام‌ها"] },
+  { id: "forms", label: ["Selection & input", "انتخاب و ورودی"] },
   { id: "navigation", label: ["Navigation", "پیمایش"] },
-  { id: "surfaces", label: ["Surfaces & data", "سطوح و داده"] },
-  { id: "feedback", label: ["Feedback", "بازخورد"] },
-  { id: "overlays", label: ["Overlays", "لایه‌های شناور"] },
-  { id: "icons", label: ["Animated icons", "آیکون‌های متحرک"] },
+  { id: "surfaces", label: ["Containment", "محتوا"] },
+  { id: "feedback", label: ["Communication", "اطلاع‌رسانی"] },
 ];
 const prop = (name: string, type: string, en: string, fa: string): PropDoc => ({
   name,
@@ -128,7 +129,7 @@ function entry(
     props: [
       ...(["forms", "navigation", "surfaces", "feedback", "overlays"].includes(family) || ["Toggle", "ToggleGroup", "Checkbox", "RadioGroup", "Switch", "Slider"].includes(name) ? [] : [prop(
         "variant",
-        "'filled' | 'tonal' | 'outlined' | 'ghost' | 'danger'",
+        "'filled' | 'emphasize' | 'tonal' | 'outlined' | 'ghost' | 'danger'",
         "Material action treatment; previous color variants remain supported.",
         "گونه ظاهری دکمه؛ نام‌های قبلی رنگ همچنان پشتیبانی می‌شوند.",
       )]),
@@ -147,7 +148,7 @@ function entry(
     ],
   };
 }
-export const catalogue: Entry[] = [
+const existingEntries: Entry[] = [
   entry(
     "Button",
     "دکمه",
@@ -162,21 +163,22 @@ export const catalogue: Entry[] = [
         "Visual emphasis.",
         "تأکید بصری.",
       ),
-      prop("size", "'sm' | 'md' | 'lg'", "Control size.", "اندازه کنترل."),
-      prop("colorMotion", "false | { duration?: number }", "Center-out color reveal duration in seconds. Hover uses a separate short fade.", "زمان نمایان شدن رنگ از مرکز، بر حسب ثانیه. شناوری محوشدگی کوتاه جداگانه دارد."),
-      prop("sizeMotion", "{ stiffness?, damping?, mass? }", "Real layout spring. Default damping 40 keeps resize smooth; press damping remains independent.", "فنر ابعاد واقعی. میرایی پیش‌فرض ۴۰ تغییر اندازه را نرم می‌کند و از میرایی فشار مستقل است."),
-      prop(
-        "pressMotion",
-        "{ scale?, stiffness?, damping?, mass?, radiusDepthRatio? }",
-        "Optional spring tuning; minimal and reduced-motion modes suppress scaling.",
-        "تنظیم اختیاری فنر؛ در حالت حرکت کم یا کاهش حرکت، تغییر اندازه غیرفعال است.",
-      ),
-      prop(
-        "ripple",
-        "false | { duration?, opacity?, easeOutStrength?, releaseSpeed? }",
-        "Pointer-origin ripple, centered for keyboard activation. Durations are seconds.",
-        "موج از محل لمس یا مرکز دکمه برای صفحه‌کلید. زمان‌ها بر حسب ثانیه هستند.",
-      ),
+      prop("size", "'xs' | 'sm' | 'md' | 'lg' | 'xl'", "Button sizes; s/m/l aliases also work. Existing sizes retain their geometry.", "اندازه دکمه؛ نام‌های s/m/l نیز پذیرفته می‌شوند."),
+      prop("children / text", "ReactNode / string", "Button label; children takes precedence over text.", "برچسب دکمه؛ children بر text اولویت دارد."),
+      prop("icon / leading / trailing", "ReactNode", "Registered icon name or React icon content, with optional leading/trailing slots.", "نام آیکون ثبت‌شده یا محتوای React با جایگاه ابتدا و انتها."),
+      prop("selectedIcon", "ReactNode | null", "Optional selected-state icon. Null uses the same Material symbol: outlined off, filled on, with the authored center-fill animation.", "آیکون انتخاب‌شده اختیاری؛ مقدار null همان نماد را در حالت خاموش توخالی و روشن پر، با پویانمایی پرشدن نشان می‌دهد."),
+      prop("iconPosition", "start | end", "Logical icon position, mirrored in RTL.", "جای منطقی آیکون، مطابق جهت نوشتن."),
+      prop("toggle / toggleOnClick", "boolean", "Tonal, Outlined and Ghost/Text use their treatment off and Primary on. Emphasize stays Primary in both states. Filled and Danger do not toggle. A parent can own selection changes.", "تونال، خطی و متنی در حالت روشن رنگ اصلی دارند؛ تأکیدی در هر دو حالت اصلی است. پر و خطر انتخابی نیستند. کنترل والد ممکن است."),
+      prop("selected / defaultSelected", "boolean", "Controlled or initial toggle state, exposed as aria-pressed.", "وضعیت کنترل‌شده یا اولیه انتخاب با aria-pressed."),
+      prop("onSelectedChange", "(selected: boolean) => void", "Selection change callback.", "تابع تغییر انتخاب."),
+      prop("onSelectionChange", "({ selected, value }) => void", "Selection event including the button value.", "رویداد انتخاب همراه با مقدار دکمه."),
+      prop("active / disabled", "boolean", "Active holds the hover background without selecting or disabling the action. Disabled blocks native activation.", "وضعیت فعال یا غیرفعال بومی."),
+      prop("progress", "number | null | boolean | { value?, indeterminate?, label? }", "Determinate percentage or unknown progress in the icon slot.", "درصد پیشرفت یا پیشرفت نامعین در جای آیکون."),
+      prop("showProgress / indeterminate", "boolean", "Explicit progress visibility and mode.", "نمایش و حالت صریح پیشرفت."),
+      prop("loadingText / progressLabel", "string", "Temporary loading text and accessible progress name.", "متن موقت بارگذاری و نام دسترس‌پذیر پیشرفت."),
+      prop("type / name / value / form", "native button attributes", "Normal action, native form submission or form reset.", "اقدام معمولی، ارسال یا بازنشانی بومی فرم."),
+      prop("ariaLabel / aria-label", "string", "Accessible name, required for icon-only content.", "نام دسترس‌پذیر برای محتوای بدون متن."),
+      prop("className / style / ref", "native React attributes", "Styling hooks and native button ref; focus, click and DOM events remain available.", "تنظیم ظاهر و ref بومی؛ تمرکز، کلیک و رویدادهای DOM در دسترس هستند."),
       prop(
         "loading",
         "boolean",
@@ -190,8 +192,8 @@ export const catalogue: Entry[] = [
     "IconButton",
     "دکمه آیکون",
     "controls",
-    "A compact action with an animated symbol.",
-    "اقدامی کوچک با نماد متحرک.",
+    "A compact action with configurable width and a selected-state symbol.",
+    "اقدامی کوچک با عرض قابل تنظیم و نماد وضعیت انتخاب.",
     '<IconButton label="Notifications"><AnimatedIcon name="bell" /></IconButton>',
     [
       prop(
@@ -200,6 +202,20 @@ export const catalogue: Entry[] = [
         "Required accessible name.",
         "نام دسترس‌پذیر الزامی.",
       ),
+      prop("ariaLabel / aria-label", "string", "Accessible-name alternatives to label; describe the action.", "جایگزین نام دسترس‌پذیر؛ اقدام را توصیف کنید."),
+      prop("icon / selectedIcon", "ReactNode | icon name | null", "Optional selected icon, used only in toggle mode. Null keeps one Material symbol and animates its official outline-to-fill transition. Children remain compatible.", "آیکون انتخاب‌شده اختیاری؛ null همان نماد را از توخالی به پر تبدیل می‌کند. children همچنان پشتیبانی می‌شود."),
+      prop("selectedLabel", "string", "Optional accessible name for the selected action, such as Pause paired with Play.", "نام اختیاری اقدام در حالت انتخاب‌شده؛ مانند مکث در کنار پخش."),
+      prop("variant", "filled | emphasize | tonal | outlined | ghost | danger", "Default Ghost. Emphasize is a toggle treatment that stays Primary off and on.", "پیش‌فرض شفاف؛ تأکیدی گونه انتخابی با رنگ اصلی در هر دو حالت است."),
+      prop("size", "xs | sm | md | lg | xl", "Five sizes; icons and progress follow the size. s/m/l aliases remain supported.", "پنج اندازه؛ آیکون و پیشرفت از اندازه پیروی می‌کنند. نام‌های s/m/l پشتیبانی می‌شوند."),
+      prop("width", "narrow | default | wide", "Changes the surface width while preserving centered, fixed-size content.", "عرض سطح را تغییر می‌دهد و محتوا در مرکز و با اندازه ثابت می‌ماند."),
+      prop("toggle / toggleOnClick", "boolean", "Tonal, Outlined, Ghost/Text and Emphasize. false toggleOnClick lets a parent own selection. Filled and Danger remain ordinary actions.", "انتخاب برای تونال، خطی، متنی و تأکیدی؛ امکان کنترل انتخاب توسط والد. پر و خطر اقدام عادی هستند."),
+      prop("selected / defaultSelected", "boolean", "Controlled or initial selection. Selected alone does not enable toggle behavior.", "انتخاب کنترل‌شده یا اولیه؛ selected به‌تنهایی حالت انتخابی را فعال نمی‌کند."),
+      prop("onSelectedChange / onSelectionChange", "callbacks", "Next boolean or { selected, value }. Preventing onClick cancels the built-in selection change.", "مقدار منطقی جدید یا { selected, value }؛ لغو onClick تغییر انتخاب را متوقف می‌کند."),
+      prop("disabled / active / loading", "boolean", "Disabled or busy activation guard; Active and keyboard focus use the active action background.", "جلوگیری از اجرای غیرفعال یا مشغول؛ حالت فعال و تمرکز صفحه‌کلید رنگ فعال دارند."),
+      prop("progress", "number | null | boolean | object", "Determinate or indeterminate progress in the icon slot, sized with Appearance.", "پیشرفت معین یا نامعین در جای آیکون با اندازه ظاهر."),
+      prop("type / name / value / form", "native button attributes", "Native button, submit and reset behavior with forwarded button ref.", "رفتار بومی دکمه، ارسال و بازنشانی و ref دکمه."),
+      prop("Web Component", "mf-icon-button", "Optional materialfluid/elements entry. Properties/attributes reflect state; change carries { selected, value }.", "ورودی اختیاری materialfluid/elements؛ ویژگی‌ها وضعیت را منعکس می‌کنند و change شامل { selected, value } است."),
+      prop("Web Component methods", "setIcon, setSelectedIcon, setAriaLabel, setSize, setWidth, setVariant", "Content and appearance getters/setters; select/deselect/toggleSelected, isSelected/isToggle, enable/disable, progress/loading, focus/click, addClass/removeClass and destroy. Programmatic selection emits no change; await updateComplete for rendering.", "متدهای محتوا و ظاهر، انتخاب، فعال‌سازی، پیشرفت، تمرکز و چرخه عمر. انتخاب برنامه‌ای change ارسال نمی‌کند؛ برای رندر updateComplete را منتظر بمانید."),
     ],
     ["disabled", "loading"],
   ),
@@ -318,12 +334,7 @@ export const catalogue: Entry[] = [
         "نماد اتصال با حرکت خطی درون دستگیره.",
       ),
       prop("languageLabels", "{ off: string; on: string }", "Custom letters inside the thumb, such as EN and فا. Takes priority over icon.", "حروف دلخواه مانند EN و فا درون دستگیره؛ بر آیکون اولویت دارد."),
-      prop(
-        "iconMotion",
-        "{ duration?, stagger?, slashDelay?, strokeWidth?, animated? }",
-        "Optional drawing settings for the connection glyph.",
-        "تنظیمات اختیاری حرکت نماد اتصال.",
-      ),
+
     ],
     ["disabled", "selected"],
     [
@@ -926,8 +937,8 @@ export const catalogue: Entry[] = [
     "مقدار معلوم یا وضعیت نامعین روشن.",
     '<Progress label="Uploading" value={65} />',
     [
-      prop("presentation", "wavy | segmented | status", "Moving wave, separated segments, or a status row with percentage and optional remaining time.", "موج متحرک، بخش‌بندی یا ردیف وضعیت با درصد و زمان باقی‌مانده اختیاری."),
-      prop("segments", "number", "Number of segments for segmented progress; default 8.", "تعداد بخش‌ها؛ پیش‌فرض ۸."),
+      prop("presentation", "wavy | segmented", "Continuous or segmented waves; either supports optional showStatus, status and remaining.", "موج متحرک، بخش‌بندی یا ردیف وضعیت با درصد و زمان باقی‌مانده اختیاری."),
+      prop("segments", "number | ProgressSegment[]", "Segment count or weighted, optionally labeled stages; default 8.", "تعداد بخش‌ها؛ پیش‌فرض ۸."),
       prop("status / remaining", "ReactNode", "Status-row content; remaining time comes from your application.", "محتوای ردیف وضعیت؛ زمان باقی‌مانده را برنامه شما تعیین می‌کند."),
       prop("wave", "ProgressWaveOptions", "Wave length, height, speed, direction, stroke and track thickness, and incremental amplitude. Default: 60px / 20px / 31px per second toward the tail / 5px / 20px / incremental.", "تنظیم طول، ارتفاع، سرعت، جهت و ضخامت موج و مسیر، با دامنه افزایشی."),
       prop(
@@ -1129,30 +1140,16 @@ export const catalogue: Entry[] = [
     '<IconButton label="Wi-Fi"><AnimatedIcon name="wifi" size={32} /></IconButton>',
     [
       prop("name", "IconName", "Locally bundled icon name.", "نام آیکون محلی."),
-      prop(
-        "duration / strokeWidth / animated",
-        "number / number / boolean",
-        "Duration multiplier, stroke weight, and animation switch.",
-        "ضریب زمان، ضخامت خطوط و فعال‌سازی حرکت.",
-      ),
+      prop("animated", "boolean", "Enable or suppress the authored icon animation.", "فعال یا غیرفعال کردن حرکت پیش‌فرض آیکون."),
+
       prop(
         "active",
         "boolean",
         "Optional state marker; animations start only on release.",
         "نشانگر اختیاری وضعیت؛ حرکت فقط پس از رها کردن آغاز می‌شود.",
       ),
-      prop(
-        "stagger / slashDelay",
-        "number / number",
-        "Stroke stagger and slash delay in seconds (default 0.07 / 0.15).",
-        "تاخیر بین خطوط و خط قطع بر حسب ثانیه (پیش‌فرض ۰٫۰۷ و ۰٫۱۵).",
-      ),
-      prop(
-        "fillDuration / fillEaseStrength",
-        "number / number",
-        "Center-out fill reveal duration in seconds (0.4) and ease-out strength (0.85). Filled icons share this circular reveal; stroke glyphs retain drawing and stagger.",
-        "زمان پر شدن از مرکز بر حسب ثانیه (۰٫۴) و شدت شروع سریع (۰٫۸۵). آیکون‌های خطی همچنان از رسم خطوط استفاده می‌کنند.",
-      ),
+
+
       prop(
         "label",
         "string",
@@ -1165,3 +1162,78 @@ export const catalogue: Entry[] = [
 ];
 export const text = (entry: [string, string], locale: "en" | "fa") =>
   entry[locale === "fa" ? 1 : 0];
+
+// The visible catalogue is independent of compatibility routes and internal helpers.
+function existing(id: string, family: Family, name?: string, newId = id): Entry {
+  const original = existingEntries.find(item => item.id === id)!;
+  return { ...original, id: newId, name: name ?? original.name, family, demoId: id, demoFamily: original.family,
+    code: name ? original.code.replace(new RegExp(`(<\\/?|\\b)${original.name}(?=[\\s/>])`, "g"), `$1${name}`) : original.code,
+  };
+}
+function added(name: string, fa: string, family: Family, en: string, persian: string, code: string, props: PropDoc[] = []): Entry {
+  const details: Record<string, PropDoc[]> = {
+    SplitButton: [prop("label / menuLabel", "string", "Primary action and alternatives button names.", "نام اقدام اصلی و دکمه گزینه‌ها."), prop("items", "MenuItem[]", "Alternative actions with optional callbacks.", "گزینه‌های مرتبط با تابع اجرای اختیاری."), prop("onClick", "MouseEventHandler", "Runs the primary action.", "اجرای اقدام اصلی.")],
+    FABMenu: [prop("label", "string", "Accessible name of the floating menu trigger.", "نام دسترس‌پذیر دکمه فهرست شناور."), prop("items", "MenuItem[]", "Actions opened by the floating button.", "اقدام‌های فهرست شناور.")],
+    Chips: [prop("label", "string", "Accessible name for the choices.", "نام دسترس‌پذیر مجموعه انتخاب‌ها."), optionsProp, prop("value / defaultValue", "string[]", "Controlled or initial selected choices.", "گزینه‌های انتخاب‌شده کنترل‌شده یا اولیه."), prop("onValueChange", "(value: string[]) => void", "Receives the next selected choices.", "دریافت مجموعه انتخاب‌های بعدی.")],
+    NavigationBar: [...selectionProps, prop("items", "NavItem[]", "Destinations with labels and optional icons or links.", "مقصدها با برچسب و آیکون یا پیوند اختیاری.")],
+    Toolbar: [prop("label", "string", "Accessible name of this action group.", "نام دسترس‌پذیر گروه ابزارها."), prop("children", "ReactNode", "Actions support Left/Right, Home and End focus navigation.", "پیمایش ابزارها با کلیدهای جهت‌نما، Home و End.")],
+    Carousel: [prop("slides", "ReactNode[]", "Slide content; inactive slides are hidden from focus.", "محتوای اسلایدها؛ موارد غیرفعال تمرکز نمی‌گیرند."), prop("label", "string", "Accessible name of the collection.", "نام دسترس‌پذیر مجموعه."), prop("orientation", "horizontal | vertical", "Scroll and arrow-key direction.", "جهت حرکت و کلیدهای پیمایش.")],
+    Sidebar: [prop("items", "{ id: string; label: string; icon?: ReactNode }[]", "Workspace destinations.", "مقصدهای فضای کار."), prop("variant", "standard | inset | floating", "Workspace composition.", "چیدمان فضای کار."), prop("children", "ReactNode", "Workspace content.", "محتوای فضای کار.")],
+    CodeBlock: [prop("code", "string", "Source to display and copy.", "کد برای نمایش و کپی."), prop("language", "string", "Displayed language caption.", "عنوان زبان کد."), prop("lineNumbers / wrap", "boolean", "Independent line numbering and wrapping.", "شماره‌گذاری و شکست خط مستقل.")],
+    Shape: [prop("form", "circle | square | flower | star | diamond | oval", "Geometric silhouette.", "فرم هندسی."), prop("label", "string", "Accessible name; omit for decorative shapes.", "نام دسترس‌پذیر؛ برای شکل تزئینی حذف شود.")],
+    SideSheet: [prop("title", "ReactNode", "Accessible sheet heading.", "عنوان دسترس‌پذیر پنل."), ...openProps, prop("side", "start | end", "Logical viewport edge; follows reading direction.", "لبه منطقی صفحه مطابق جهت نوشتار.")],
+  };
+  const base = entry(name, fa, family, en, persian, code, props);
+  return { ...base, props: [
+    ...base.props.filter(item => item.name === "size" && !["Carousel", "Sidebar", "CodeBlock", "Shape"].includes(name)),
+    ...(details[name] ?? props),
+  ], custom: true };
+}
+export const catalogue: Entry[] = [
+  existing("button", "controls"),
+  existing("icon-button", "controls"),
+  existing("button-group", "controls"),
+  added("SplitButton", "دکمه دو‌بخشی", "controls", "A primary action with related alternatives.", "اقدام اصلی همراه با گزینه‌های مرتبط.", '<SplitButton label="Save" onClick={() => console.log("Saved")} menuLabel="Save options" items={[{ id: "copy", label: "Save a copy" }]} />'),
+  existing("fab", "controls"),
+  added("FABMenu", "فهرست اقدام شناور", "controls", "Related actions opened from a floating button.", "اقدام‌های مرتبط در یک فهرست شناور.", '<FABMenu label="Create" items={[{ id: "document", label: "Document" }, { id: "folder", label: "Folder" }]} />'),
+  added("Chips", "تراشه‌ها", "controls", "Compact choices and filters with explicit selection.", "انتخاب‌ها و فیلترهای کوچک با وضعیت روشن.", '<Chips label="Interests" options={[{value:"design",label:"Design"},{value:"music",label:"Music"}]} />'),
+  existing("calendar", "forms"),
+  existing("checkbox", "forms"),
+  existing("date-picker", "forms"),
+  existing("menu", "forms"),
+  existing("radio-group", "forms"),
+  existing("select", "forms"),
+  existing("slider", "forms"),
+  existing("switch", "forms"),
+  existing("text-field", "forms"),
+  existing("breadcrumbs", "navigation", "Breadcrumb", "breadcrumb"),
+  added("NavigationBar", "نوار پیمایش", "navigation", "Primary destinations in a horizontal bar.", "مقصدهای اصلی در نوار افقی.", '<NavigationBar label="Main navigation" items={destinations} />'),
+  existing("side-navigation", "navigation", "NavigationDrawer", "navigation-drawer"),
+  existing("navigation-rail", "navigation"),
+  existing("pagination", "navigation"),
+  added("Sidebar", "نوار کناری", "navigation", "Grouped navigation beside a workspace.", "پیمایش گروه‌بندی‌شده در کنار فضای کار.", '<Sidebar label="Workspace" items={[{id:"home",label:"Home"}]}><p>Workspace content.</p></Sidebar>'),
+  existing("tabs", "navigation"),
+  added("Toolbar", "نوار ابزار", "navigation", "A named group of actions with arrow-key navigation.", "گروهی از ابزارها با پیمایش کلیدهای جهت‌نما.", '<Toolbar label="Document tools"><Button>Undo</Button><Button>Redo</Button></Toolbar>'),
+  existing("top-app-bar", "navigation"),
+  existing("accordion", "surfaces"),
+  existing("avatar", "surfaces"),
+  existing("bottom-sheet", "surfaces"),
+  existing("card", "surfaces"),
+  added("Carousel", "چرخ‌وفلک", "surfaces", "Browse a collection with buttons, keyboard or dragging.", "مرور مجموعه با دکمه، صفحه‌کلید یا کشیدن.", '<Carousel label="Highlights" slides={[<p key="one">First highlight</p>, <p key="two">Second highlight</p>]} />'),
+  added("CodeBlock", "بلوک کد", "surfaces", "Readable source with copying, wrapping and line numbers.", "کد خوانا با کپی، شکست خط و شماره خطوط.", '<CodeBlock code={"const greeting = 42;"} language="typescript" />'),
+  existing("dialog", "surfaces"),
+  existing("divider", "surfaces"),
+  existing("list", "surfaces"),
+  added("Shape", "شکل", "surfaces", "Rounded geometric forms using the shared accent roles.", "فرم‌های هندسی نرم با رنگ‌های مشترک.", '<Shape form="flower" label="Flower" />'),
+  added("SideSheet", "پنل کناری", "surfaces", "Supporting details beside the main content.", "جزئیات تکمیلی در کنار محتوای اصلی.", '<SideSheet title="Details" trigger={<Button>Open details</Button>}><p>Supporting information.</p></SideSheet>'),
+  existing("data-table", "surfaces", "Table", "table"),
+  existing("alert", "feedback"),
+  existing("alert-dialog", "feedback"),
+  existing("badge", "feedback"),
+  existing("spinner", "feedback", "Loading", "loading"),
+  existing("progress", "feedback"),
+  existing("toast", "feedback", "Snackbar", "snackbar"),
+  existing("toast", "feedback"),
+  existing("tooltip", "feedback"),
+];
+export const findEntry = (id: string) => catalogue.find(item => item.id === id) ?? existingEntries.find(item => item.id === id);

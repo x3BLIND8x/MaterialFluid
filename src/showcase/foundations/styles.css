@@ -1,0 +1,63 @@
+.foundation-page { min-width: 0; }
+.foundation-preview { display: grid; place-items: center; min-height: 260px; padding: 32px; margin-block: 24px; border: 1px solid var(--mf-outline-variant); border-radius: calc(var(--mf-corner-md, 24px) + 33px); background: var(--mf-surface-container); }
+.foundation-type-preview { overflow-wrap: anywhere; text-align: center; }
+.foundation-control-group { border: 0; padding: 0; margin: 24px 0; min-width: 0; }
+.foundation-control-group > legend { font-weight: 750; margin-bottom: 10px; }
+.foundation-control-group .mf-toggle-group { max-width: 100%; flex-wrap: wrap; }
+.foundation-control-rows { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.foundation-type-specimen { width: 100%; min-width: 0; position: relative; }
+.foundation-type-specimen :is(p, blockquote) { margin: 0; }
+.foundation-type-specimen article h2 { font-size: 1.4em; line-height: 1.2; margin: 0 0 1em; }
+.foundation-type-specimen article p + p { margin-top: 1em; }
+.foundation-type-specimen cite { display: block; font-size: .7em; margin-top: 1em; }
+.foundation-type-specimen .foundation-code-sample { font-size: 1em; line-height: inherit; margin: 0; padding: 0; background: none; border-radius: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.foundation-math { display: grid; gap: 24px; justify-items: center; }
+.foundation-math math { font-size: 1.5em; }
+.foundation-keyboard-sample, .foundation-science { display: grid; gap: 1em; }
+.foundation-accessibility-demo { padding-block: 24px; border-block: 1px solid var(--mf-outline-variant); }
+.foundation-accessibility-demo form { display: grid; gap: 24px; justify-items: start; max-width: 560px; }
+.foundation-accessibility-demo form .mf-field { width: 100%; }
+.foundation-contrast-samples { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-block: 24px; }
+.foundation-event-log { min-height: 28px; padding-block: 16px; color: var(--mf-on-surface); }
+.foundation-motion-notice { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.foundation-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 20px; margin-block: 24px; }
+.foundation-controls > .mf-field { flex: 1 1 220px; }
+.foundation-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+.foundation-page output { display: block; min-height: 28px; margin-block: 12px; }
+.foundation-shape-preview { width: min(200px, 65vw); height: 200px; fill: var(--mf-primary-fill); stroke: var(--mf-primary-plain-ink); stroke-width: .4; }
+.foundation-shapes { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 12px; margin-block: 28px; }
+.foundation-shapes .mf-button { width: 64px; height: 64px; padding: 12px; }
+.foundation-shapes svg { width: 36px; height: 36px; fill: currentColor; }
+.foundation-type-list { display: grid; margin-block: 24px; }
+.foundation-type-list > div { display: grid; grid-template-columns: minmax(140px, 1fr) 2fr; gap: 24px; align-items: center; padding-block: 20px; border-bottom: 1px solid var(--mf-outline-variant); min-width: 0; }
+.foundation-type-list p { margin: 0; overflow-wrap: anywhere; }
+.foundation-page pre { direction: ltr; text-align: left; unicode-bidi: isolate; overflow: auto; padding: 20px; background: var(--mf-surface-container); border-radius: var(--mf-corner-md); font-family: var(--mf-font-code); }
+.foundation-page p, .foundation-page li { max-width: 72ch; }
+.foundation-page h2 { margin-top: 32px; }
+.foundation-motion-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-block: 24px; }
+.foundation-motion-role { padding-block: 16px; border-block-end: 1px solid var(--mf-outline-variant); min-width: 0; }
+.foundation-motion-role h3 { text-transform: capitalize; }
+.foundation-motion-role svg { display: block; width: 100%; height: 130px; overflow: visible; }
+.foundation-motion-role .curve-axis { stroke: var(--mf-outline); stroke-width: 1; }
+.foundation-motion-role .curve-path { fill: none; stroke: var(--mf-primary-plain-ink); stroke-width: 2; }
+.foundation-motion-role .curve-playhead { stroke: var(--mf-outline); stroke-width: 1; stroke-dasharray: 3 3; }
+.foundation-motion-role .curve-cursor { fill: var(--mf-primary-plain-ink); }
+.foundation-motion-role svg text { font-size: 11px; fill: var(--mf-on-surface); font-family: var(--mf-font-code); }
+.foundation-timeline { padding-block: 20px; border-block: 1px solid var(--mf-outline-variant); }
+.foundation-timeline .mf-toggle-group { margin-top: 20px; }
+.foundation-timecode { font-family: var(--mf-font-code); font-variant-numeric: tabular-nums; }
+.foundation-motion-role svg { height: 180px; margin-inline: auto; overflow: hidden; }
+.foundation-motion-track.foundation-curve-track { width: min(240px, 55%); height: 44px; margin-inline: auto; border: 0; border-radius: 22px; background: var(--mf-secondary-container); color: var(--mf-on-secondary-container); }
+.foundation-curve-track .foundation-motion-dot { top: 11px; }
+.foundation-curve-time { font-family: var(--mf-font-code); font-size: 12px; white-space: nowrap; }
+.foundation-motion-track { height: 32px; background: var(--mf-surface-container); border-radius: 16px; margin-block: 16px; position: relative; }
+.foundation-motion-dot { position: absolute; inset-inline-start: 0; top: 5px; width: 22px; height: 22px; border-radius: 50%; background: var(--mf-primary-fill); border: 1px solid var(--mf-primary-plain-ink); }
+.foundation-tone-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; margin-block: 12px 28px; }
+.foundation-tone { display: grid; place-items: center; min-height: 48px; border-radius: 12px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.foundation-color-configuration { margin-block: 28px; }
+@media (max-width: 600px) {
+  .foundation-motion-roles { grid-template-columns: 1fr; }
+  .foundation-preview { min-height: 220px; padding: 24px; border-radius: calc(var(--mf-corner-md, 24px) + 25px); }
+  .foundation-type-list > div { grid-template-columns: 1fr; gap: 12px; }
+  .foundation-tone-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}

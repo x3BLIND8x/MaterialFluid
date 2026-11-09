@@ -8,12 +8,12 @@ test('pagination numbers, overflow and stepper symbols stay centered at every si
    await page.goto(`/#/components/${route}`);
    for(const size of ['sm','md','lg']){
     await selectSize(page,size);
-    const offsets=await page.locator(route==='pagination'?'.demo-primary .mf-page-button':'.demo-primary .mf-step-dot').evaluateAll(nodes=>nodes.map(node=>{
+    await expect.poll(async()=>{const offsets=await page.locator(route==='pagination'?'.demo-primary .mf-page-button':'.demo-primary .mf-step-dot').evaluateAll(nodes=>nodes.map(node=>{
      const ink=node.querySelector('.mf-step-symbol')??node.querySelector('span:not(.mf-selection)')!;
      const a=node.getBoundingClientRect(),b=ink.getBoundingClientRect();
      return {x:Math.abs(a.x+a.width/2-b.x-b.width/2),y:Math.abs(a.y+a.height/2-b.y-b.height/2)};
     }));
-    for(const point of offsets){expect(point.x).toBeLessThan(1);expect(point.y).toBeLessThan(1);}
+    return Math.max(...offsets.flatMap(point=>[point.x,point.y]));}).toBeLessThan(1);
     if(route==='stepper'){
      const dot=page.locator('.demo-primary button[aria-current=step] .mf-step-dot');
      const a=(await dot.boundingBox())!,b=(await dot.locator('.mf-selection').boundingBox())!;

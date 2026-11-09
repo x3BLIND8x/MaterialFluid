@@ -1,5 +1,6 @@
+import { useCurveValue } from "./curve-value";
 import { forwardRef, useRef, useState, useEffect, useLayoutEffect, type AnchorHTMLAttributes } from "react";
-import { useMotionValue, useMotionValueEvent, useSpring, useTransform } from "motion/react";
+import { useMotionValue, useMotionValueEvent, useTransform } from "motion/react";
 import { useAppearanceProps, type AppearanceProps } from "./appearance";
 import { useMaterialFluid } from "./provider";
 import { ButtonRipple } from "./button-ripple";
@@ -27,8 +28,8 @@ export const GhostLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTML
     observer.observe(element);
     return () => observer.disconnect();
   }, [restRadius]);
-  const press = useSpring(0, { stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass });
-  useEffect(() => { if (expressive) press.set(held ? 1 : 0); else press.jump(0); }, [held, expressive, press]);
+  const press = useCurveValue(0, "press");
+  useEffect(() => { if (expressive) press.setTarget(held ? 1 : 0); else press.jump(0); }, [held, expressive, press]);
   const radius = useTransform(() => Math.max(6, restRadius.get() * (1 - (expressive ? press.get() : reducedMotion ? 0 : rippleDepth.get()) * buttonMotion.pressDepth * buttonMotion.radiusDepthRatio / 100)));
   useMotionValueEvent(radius, "change", value => { if (node.current) node.current.style.borderRadius = `${value}px`; });
   useMotionValueEvent(press, "change", value => { if (node.current) node.current.style.transform = `scale(${1 - value * buttonMotion.pressDepth / 100})`; });

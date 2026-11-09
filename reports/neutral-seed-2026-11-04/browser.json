@@ -1,0 +1,316 @@
+[
+  {
+    "theme": "light",
+    "locale": "en",
+    "id": "button",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "id": "input",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "id": "select",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "id": "calendar",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "id": "badge",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "settings": true
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "id": "button",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "id": "input",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "id": "select",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "id": "calendar",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "id": "badge",
+    "colors": {
+      "canvas": "#ffffff",
+      "surface-high": "#f5f5f5",
+      "primary": "#e8d791",
+      "on-primary": "#261f00",
+      "primary-plain-ink": "#4c4209"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "id": "button",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "id": "input",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "id": "select",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "id": "calendar",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "target": [
+              ".rdp-selected > .rdp-day_button.mf-size--md.mf-scale--md"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.37 (foreground color: #fafafa, background color: #ccd6ff, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "id": "badge",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "settings": true
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "id": "button",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "id": "input",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "id": "select",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "id": "calendar",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "target": [
+              ".rdp-selected > .rdp-day_button.mf-size--md[data-mf-sized=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.37 (foreground color: #fafafa, background color: #ccd6ff, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "id": "badge",
+    "colors": {
+      "canvas": "#0a0a0a",
+      "surface-high": "#262626",
+      "primary": "#ccd6ff",
+      "on-primary": "#001b54",
+      "primary-plain-ink": "#ccd6ff"
+    },
+    "overflow": false,
+    "violations": []
+  }
+]

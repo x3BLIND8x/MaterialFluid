@@ -1,0 +1,11 @@
+# IconButton additions, 2026-11-09
+
+Reviewed the reference playground and documentation at https://md3.io/components/icon-button/ and https://md3.io/docs/components/icon-button/, plus the source types, config, API, implementation, toggle feature, styles and element adapter under https://github.com/floor/material/tree/main/src/components/icon-button. Adapted behavior into MaterialFluid shared controls and optional element adapter, preserving owned styling and authored animation.
+
+Five sizes, narrow/default/wide widths, selectedIcon, nullable same-symbol fill, optional selectedLabel, toggleOnClick, native form types/value, progress/loading, active/focus behavior and element state methods have React and Web Component examples. The owner's final Emphasize request replaces the intermediate Playback/playing concept entirely. Emphasize is an ordinary toggle and keeps Primary paired colors off and on. Filled/Danger stay non-toggleable; Square, Elevated, independent icon sizing and ripple/motion knobs remain excluded.
+
+Official FILL=0 contours were added from the hash-pinned Material Symbols font without replacing existing filled artwork or reveal data. Of 4,322 optional symbols, 2,887 have distinct outline contours; fill-invariant glyphs naturally retain their original shape. The core includes play/pause, avoiding an optional-pack download for the default and Emphasize presets. The optional complete pack is larger, approximately 1.67 MB gzip, and still loads on demand.
+
+All seven dedicated browser checks passed: four bilingual light/dark desktop/narrow matrices with glyph alignment and scoped axe scans; reversible null-selected-icon fill in both controls including reduced motion; complete icon selection, preserved state, escaped code and native forms; and Web Component methods/events/forms. Desktop and narrow captures were inspected. All 185 unit tests passed. Installed-package smoke passed with 26 IconButton and 17 Button examples, 45 default/45 size examples and 34 compatibility examples. Final release-wide evidence is recorded in ../release-0.2.0/REVIEW.md and ../../VALIDATION.md.
+
+Checks use local Microsoft Edge. They do not establish physical touch-device, Safari/Firefox or manual screen-reader acceptance.

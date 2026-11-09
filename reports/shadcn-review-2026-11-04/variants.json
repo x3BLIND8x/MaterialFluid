@@ -1,0 +1,92 @@
+[
+  {
+    "locale": "en",
+    "id": "accordion",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "field",
+    "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('textbox', { name: 'Email address', exact: true })\u001b[22m\n"
+  },
+  {
+    "locale": "en",
+    "id": "item",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "scroll-area",
+    "error": "The expression evaluated to a falsy value:\n\n  assert(await p.locator('.mf-pattern-scroll').evaluate(e=>e.scrollWidth>e.clientWidth&&e.scrollHeight>e.clientHeight))\n"
+  },
+  {
+    "locale": "en",
+    "id": "code-block",
+    "error": "The expression evaluated to a falsy value:\n\n  assert(await code.locator('.mf-code-line-number').count()>2)\n"
+  },
+  {
+    "locale": "en",
+    "id": "resizable",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "separator",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "carousel",
+    "error": "expect(locator).toBeVisible() failed\n\nLocator: getByRole('group', { name: '2 / 3', exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('group', { name: '2 / 3', exact: true }) with timeout 5000ms\n  - waiting for getByRole('group', { name: '2 / 3', exact: true })\n"
+  },
+  {
+    "locale": "en",
+    "id": "button",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "accordion",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "field",
+    "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('textbox', { name: 'نشانی ایمیل', exact: true })\u001b[22m\n"
+  },
+  {
+    "locale": "fa",
+    "id": "item",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "scroll-area",
+    "error": "The expression evaluated to a falsy value:\n\n  assert(await p.locator('.mf-pattern-scroll').evaluate(e=>e.scrollWidth>e.clientWidth&&e.scrollHeight>e.clientHeight))\n"
+  },
+  {
+    "locale": "fa",
+    "id": "code-block",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "resizable",
+    "error": "[{\"id\":\"scrollable-region-focusable\",\"nodes\":[[\".mf-pattern-resizable > div:nth-child(3)\"]]}]\n\n1 !== 0\n"
+  },
+  {
+    "locale": "fa",
+    "id": "separator",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "carousel",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "button",
+    "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('option', { name: 'Small', exact: true })\u001b[22m\n"
+  }
+]

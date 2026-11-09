@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "touch": false,
+      "rtl": false,
+      "rest": 1
+    },
+    {
+      "touch": true,
+      "rtl": true,
+      "rest": 1
+    }
+  ],
+  "errors": []
+}

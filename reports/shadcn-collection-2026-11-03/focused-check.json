@@ -1,0 +1,18 @@
+{
+  "oldEntries": 58,
+  "referenceEntries": 66,
+  "checked": [
+    "menu expansion",
+    "comparison",
+    "reference routes render",
+    "command keyboard",
+    "context-menu right click/action",
+    "resizable keyboard",
+    "questionnaire submission",
+    "carousel advance",
+    "mobile Persian navigation",
+    "reduced-motion mobile",
+    "no sampled runtime errors"
+  ],
+  "errors": []
+}

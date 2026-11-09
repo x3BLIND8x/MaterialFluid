@@ -10,7 +10,7 @@ test("select icon colors match password-field icons in light and dark themes", a
     await expect(passwordIcon).toBeVisible();
     const color = await passwordIcon.evaluate(el => getComputedStyle(el).color);
     await passwordIcon.hover();
-    const passwordButton = passwordIcon.locator("..");
+    const passwordButton = passwordIcon.locator("xpath=ancestor::button[1]");
     const hoverColor = await passwordButton.evaluate(el => {
       const probe = document.createElement("span");
       probe.style.cssText = "position:absolute;background:var(--mf-solid-hover)";

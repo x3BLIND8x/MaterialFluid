@@ -42,13 +42,13 @@ test("None hides form labels while retaining accessible names", async ({ page })
   }
 });
 
-test("old scheme preferences migrate to Tonal Spot without offering other schemes", async ({ page }) => {
+test("saved supported algorithms persist and remain available", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => localStorage.setItem("materialfluid.preferences", JSON.stringify({ colorScheme: "vibrant", locale: "en" })));
   await page.reload();
   await page.goto("/#/colors");
-  await expect(page.getByRole("combobox", { name: "Theme color scheme" })).toHaveCount(0);
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("materialfluid.preferences")!).colorScheme)).toBe("tonalSpot");
+  await expect(page.getByRole("combobox", { name: "Color algorithm", exact: true })).toContainText("Vibrant");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("materialfluid.preferences")!).colorScheme)).toBe("vibrant");
 });
 
 test("field labels retain accessible names without focusing or opening their controls", async ({ page }) => {

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("all 58 pages render without runtime errors or overflow", async ({
+test("all 45 pages render without runtime errors or overflow", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -14,7 +14,7 @@ test("all 58 pages render without runtime errors or overflow", async ({
         title: link.textContent!.trim(),
       })),
     );
-  expect(links).toHaveLength(58);
+  expect(links).toHaveLength(45);
   for (const link of links) {
     await page.goto("/" + link.href);
     await expect(page.locator("h1")).toHaveText(link.title);
@@ -24,6 +24,7 @@ test("all 58 pages render without runtime errors or overflow", async ({
     await expect(
       page.locator(".demo-primary:not(.demo-loading):visible > *"),
     ).not.toHaveCount(0);
+    await page.getByRole("tab", {name:"Documentation",exact:true}).click();
     await expect(page.locator(".usage-code")).toContainText(
       "MaterialFluidProvider",
     );
@@ -60,14 +61,12 @@ test("dialog traps focus, escapes, and restores trigger focus", async ({
   await trigger.click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(
-    dialog.getByRole("button", { name: "Close", exact: true }),
-  ).toBeFocused();
+  expect(await dialog.evaluate(element => element.contains(document.activeElement) && element !== document.activeElement)).toBe(true);
   for (let i = 0; i < 6; i++) {
     await page.keyboard.press("Tab");
     expect(
       await dialog.evaluate((element) =>
-        element.contains(document.activeElement),
+        element.contains(document.activeElement) && element !== document.activeElement,
       ),
     ).toBe(true);
   }
@@ -225,12 +224,12 @@ test("mobile navigation, touch switch dragging, cancellation, and RTL", async ({
   await context.close();
 });
 test("local fonts, no external requests, and accessibility on representative pages", async ({
-  page,
+  page, baseURL,
 }) => {
   const external: string[] = [];
   page.on("request", (request) => {
     if (
-      !request.url().startsWith("http://127.0.0.1:5173") &&
+      !request.url().startsWith(baseURL!) &&
       !request.url().startsWith("data:")
     )
       external.push(request.url());

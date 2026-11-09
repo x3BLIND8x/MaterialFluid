@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { animate, motion, useMotionValue, useTransform, useMotionValueEvent } from "motion/react";
-import type { ButtonProps } from "./controls";
+
 
 export function ButtonRipple({
   x,
@@ -18,7 +18,7 @@ export function ButtonRipple({
   released: boolean;
   animated: boolean;
   onProgress: (value: number) => void;
-  options: Exclude<ButtonProps["ripple"], false>;
+  options?: { duration?: number; opacity?: number; easeOutStrength?: number; releaseSpeed?: number };
   onFinished: () => void;
 }) {
   const scale = useMotionValue(animated ? 0 : 1);

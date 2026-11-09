@@ -1,3 +1,4 @@
+import { selectionTransition } from "./selection-motion";
 import { useSizePolicy } from "./appearance";
 import { Tree, type TreeItem } from "./tree";
 import { useAppearanceProps, appearanceClasses, type AppearanceProps } from "./appearance";
@@ -12,21 +13,23 @@ import {
   type ReactNode,
 } from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { AnimatePresence, motion, useMotionValue, useTransform } from "motion/react";
+import { AnimatePresence, motion, useMotionValue, useTransform, type MotionValue } from "motion/react";
 import { useMaterialFluid } from "./provider";
 import { useControllable, cx } from "./utils";
-import { Button, IconButton } from "./controls";
+import { IconButton } from "./controls";
 import { GhostLink } from "./ghost-link";
 import { useButtonPressAnimation } from "./button-press";
 import { AnimatedIcon } from "./icons";
-function NavigationSelection({ id, className, keepPill = false }: { id: string; className?: string; keepPill?: boolean }) {
+function NavigationSelection({ id, className, keepPill = false, pressScale }: { id: string; className?: string; keepPill?: boolean; pressScale?: MotionValue<number> }) {
   const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
   const animated = mode === "expressive" && !reducedMotion;
   const element = useRef<HTMLSpanElement>(null);
-  const scale = useMotionValue(1);
+  const ownScale = useMotionValue(1);
+  const scale = pressScale ?? ownScale;
   const radius = useMotionValue(24);
-  const { press, release } = useButtonPressAnimation(scale, animated, { scale: 1 - buttonMotion.pressDepth / 100, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass });
+  const { press, release } = useButtonPressAnimation(ownScale, animated && !pressScale, { scale: 1 - buttonMotion.pressDepth / 100, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass });
   useEffect(() => {
+    if (pressScale) return;
     const trigger = element.current?.parentElement;
     if (!trigger) return;
     const down = (event: PointerEvent) => { if (event.button === 0) press(); };
@@ -48,7 +51,7 @@ function NavigationSelection({ id, className, keepPill = false }: { id: string; 
       trigger.removeEventListener("keyup", keyUp);
       trigger.removeEventListener("blur", release);
     };
-  }, [press, release]);
+  }, [press, release, pressScale]);
   const boundedScale = useTransform(scale, value => Math.min(1, value));
   const pressedRadius = useTransform(() => Math.max(6, radius.get() * (1 - Math.max(0, 1 - scale.get()) * buttonMotion.radiusDepthRatio)));
   useLayoutEffect(() => {
@@ -62,7 +65,7 @@ function NavigationSelection({ id, className, keepPill = false }: { id: string; 
   }, [radius]);
   return <motion.span ref={element} className={cx("mf-selection", className)} aria-hidden="true" initial={false}
     layoutId={animated ? id : undefined} style={{ scale: boundedScale, borderRadius: keepPill ? "var(--mf-ui-radius)" : pressedRadius }}
-    transition={animated ? { type: "spring", stiffness: 620, damping: 42, mass: .65 } : { duration: 0 }} />;
+    transition={animated ? selectionTransition : { duration: 0 }} />;
 }
 
 export interface NavItem {
@@ -86,6 +89,7 @@ export interface NavigationProps
   selectionId?: string;
 }
 export interface TabsProps extends Omit<NavigationProps, "items"> {
+  orientation?:"horizontal"|"vertical";
   items: (NavItem & { content: ReactNode })[];
 }
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
@@ -93,6 +97,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     const {
       items,
       selectionId,
+      orientation="horizontal",
       label,
       value,
       defaultValue,
@@ -106,27 +111,86 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
       defaultValue ?? items[0]?.value ?? "",
       onValueChange,
     );
-    const { dir } = useMaterialFluid();
+    const { dir, motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
+    const pressScale = useMotionValue(1);
+    const drag = useRef<{ id: number; startX: number; startY: number; initial: string; list: HTMLElement } | null>(null);
+    const tabAt = (list: HTMLElement, x: number, y: number) => Array.from(list.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(tab => {
+      const box = tab.getBoundingClientRect();
+      return !tab.disabled && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+    });
+    const { press, release } = useButtonPressAnimation(pressScale, mode === "expressive" && !reducedMotion, {
+      scale: 1 - buttonMotion.pressDepth / 100, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass,
+    });
+    const finishDrag = (root: HTMLElement, cancel: boolean, x?: number, y?: number) => {
+      const pointer = drag.current;
+      if (!pointer) return;
+      drag.current = null;
+      if (cancel) set(pointer.initial);
+      else if (x !== undefined && y !== undefined) {
+        const tab = tabAt(pointer.list, x, y);
+        if (tab) { set(tab.dataset.mfTabValue!); tab.focus({ preventScroll: true }); }
+      }
+      if (root.hasPointerCapture(pointer.id)) root.releasePointerCapture(pointer.id);
+      release();
+    };
+    useEffect(() => {
+      window.addEventListener("pointerup", release);
+      window.addEventListener("pointercancel", release);
+      return () => { window.removeEventListener("pointerup", release); window.removeEventListener("pointercancel", release); };
+    }, [release]);
     const id = useId();
     return (
       <TabsPrimitive.Root
+        orientation={orientation}
         {...props}
         ref={ref}
         dir={dir}
         value={selected}
         onValueChange={set}
         className={cx("mf-tabs", className)}
+        onPointerDownCapture={event => {
+          props.onPointerDownCapture?.(event);
+          const target = (event.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
+          const list = target?.closest<HTMLElement>('[role="tablist"]');
+          if (!event.defaultPrevented && event.button === 0 && event.isPrimary && target && !target.disabled && list === event.currentTarget.querySelector(':scope > [role="tablist"]')) {
+            drag.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, initial: selected, list: list! };
+            event.currentTarget.setPointerCapture(event.pointerId);
+            set(target.dataset.mfTabValue!);
+            press();
+          }
+        }}
+        onPointerMove={event => {
+          props.onPointerMove?.(event);
+          const pointer = drag.current;
+          if (!pointer || pointer.id !== event.pointerId || event.defaultPrevented) return;
+          if (event.pointerType === "touch" && (orientation==="vertical"?Math.abs(event.clientX-pointer.startX)>Math.max(8,Math.abs(event.clientY-pointer.startY)):Math.abs(event.clientY-pointer.startY)>Math.max(8,Math.abs(event.clientX-pointer.startX)))) {
+            finishDrag(event.currentTarget, true); return;
+          }
+          const tab = tabAt(pointer.list, event.clientX, event.clientY);
+          if (tab) set(tab.dataset.mfTabValue!);
+        }}
+        onPointerUp={event => { props.onPointerUp?.(event); finishDrag(event.currentTarget, false, event.clientX, event.clientY); }}
+        onPointerCancel={event => { props.onPointerCancel?.(event); finishDrag(event.currentTarget, true); }}
+        onLostPointerCapture={event => { props.onLostPointerCapture?.(event); if (drag.current?.id === event.pointerId) { drag.current = null; release(); } }}
+        onPointerLeave={event => { props.onPointerLeave?.(event); if (!drag.current) release(); }}
+        onBlurCapture={event => { props.onBlurCapture?.(event); if (!event.currentTarget.contains(event.relatedTarget)) release(); }}
+        onKeyDownCapture={event => {
+          props.onKeyDownCapture?.(event);
+          if (!event.defaultPrevented && !event.repeat && (event.target as HTMLElement).closest('[role="tab"]') && ["Enter", " ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) press();
+        }}
+        onKeyUpCapture={event => { props.onKeyUpCapture?.(event); if (["Enter", " ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) release(); }}
       >
         <TabsPrimitive.List aria-label={label} className="mf-tab-list">
           {items.map((item) => (
             <TabsPrimitive.Trigger
               key={item.value}
               value={item.value}
+              data-mf-tab-value={item.value}
               disabled={item.disabled}
               className="mf-tab"
             >
               {selected === item.value && (
-                <NavigationSelection id={selectionId ?? id} />
+                <NavigationSelection id={selectionId ?? id} pressScale={pressScale} />
               )}
               <span>
                 {item.icon}
@@ -172,11 +236,11 @@ export const Breadcrumbs = forwardRef<HTMLElement, BreadcrumbsProps>(
         <ol>
           {items.map((item, i) => (
             <li key={i}>
-              {i > 0 && <AnimatedIcon name="chevron-right" size={16} />}{" "}
+              {i > 0 && <AnimatedIcon name="chevron-right" size={12} />}{" "}
               {item.href ? (
                 <GhostLink href={item.href} aria-current={i === items.length - 1 ? "page" : undefined}>{item.label}</GhostLink>
               ) : (
-                <Button variant="ghost" aria-current={i === items.length - 1 ? "page" : undefined}>{item.label}</Button>
+                <span className="mf-breadcrumb-current" aria-current={i === items.length - 1 ? "page" : undefined}>{item.label}</span>
               )}
             </li>
           ))}
@@ -427,3 +491,8 @@ export const Stepper = forwardRef<HTMLOListElement, StepperProps>(
 export const Link = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchorElement> & AppearanceProps>(function Link(props, ref) {
   return <GhostLink {...props} ref={ref} />;
 });
+
+export const NavigationBar = forwardRef<HTMLElement, NavigationProps>(function NavigationBar(props, ref) {
+  return <div ref={ref as React.Ref<HTMLDivElement>}><NavBase {...props} kind="bottom" /></div>;
+});
+export { Breadcrumbs as Breadcrumb, SideNavigation as NavigationDrawer };

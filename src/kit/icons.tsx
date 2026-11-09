@@ -27,13 +27,7 @@ const ICON_ANIMATIONS_ENABLED = false;
 export interface AnimatedIconProps
   extends HTMLAttributes<HTMLSpanElement>, Omit<AppearanceProps, "size"> {
   name?: IconName;
-  stagger?: number;
-  slashDelay?: number;
-  fillDuration?: number;
-  fillEaseStrength?: number;
   size?: number | ComponentSize;
-  duration?: number;
-  strokeWidth?: number;
   animated?: boolean;
   animateOnMount?: boolean;
   active?: boolean;
@@ -43,13 +37,7 @@ export const AnimatedIcon = forwardRef<HTMLSpanElement, AnimatedIconProps>(
   function AnimatedIcon(rawProps, ref) {
     const {
       name = "plus",
-      stagger = 0.07,
-      slashDelay = 0.15,
-      fillDuration = 0.4,
-      fillEaseStrength = 0.85,
       size: requestedSize = 22,
-      duration = 1,
-      strokeWidth = 2,
       animated = true,
       animateOnMount = false,
       active = false,
@@ -59,6 +47,7 @@ export const AnimatedIcon = forwardRef<HTMLSpanElement, AnimatedIconProps>(
       ...props
     } = useAppearanceProps(rawProps, { preserveSize: true });
 
+    const stagger = .07, slashDelay = .15, fillDuration = .4, fillEaseStrength = .85, duration = 1, strokeWidth = 2;
     const size =
       typeof requestedSize === "number"
         ? requestedSize

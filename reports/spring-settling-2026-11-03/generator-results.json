@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "result": [
+    {
+      "name": "button return",
+      "beforeMs": 1041.6666666666683,
+      "afterMs": 733.3333333333338,
+      "final": 1
+    },
+    {
+      "name": "geometry resize",
+      "beforeMs": 966.6666666666682,
+      "afterMs": 441.66666666666634,
+      "final": 52
+    },
+    {
+      "name": "height",
+      "beforeMs": 991.6666666666683,
+      "afterMs": 675.0000000000002,
+      "final": 140
+    }
+  ]
+}

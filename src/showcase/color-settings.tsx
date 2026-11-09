@@ -1,5 +1,7 @@
 import { Button, Slider, ToggleGroup } from "../kit/controls";
 import { AnimatedIcon } from "../kit/icons";
+import { Select } from "../kit/forms";
+import { neutralColorDefaults, type ColorPreset, type NeutralColorSettings } from "../kit/theme-neutral";
 import { localizeDigits } from "../kit/numerals";
 import {
   colorBehaviorDefaults,
@@ -170,12 +172,20 @@ export function ColorSettings({
   locale,
   colorDesign,
   onColorDesignChange,
+  colorPreset,
+  onColorPresetChange,
+  neutralColors,
+  onNeutralColorsChange,
 }: {
   value: ColorBehavior;
   onChange: (value: ColorBehavior) => void;
   locale: Locale;
   colorDesign: "material" | "previous";
   onColorDesignChange: (design: "material" | "previous") => void;
+  colorPreset: ColorPreset;
+  onColorPresetChange: (preset: ColorPreset) => void;
+  neutralColors: NeutralColorSettings;
+  onNeutralColorsChange: (value: NeutralColorSettings) => void;
 }) {
   const fa = locale === "fa";
   const renderControl = ({
@@ -212,11 +222,18 @@ export function ColorSettings({
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => onChange({ ...colorBehaviorDefaults })}
+          onClick={() => { onChange({ ...colorBehaviorDefaults }); onNeutralColorsChange({ ...neutralColorDefaults }); }}
         >
           {fa ? "بازنشانی رنگ‌ها" : "Reset colors"}
         </Button>
       </div>
+      <Select label={fa ? "پالت رنگ" : "Palette preset"} size="sm" value={colorPreset}
+        onValueChange={value => { onColorPresetChange(value as ColorPreset); if (value === 'neutral') onColorDesignChange('material'); }}
+        options={[{value:'neutral',label:fa?'خنثی + رنگ پایه':'Neutral + seed'},{value:'standard',label:fa?'پالت اصلی':'Original palette'}]} />
+      {colorPreset === 'neutral' && colorDesign === 'material' && <>
+        <p className="settings-note">{fa ? "سطوح خنثی، رنگ اصلی روشن و متن تیره. اشباع رنگ تأکیدی و ته‌رنگ سطح را جدا تنظیم کنید." : "Neutral surfaces with light primary fills and dark text. Tune accent strength and surface tint independently."}</p>
+        {(['surfaceTint','accentStrength'] as const).map(key => <div className="color-setting" key={key}><Slider size="sm" label={key === 'surfaceTint' ? (fa?'ته‌رنگ سطوح خنثی':'Surface tint') : (fa?'شدت رنگ تأکیدی':'Accent strength')} min={0} max={100} step={1} value={[neutralColors[key]]} showValue={false} onValueChange={([next])=>onNeutralColorsChange({...neutralColors,[key]:next})}/><output dir="ltr">{neutralColors[key]}%</output></div>)}
+      </>}
       <div className="color-design-control">
         <span>{fa ? "طراحی رنگ کامپوننت‌ها" : "Component colors"}</span>
         <ToggleGroup label={fa ? "طراحی رنگ کامپوننت‌ها" : "Component colors"} size="sm"
@@ -250,7 +267,8 @@ export function ColorSettings({
           ? "تغییرات زنده‌اند. کنتراست بیشتر، نوشته‌ها و سطوح را از هم متمایزتر می‌کند."
           : "Changes apply live. More contrast increases separation between text and surfaces."}
       </p>
-      {controls.slice(0, 9).filter(control => colorDesign === "previous" || !["lightBrightness", "darkBrightness"].includes(control.key)).map(renderControl)}
+      {colorPreset !== 'neutral' || colorDesign === 'previous' ? controls.slice(0, 9).filter(control => colorDesign === "previous" || !["lightBrightness", "darkBrightness"].includes(control.key)).map(renderControl) : null}
+      {(colorPreset !== "neutral" || colorDesign === "previous") && <>
       <details className="color-role-settings action-color-settings">
         <summary className="mf-variant--outline">
           <span>{fa ? "رنگ دکمه‌ها" : "Action colors"}</span>
@@ -282,6 +300,7 @@ export function ColorSettings({
         </p>
         {controls.slice(9).filter(({ key }) => key !== "lightDangerBrightness" && key !== "darkDangerBrightness").map(renderControl)}
       </details>
+      </>}
     </section>
   );
 }

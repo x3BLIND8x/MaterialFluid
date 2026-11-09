@@ -1,0 +1,16 @@
+[
+  {
+    "locale": "en",
+    "dotsRemoved": true,
+    "breadcrumbMinHeight": "28px",
+    "calendarStable": true,
+    "track": "M169.375,2.5H276Q286,2.5 286,12.5V12.5Q286,22.5 276,22.5H169.375Q167.375,22.5 167.375,20.5V4.5Q167.375,2.5 169.375,2.5Z"
+  },
+  {
+    "locale": "fa",
+    "dotsRemoved": true,
+    "breadcrumbMinHeight": "28px",
+    "calendarStable": true,
+    "track": "M142.375,2.5H228Q238,2.5 238,12.5V12.5Q238,22.5 228,22.5H142.375Q140.375,22.5 140.375,20.5V4.5Q140.375,2.5 142.375,2.5Z"
+  }
+]

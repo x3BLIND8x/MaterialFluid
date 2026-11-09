@@ -1,3 +1,4 @@
+import { neutralColorDefaults, normalizeNeutralColors, type NeutralColorSettings, type ColorPreset } from "../kit/theme-neutral";
 import type { Locale, ThemeMode, MotionMode, ColorScheme } from "../kit/theme";
 import {
   colorSchemes,
@@ -12,6 +13,8 @@ export interface Preferences {
   accentSeed: string;
   colorBehavior: ColorBehavior;
   colorDesign: "material" | "previous";
+  colorPreset: ColorPreset;
+  neutralColors: NeutralColorSettings;
   colorScheme: ColorScheme;
 }
 export const preferenceDefaults: Preferences = {
@@ -21,6 +24,8 @@ export const preferenceDefaults: Preferences = {
   accentSeed: "#eedd96",
   colorBehavior: { ...colorBehaviorDefaults },
   colorDesign: "material",
+  colorPreset: "neutral",
+  neutralColors: { ...neutralColorDefaults },
   colorScheme: "tonalSpot",
 };
 export function loadPreferences(
@@ -62,6 +67,8 @@ export function loadPreferences(
         : "system",
       motion: data?.motion === "minimal" ? "minimal" : "expressive",
       colorBehavior,
+      colorPreset: data?.colorPreset === "standard" ? "standard" : "neutral",
+      neutralColors: normalizeNeutralColors(data?.neutralColors),
       colorDesign: data?.colorDesign === "previous" ? "previous" : "material",
       colorScheme: colorSchemes.includes(data?.colorScheme) ? data.colorScheme : "tonalSpot",
       accentSeed: /^#[0-9a-f]{6}$/i.test(data?.accentSeed ?? "")

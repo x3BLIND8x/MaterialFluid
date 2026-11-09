@@ -1,7 +1,7 @@
 import type { Entry } from "./catalogue";
 import type { AppearanceProps } from "../kit/appearance";
 export function usageFor(entry: Entry, appearance?: AppearanceProps) {
-  const names = new Set([entry.name, "MaterialFluidProvider"]);
+  const names = new Set(["MaterialFluidProvider"]);
   for (const match of entry.code.matchAll(/<([A-Z][A-Za-z]+)/g))
     names.add(match[1]);
   const declarations: string[] = [];
@@ -9,7 +9,7 @@ export function usageFor(entry: Entry, appearance?: AppearanceProps) {
     names.add("type FileUploadOptions");
     declarations.push('const uploadFile = async (file: File, { signal, onProgress }: FileUploadOptions) => {\n    const body = new FormData();\n    body.append("file", file);\n    // Replace this URL with your upload endpoint.\n    const response = await fetch("/api/upload", { method: "POST", body, signal });\n    if (!response.ok) throw new Error("Upload failed");\n    onProgress(100);\n  };');
   }
-  const fixedAppearance = ["forms", "navigation", "surfaces", "feedback", "overlays"].includes(entry.family) || ["toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider"].includes(entry.id);
+  const fixedAppearance = entry.custom || ["forms", "navigation", "surfaces", "feedback", "overlays"].includes(entry.family) || ["toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider"].includes(entry.id);
   const variantAttribute = fixedAppearance ? "" : ` variant="${appearance?.variant ?? "filled"}"`;
   const code = appearance
     ? entry.code
@@ -17,7 +17,7 @@ export function usageFor(entry: Entry, appearance?: AppearanceProps) {
           new RegExp(`<${entry.name}(?=[\\s/>])([^>]*?)>`),
           (_match, attributes: string) => {
             const clean = attributes.replace(/\s+(?:variant|size|labelPosition)=(?:"[^"]*"|\{[^}]*\})/g, "");
-            const size = entry.name === "NotificationCenter" ? "" : ` size="${appearance.size ?? "md"}"`;
+            const size = ["NotificationCenter", "Carousel", "CodeBlock", "Sidebar", "Shape"].includes(entry.name) ? "" : ` size="${appearance.size ?? "md"}"`;
             const label = !["switch", "checkbox", "radio-group", "slider", "card-group"].includes(entry.id) && appearance.labelPosition && appearance.labelPosition !== "top" ? ` labelPosition="${appearance.labelPosition}"` : "";
             return `<${entry.name}${variantAttribute}${size}${label}${clean}>`;
           },
@@ -76,7 +76,7 @@ export function usageFor(entry: Entry, appearance?: AppearanceProps) {
     declarations.push(
       'const archive = () => console.log("Archive confirmed");',
     );
-  if (entry.name === "DataTable")
+  if ((entry.name === "DataTable" || entry.name === "Table"))
     declarations.push(
       'const people = [{ id: "1", name: "Nora Chen" }, { id: "2", name: "Arman Rezaei" }];',
       'const columns: ColumnDef<(typeof people)[number]>[] = [{ accessorKey: "name", header: "Name" }];',
@@ -86,7 +86,7 @@ export function usageFor(entry: Entry, appearance?: AppearanceProps) {
       ? ['import { useState } from "react";']
       : []),
     `import { ${[...names].join(", ")}${code.includes("setRange") ? ", type DateRangeValue" : ""} } from "materialfluid";`,
-    ...(entry.name === "DataTable"
+    ...((entry.name === "DataTable" || entry.name === "Table")
       ? ['import type { ColumnDef } from "@tanstack/react-table";']
       : []),
     'import "materialfluid/styles.css";',

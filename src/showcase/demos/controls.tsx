@@ -1,7 +1,7 @@
 // Live control examples share the page's variant and size defaults.
 import { componentVariants, useComponentAppearance } from "../../kit/appearance";
 import { useState, useEffect, useRef, useId } from "react";
-import { animate, motion, useAnimate, useMotionValue, useTransform } from "motion/react";
+import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import {
   Button,
   ButtonGroup,
@@ -17,6 +17,7 @@ import {
 } from "../../kit/controls";
 import { AnimatedIcon, registerMaterialIcons, type IconName } from "../../kit/icons";
 import { IconSwap } from "../../kit/icon-swap";
+import { MorphingLabel } from "../../kit/morphing-label";
 import { RollingNumber } from "../../kit/rolling-number";
 import { localizeDigits } from "../../kit/numerals";
 import { actionIcons } from "./action-icons";
@@ -26,65 +27,6 @@ import { type DemoProps, translate } from "./shared";
 
 registerMaterialIcons(actionIcons);
 
-function MorphingLabel({
-  text,
-  animated,
-  onVisibleTextChange,
-}: {
-  text: string;
-  animated: boolean;
-  onVisibleTextChange?: () => void;
-}) {
-  const { textMorph: { duration, blur, fade } } = useMaterialFluid();
-  const [scope, animate] = useAnimate<HTMLSpanElement>();
-  const [visibleText, setVisibleText] = useState(text);
-
-  useEffect(() => {
-    if (visibleText === text) return;
-    if (!animated) {
-      setVisibleText(text);
-      onVisibleTextChange?.();
-      return;
-    }
-
-    const halfDuration = duration / 2000;
-    const blurAnimation = animate(
-      scope.current,
-      { filter: `blur(${blur}px)`, scale: 0.97, opacity: 1 - Math.max(0, Math.min(100, fade)) / 100 },
-      { duration: halfDuration, ease: "easeInOut" },
-    );
-    const swapTimer = window.setTimeout(() => {
-      setVisibleText(text);
-      onVisibleTextChange?.();
-      animate(
-        scope.current,
-        { filter: "blur(0px)", scale: 1, opacity: 1 },
-        { duration: halfDuration, ease: "easeOut" },
-      );
-    }, duration / 2);
-
-    return () => {
-      window.clearTimeout(swapTimer);
-      blurAnimation.stop();
-    };
-  }, [
-    animate,
-    animated,
-    blur,
-    duration,
-    fade,
-    onVisibleTextChange,
-    scope,
-    text,
-    visibleText,
-  ]);
-
-  return (
-    <motion.span ref={scope} className="mf-morph-label">
-      {visibleText}
-    </motion.span>
-  );
-}
 
 const favoriteOutlinePath = "M10.65 19.8 8.925 18.225Q6.275 15.8 4.138 13.412Q2 11.025 2 8.15Q2 5.8 3.575 4.225Q5.15 2.65 7.5 2.65Q8.825 2.65 10 3.212Q11.175 3.775 12 4.75Q12.825 3.775 14 3.212Q15.175 2.65 16.5 2.65Q18.85 2.65 20.425 4.225Q22 5.8 22 8.15Q22 11.025 19.875 13.425Q17.75 15.825 15.05 18.25L13.35 19.8Q13.075 20.075 12.713 20.2Q12.35 20.325 12 20.325Q11.65 20.325 11.288 20.2Q10.925 20.075 10.65 19.8ZM11.05 6.75Q10.325 5.725 9.5 5.187Q8.675 4.65 7.5 4.65Q6 4.65 5 5.65Q4 6.65 4 8.15Q4 9.45 4.925 10.912Q5.85 12.375 7.138 13.75Q8.425 15.125 9.788 16.325Q11.15 17.525 12 18.3Q12.85 17.525 14.213 16.325Q15.575 15.125 16.863 13.75Q18.15 12.375 19.075 10.912Q20 9.45 20 8.15Q20 6.65 19 5.65Q18 4.65 16.5 4.65Q15.325 4.65 14.5 5.187Q13.675 5.725 12.95 6.75Q12.775 7 12.525 7.125Q12.275 7.25 12 7.25Q11.725 7.25 11.475 7.125Q11.225 7 11.05 6.75Z";
 
@@ -270,6 +212,7 @@ export default function ControlsDemo({
       {
         const { name, label } = {
           filled: { name: "bell", label: t("Notifications", "اعلان‌ها") },
+          emphasize: { name: "play_arrow", label: t("Play", "پخش") },
           tonal: { name: "heart", label: t("Favorite", "علاقه‌مندی") },
           outlined: { name: "edit", label: t("Edit", "ویرایش") },
           primary: { name: "bell", label: t("Notifications", "اعلان‌ها") },

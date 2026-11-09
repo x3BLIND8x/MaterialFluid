@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "examples": 10,
+  "errors": [],
+  "checks": [
+    "58 original entries",
+    "accordion live parameters and empty hold preview",
+    "all 10 examples",
+    "tween engine",
+    "dialog Escape",
+    "selection arrow keys",
+    "menu action",
+    "list add/remove/reverse",
+    "notification stack",
+    "drag keyboard",
+    "per-example settings and persistence",
+    "configuration preview and export",
+    "mobile dark Persian reduced motion without overflow"
+  ]
+}

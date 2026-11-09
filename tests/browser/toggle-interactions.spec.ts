@@ -50,17 +50,15 @@ test("dragged selection keeps one pill and glides between snapped items", async 
   await expect.poll(() => pill.evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeCloseTo(restRadius, 0);
 });
 
-test("icon variants share a compact row", async ({ page }) => {
+test("icon variants configure one shared preview", async ({ page }) => {
   await page.goto("/#/components/icon-button");
-  const buttons = page.locator(".demo-primary .mf-icon-button");
-  await expect(buttons).toHaveCount(5);
-  const bounds = await buttons.evaluateAll(nodes => nodes.map(node => {
-    const rect = node.getBoundingClientRect();
-    return { left: rect.left, right: rect.right, top: rect.top };
-  }));
-  for (let i = 1; i < bounds.length; i++) {
-    expect(Math.abs(bounds[i].top - bounds[0].top)).toBeLessThan(1);
-    expect(bounds[i].left - bounds[i - 1].right).toBeLessThanOrEqual(14);
+  const preview=page.locator(".icon-button-preview-form > .mf-icon-button");
+  await expect(preview).toHaveCount(1);
+  const variants=page.locator('#icon-button-appearance .mf-toggle-group[aria-label="Variant"]');
+  for(const value of ["filled","emphasize","tonal","outlined","ghost","danger"]){
+    await variants.locator(`button[data-value="${value}"]`).click();
+    await expect(preview).toHaveClass(new RegExp(`mf-variant--${value}\\b`));
+    await expect(preview).toHaveCount(1);
   }
 });
 
@@ -151,41 +149,25 @@ test("touch dragging commits on release and cancellation restores selection", as
   await expect(grid).toHaveAttribute("aria-pressed", "true");
 });
 
-test("Toggle advanced fade controls the Toggle and FAB blur transitions", async ({ page }) => {
-  for (const fade of [100, 0]) {
-    await page.goto("/#/components/toggle");
-    await page.locator(".advanced-tuning-trigger").click();
-    const setting = page.getByRole("slider", { name: "Text fade (%)", exact: true });
-    await setting.press(fade === 100 ? "End" : "Home");
-    await expect(setting).toHaveAttribute("aria-valuenow", String(fade));
-    for (const id of ["toggle", "fab"]) {
-      if (id === "fab") await page.locator('a[href="#/components/fab"]').first().click();
-      await expect(page.locator(id === "toggle" ? ".live-stage .mf-toggle" : ".live-stage .mf-fab").first()).toBeVisible();
-      const selector = ".live-stage .mf-morph-label";
-      await expect(page.locator(selector).first()).toBeVisible();
-      const minimum = await page.evaluate(async ({ id, selector }) => {
-        const button = document.querySelector<HTMLButtonElement>(id === "toggle" ? ".live-stage .mf-toggle" : ".live-stage .mf-fab")!;
-        button.click();
-        const start = performance.now();
-        let minimum = 1;
-        await new Promise<void>(resolve => {
-          function sample() {
-            minimum = Math.min(minimum, parseFloat(getComputedStyle(document.querySelector(selector)!).opacity));
-            if (performance.now() - start < 300) requestAnimationFrame(sample);
-            else resolve();
-          }
-          requestAnimationFrame(sample);
-        });
-        return minimum;
-      }, { id, selector });
-      if (fade === 100) expect(minimum).toBeLessThan(.2);
-      else expect(minimum).toBeGreaterThan(.99);
-    }
+test("Toggle and FAB retain their opaque default text morph without Advanced controls", async ({ page }) => {
+  for (const id of ["toggle", "fab"]) {
+    await page.goto(`/#/components/${id}`);
+    const button = page.locator(id === "toggle" ? ".live-stage .mf-toggle" : ".live-stage .mf-fab").first();
+    await expect(button).toBeVisible();
+    await expect(page.locator(".advanced-tuning-trigger")).toHaveCount(0);
+    const samples = await button.evaluate(async element => {
+      const read = () => {
+        const css = getComputedStyle(element.querySelector(".mf-morph-label")!);
+        return { opacity: Number(css.opacity), blur: parseFloat(css.filter.match(/blur\(([^)]+)/)?.[1] ?? "0") };
+      };
+      (element as HTMLButtonElement).click();
+      const frames = [];
+      const start = performance.now();
+      while (performance.now() - start < 350) { frames.push(read()); await new Promise(requestAnimationFrame); }
+      return frames;
+    });
+    expect(Math.min(...samples.map(frame => frame.opacity))).toBeGreaterThan(.99);
+    expect(Math.max(...samples.map(frame => frame.blur))).toBeGreaterThan(.1);
+    await expect(button.locator(".mf-morph-label")).toHaveCSS("filter", "blur(0px)");
   }
-  await page.locator('a[href="#/components/toggle"]').first().click();
-  await page.locator(".advanced-tuning-trigger").click();
-  await page.getByRole("button", { name: "Reset text morph" }).click();
-  await expect(page.getByRole("slider", { name: "Text fade (%)", exact: true })).toHaveAttribute("aria-valuenow", "0");
-  await expect(page.getByRole("slider", { name: "Text blur strength (px)", exact: true })).toHaveAttribute("aria-valuenow", "6");
-  await expect(page.getByRole("slider", { name: "Text morph duration (ms)", exact: true })).toHaveAttribute("aria-valuenow", "100");
 });

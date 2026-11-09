@@ -1,0 +1,6 @@
+{
+  "tooltipSuppressedOnMenuFocus": true,
+  "menuReopens": true,
+  "progressStart": "M0.00,12.50L2.00,14.",
+  "segmentGap": "2px"
+}

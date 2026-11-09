@@ -21,3 +21,6 @@ playwright-report/
 coverage/
 __pycache__/
 .DS_Store
+
+# Owner design snapshots, kept locally for restoration.
+/backups/

@@ -154,113 +154,22 @@ export const Toast = forwardRef<HTMLLIElement, ToastProps>(
 );
 /** Compatibility alias. Snackbar actions now use the shared Toast treatment and queue. */
 export const Snackbar = Toast;
-export interface ProgressProps
-  extends HTMLAttributes<HTMLDivElement>, AppearanceProps {
-  value?: number;
-  max?: number;
-  label: string;
-  presentation?: "wavy" | "segmented" | "status";
-  segments?: number;
-  status?: ReactNode;
-  remaining?: ReactNode;
-  wave?: ProgressWaveOptions;
+export interface ProgressSegment { value:number; label?:string; }
+export interface ProgressProps extends HTMLAttributes<HTMLDivElement>, AppearanceProps {
+ value?:number;max?:number;label:string;presentation?:'wavy'|'segmented';segments?:number|ProgressSegment[];showStatus?:boolean;status?:ReactNode;remaining?:ReactNode;wave?:ProgressWaveOptions;
 }
-export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
-  function Progress(rawProps, ref) {
-    const {
-      value,
-      max = 100,
-      label,
-      presentation = "wavy",
-      segments = 8,
-      status,
-      remaining,
-      wave,
-      className,
-      ...props
-    } = useAppearanceProps(
-      useSizePolicy("progress", { ...rawProps, variant: "outline" }),
-    );
-
-    const { motion: mode, reducedMotion, locale } = useMaterialFluid();
-    const expressive = mode === "expressive" && !reducedMotion;
-    const bounded =
-      value === undefined
-        ? undefined
-        : Math.min(Math.max(value, 0), Math.max(1, max));
-    const ratio =
-      bounded === undefined ? undefined : bounded / Math.max(1, max);
-    const percentage =
-      ratio === undefined
-        ? "…"
-        : new Intl.NumberFormat(locale, {
-            style: "percent",
-            maximumFractionDigits: 0,
-          }).format(ratio);
-    const count = Number.isFinite(segments)
-      ? Math.min(100, Math.max(1, Math.floor(segments)))
-      : 8;
-    return (
-      <div
-        {...props}
-        ref={ref}
-        role="progressbar"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={Math.max(1, max)}
-        aria-valuenow={bounded}
-        aria-busy={bounded === undefined || undefined}
-        aria-valuetext={
-          props["aria-valuetext"] ??
-          (presentation === "status"
-            ? [
-                percentage,
-                typeof status === "string" ? status : label,
-                typeof remaining === "string" ? remaining : undefined,
-              ]
-                .filter(Boolean)
-                .join(", ")
-            : undefined)
-        }
-        className={cx(
-          "mf-progress",
-          `mf-progress--${presentation}`,
-          bounded === undefined && "mf-progress--indeterminate",
-          className,
-        )}
-      >
-        {presentation === "wavy" ? (
-          <LinearWave ratio={ratio} animated={expressive} options={wave} />
-        ) : presentation === "segmented" ? (
-          <div className="mf-progress-segments" aria-hidden="true">
-            {Array.from({ length: count }, (_, index) => (
-              <span key={index} className="mf-progress-segment">
-                <span
-                  style={{
-                    width: `${ratio === undefined ? 0 : Math.min(1, Math.max(0, ratio * count - index)) * 100}%`,
-                  }}
-                />
-              </span>
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="mf-progress-status-row" aria-hidden="true">
-              <span className="mf-progress-percent">{percentage}</span>
-              <span className="mf-progress-status-text">{status ?? label}</span>
-              {remaining != null && (
-                <span className="mf-progress-remaining">{remaining}</span>
-              )}
-            </div>
-            <div className="mf-progress-status-track" aria-hidden="true">
-              <span style={{ width: `${(ratio ?? 0) * 100}%` }} />
-            </div>
-          </>
-        )}
-      </div>
-    );
-  },
-);
+export const Progress=forwardRef<HTMLDivElement,ProgressProps>(function Progress(rawProps,ref){
+ const {value,max=100,label,presentation='wavy',segments=8,showStatus=false,status,remaining,wave,className,...props}=useAppearanceProps(useSizePolicy('progress',{...rawProps,variant:'outline'}));
+ const {motion:mode,reducedMotion,locale}=useMaterialFluid(),animated=mode==='expressive'&&!reducedMotion;
+ const bounded=value===undefined?undefined:Math.max(0,Math.min(max,value)),ratio=bounded===undefined?undefined:bounded/Math.max(1,max);
+ const percentage=ratio===undefined?'…':new Intl.NumberFormat(locale,{style:'percent',maximumFractionDigits:0}).format(ratio);
+ const stages=typeof segments==='number'?Array.from({length:Math.min(100,Math.max(1,Math.floor(segments)||8))},()=>({value:1,label:undefined as string|undefined})):segments.filter(stage=>Number.isFinite(stage.value)&&stage.value>0);
+ const total=stages.reduce((sum,stage)=>sum+stage.value,0)||1;let offset=0;
+ return <div {...props} ref={ref} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={bounded} aria-busy={bounded===undefined||undefined} aria-valuetext={props['aria-valuetext']??[percentage,typeof status==='string'?status:'',typeof remaining==='string'?remaining:''].filter(Boolean).join(', ')} className={cx('mf-progress',`mf-progress--${presentation}`,className)}>
+  {(showStatus||status||remaining)&&<div className="mf-progress-status-row" aria-hidden="true"><span className="mf-progress-percent">{percentage}</span><span className="mf-progress-status-text">{status??label}</span>{remaining&&<span className="mf-progress-remaining">{remaining}</span>}</div>}
+  {presentation==='wavy'?<LinearWave ratio={ratio} animated={animated} options={wave}/>:<div className="mf-progress-wave-segments" aria-hidden="true">{stages.map((stage,index)=>{const length=stage.value/total,start=offset;offset+=length;return <div className="mf-progress-stage" key={index} style={{flex:stage.value}} data-inverted={(index+1)%2===0}><div style={{transform:(index+1)%2===0?'scaleY(-1)':undefined}}><LinearWave ratio={ratio===undefined?undefined:Math.max(0,Math.min(1,(ratio-start)/length))} animated={animated} options={wave} segmentEdges={{first:index===0,last:index===stages.length-1}}/></div>{stage.label&&<span>{stage.label}</span>}</div>;})}</div>}
+ </div>;
+});
 export interface SpinnerProps
   extends HTMLAttributes<HTMLSpanElement>, Omit<AppearanceProps, "size"> {
   label: string;

@@ -1,3 +1,4 @@
+import { useCurveValue } from "./curve-value";
 import {
   useCallback,
   useEffect,
@@ -6,7 +7,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { useMotionValueEvent, useSpring } from "motion/react";
+import { useMotionValueEvent } from "motion/react";
 
 const tau = Math.PI * 2;
 export interface ProgressWaveOptions {
@@ -35,15 +36,9 @@ function linearWave(
   return `${path}L${point(end)}`;
 }
 function circularWave(phase: number) {
-  const points: string[] = [];
-  for (let i = 0; i <= 180; i++) {
-    const angle = (i / 180) * tau - Math.PI / 2;
-    const radius = 15 + 1.5 * Math.sin(angle * 6 - phase * tau);
-    points.push(
-      `${(20 + Math.cos(angle) * radius).toFixed(3)},${(20 + Math.sin(angle) * radius).toFixed(3)}`,
-    );
-  }
-  return `M${points.join("L")}Z`;
+ const points:string[]=[];
+ for(let i=0;i<=120;i++){const t=i/120,angle=(t*.72+phase)*tau-Math.PI/2;const radius=15+1.3*Math.sin(t*tau*5-phase*tau)*Math.sin(t*Math.PI);points.push(`${(20+Math.cos(angle)*radius).toFixed(3)},${(20+Math.sin(angle)*radius).toFixed(3)}`);}
+ return `M${points.join('L')}`;
 }
 
 /** Pause the continuous wave while hidden, offscreen, or motion is reduced. */
@@ -103,10 +98,12 @@ export function LinearWave({
   ratio,
   animated,
   options = {},
+  segmentEdges,
 }: {
   ratio?: number;
   animated: boolean;
   options?: ProgressWaveOptions;
+  segmentEdges?: { first: boolean; last: boolean };
 }) {
   const {
     waveLength = 60,
@@ -121,19 +118,15 @@ export function LinearWave({
     thickness = Math.max(1, waveThickness),
     trackSize = Math.max(1, trackThickness);
   const height = Math.max(Math.max(0, waveHeight) + thickness, trackSize);
-  const start = thickness / 2,
+  const start = 0,
     center = height / 2;
   const svg = useRef<SVGSVGElement>(null),
     wave = useRef<SVGPathElement>(null),
-    track = useRef<SVGLineElement>(null);
+    track = useRef<SVGPathElement>(null);
   const [width, setWidth] = useState(300);
-  const amount = useSpring(ratio ?? 0.35, {
-    stiffness: 460,
-    damping: 40,
-    mass: 1,
-  });
+  const amount = useCurveValue(ratio ?? 0.35);
   useLayoutEffect(() => {
-    if (animated) amount.set(ratio ?? 0.35);
+    if (animated) amount.setTarget(ratio ?? 0.35);
     else amount.jump(ratio ?? 0.35);
   }, [ratio, amount, animated]);
   useLayoutEffect(() => {
@@ -148,10 +141,11 @@ export function LinearWave({
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+  const firstEdge = segmentEdges?.first, lastEdge = segmentEdges?.last;
   const draw = useCallback(
     (phase: number) => {
       const value = Math.min(1, Math.max(0, amount.get()));
-      const end = start + Math.max(0, width - thickness) * value;
+      const end = start + Math.max(0, width) * value;
       const amplitude =
         waveLength <= 0
           ? 0
@@ -161,16 +155,14 @@ export function LinearWave({
         "d",
         linearWave(start, end, phase, amplitude, center, length, incremental),
       );
-      const trackEnd = width - trackSize / 2;
-      const trackStart =
-        ratio === undefined
-          ? trackSize / 2
-          : end + thickness / 2 + 4 + trackSize / 2;
-      track.current?.setAttribute("x1", String(Math.min(trackEnd, trackStart)));
-      track.current?.setAttribute(
-        "opacity",
-        trackStart >= trackEnd ? "0" : "1",
-      );
+      const trackStart = ratio === undefined || value === 0 ? 0 : Math.min(width, end + thickness / 2 + 4);
+      const remaining = width - trackStart;
+      const leftRadius = Math.min(remaining / 2, firstEdge === false ? 2 : trackSize / 2);
+      const rightRadius = Math.min(remaining / 2, lastEdge === false ? 2 : trackSize / 2);
+      const top = center - trackSize / 2, bottom = center + trackSize / 2;
+      track.current?.setAttribute('d', remaining <= 0 ? '' :
+        `M${trackStart + leftRadius},${top}H${width - rightRadius}Q${width},${top} ${width},${top + rightRadius}V${bottom - rightRadius}Q${width},${bottom} ${width - rightRadius},${bottom}H${trackStart + leftRadius}Q${trackStart},${bottom} ${trackStart},${bottom - leftRadius}V${top + leftRadius}Q${trackStart},${top} ${trackStart + leftRadius},${top}Z`);
+
     },
     [
       width,
@@ -184,6 +176,8 @@ export function LinearWave({
       length,
       incremental,
       trackSize,
+      firstEdge,
+      lastEdge,
     ],
   );
   const refresh = useWaveMotion(
@@ -208,14 +202,10 @@ export function LinearWave({
       data-wave-animated={animated}
       data-wave-direction={direction}
     >
-      <line
+      <path
         ref={track}
         className="mf-wave-track"
-        x1={trackSize / 2}
-        x2={width - trackSize / 2}
-        y1={center}
-        y2={center}
-        style={{ strokeWidth: trackSize }}
+        style={{ fill: 'var(--mf-secondary-container, var(--mf-primary-container))', stroke: 'none' }}
       />
       <g className={ratio === undefined ? "mf-wave-travel" : undefined}>
         <path
@@ -224,7 +214,7 @@ export function LinearWave({
           style={{ strokeWidth: thickness }}
           d={linearWave(
             start,
-            start + (width - thickness) * (ratio ?? 0.35),
+            start + width * (ratio ?? 0.35),
             0,
             Math.max(0, waveHeight) / 2,
             center,
@@ -233,50 +223,13 @@ export function LinearWave({
           )}
         />
       </g>
-      {ratio !== undefined && ratio < 1 && (
-        <circle
-          className="mf-wave-stop"
-          cx={width - trackSize / 2}
-          cy={center}
-          r={thickness / 2}
-        />
-      )}
+
     </svg>
   );
 }
-export function CircularWave({ animated }: { animated: boolean }) {
-  const svg = useRef<SVGSVGElement>(null),
-    wave = useRef<SVGPathElement>(null),
-    track = useRef<SVGPathElement>(null);
-  const draw = useCallback((phase: number) => {
-    const path = circularWave(phase);
-    wave.current?.setAttribute("d", path);
-    track.current?.setAttribute("d", path);
-  }, []);
-  useWaveMotion(svg, draw, animated);
-  return (
-    <svg
-      ref={svg}
-      className="mf-circular-wave"
-      viewBox="0 0 40 40"
-      aria-hidden="true"
-      data-wave-animated={animated}
-    >
-      <path
-        ref={track}
-        className="mf-wave-track"
-        d={circularWave(0)}
-        pathLength="100"
-        strokeDasharray="24 76"
-        strokeDashoffset="-76"
-      />
-      <path
-        ref={wave}
-        className="mf-spinner-wave"
-        d={circularWave(0)}
-        pathLength="100"
-        strokeDasharray="64 36"
-      />
-    </svg>
-  );
+export function CircularWave({animated}:{animated:boolean}) {
+ const svg=useRef<SVGSVGElement>(null),wave=useRef<SVGPathElement>(null);
+ const draw=useCallback((phase:number)=>{wave.current?.setAttribute('d',circularWave(phase));},[]);
+ useWaveMotion(svg,draw,animated);
+ return <svg ref={svg} className="mf-circular-wave" viewBox="0 0 40 40" aria-hidden="true" data-wave-animated={animated}><circle className="mf-wave-track" cx={20} cy={20} r={15} fill="none" strokeWidth={3}/><path ref={wave} className="mf-spinner-wave" d={circularWave(0)} fill="none" strokeWidth={3} strokeLinecap="round"/></svg>;
 }

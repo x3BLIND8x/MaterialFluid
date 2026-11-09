@@ -1,6 +1,6 @@
 # Third-party notices
 
-Material Symbols Rounded vector contours are extracted from Google's official variable font and bundled locally under Apache-2.0. A build-time script estimates centerline reveal masks for thin, fill-invariant symbols; original vector artwork remains visible. Only Wi-Fi and Bluetooth use hand-authored state/slash drawings adapted from the earlier Forma SwitchGlyph. Motion drives animation; no icon service or CDN is used.
+Material Symbols Rounded FILL=0 outline and FILL=1 filled vector contours are extracted from Google's official variable font and bundled locally under Apache-2.0. A build-time script estimates centerline reveal masks for thin, fill-invariant symbols; original vector artwork remains visible. Only Wi-Fi and Bluetooth use hand-authored state/slash drawings adapted from the earlier Forma SwitchGlyph. Motion drives animation; no icon service or CDN is used.
 
 Dependency licenses are retained in node_modules and apply to their respective packages. Material Color Utilities is Apache-2.0; React, Radix, Motion, TanStack Table and React DayPicker are MIT.
 
@@ -498,3 +498,8 @@ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
 DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
+
+
+## Expressive foundations
+
+Selected color, typography, shape, spacing, spring-math and shape-morph source is adapted from https://github.com/Grenish/expressive at eb96d3df46790079ae5bf7b22d721491260c1485. Copyright (c) 2026 Grenish rai, MIT. The full license is retained in licenses/expressive-MIT.txt. Material shape path data derives from Jetpack Compose MaterialShapes and androidx.graphics.shapes, Copyright The Android Open Source Project, Apache-2.0. Existing Apache-2.0 terms apply; see licenses/material-symbols.txt for the Apache license text. No upstream elevation system, GSAP adapter or component replacement is included.

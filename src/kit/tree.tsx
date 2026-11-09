@@ -1,3 +1,6 @@
+import { selectionTransition } from "./selection-motion";
+import { settledSpring } from "./motion-engine";
+import { motionTransition } from "./bounded-motion";
 import { forwardRef, useId, useState, type HTMLAttributes, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppearanceProps, type AppearanceProps } from "./appearance";
@@ -93,10 +96,10 @@ export const Tree = forwardRef<HTMLDivElement, TreeProps>(function Tree(rawProps
         if (!branch || selectBranches) setSelected(item.value);
       },
     };
-    const content = <>{isSelected && <motion.span className="mf-tree-selection" aria-hidden="true" layoutId={animated ? `${treeId}-selection` : undefined} transition={animated ? { type: "spring", stiffness: 620, damping: 42, mass: .65 } : { duration: 0 }} />}{branch && <span className="mf-tree-chevron" aria-hidden="true"><motion.span animate={{ rotate: isOpen ? 90 : (dir === "rtl" ? 180 : 0) }} transition={animated ? { type: "spring", stiffness: 420, damping: 30 } : { duration: 0 }}><AnimatedIcon name="chevron-right" size={18} /></motion.span></span>}{showIcon && item.icon && <span className="mf-tree-icon" aria-hidden="true">{item.icon}</span>}<span className="mf-tree-label">{item.label}</span>{branch && <span className="mf-tree-count" aria-hidden="true">{item.children!.length.toLocaleString(locale)}</span>}</>;
+    const content = <>{isSelected && <motion.span className="mf-tree-selection" aria-hidden="true" layoutId={animated ? `${treeId}-selection` : undefined} transition={animated ? selectionTransition : { duration: 0 }} />}{branch && <span className="mf-tree-chevron" aria-hidden="true"><motion.span animate={{ rotate: isOpen ? 90 : (dir === "rtl" ? 180 : 0) }} transition={animated ? motionTransition("resize") : { duration: 0 }}><AnimatedIcon name="chevron-right" size={18} /></motion.span></span>}{showIcon && item.icon && <span className="mf-tree-icon" aria-hidden="true">{item.icon}</span>}<span className="mf-tree-label">{item.label}</span>{branch && <span className="mf-tree-count" aria-hidden="true">{item.children!.length.toLocaleString(locale)}</span>}</>;
     return <div className="mf-tree-node" key={item.value}>
       {item.href && !branch ? <a {...common} href={item.disabled ? undefined : item.href}>{content}</a> : <button {...common} type="button" disabled={item.disabled}>{content}</button>}
-      {branch && <AnimatePresence initial={false}>{isOpen && <motion.div id={`${treeId}-${encodeURIComponent(item.value)}`} role="group" className="mf-tree-group" initial={animated ? { height: 0, opacity: 0 } : false} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={animated ? { type: "spring", stiffness: 420, damping: 38 } : { duration: 0 }}>{renderItems(item.children!, depth + 1)}</motion.div>}</AnimatePresence>}
+      {branch && <AnimatePresence initial={false}>{isOpen && <motion.div id={`${treeId}-${encodeURIComponent(item.value)}`} role="group" className="mf-tree-group" initial={animated ? { height: 0, opacity: 0 } : false} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={animated ? settledSpring({ type: "spring", stiffness: 420, damping: 38 }) : { duration: 0 }}>{renderItems(item.children!, depth + 1)}</motion.div>}</AnimatePresence>}
     </div>;
   });
   return <div {...props} ref={ref} className={cx("mf-tree", className)}>

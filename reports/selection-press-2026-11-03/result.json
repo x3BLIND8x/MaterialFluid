@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "reduced": false,
+      "before": {
+        "radius": 22,
+        "scale": 1,
+        "transform": "none"
+      },
+      "held": {
+        "radius": 17.3776,
+        "scale": 0.920066,
+        "transform": "matrix(0.920066, 0, 0, 0.92006, -0.03463, 0)"
+      },
+      "released": {
+        "radius": 22,
+        "scale": 1,
+        "transform": "none"
+      }
+    },
+    {
+      "reduced": true,
+      "before": {
+        "radius": 22,
+        "scale": 1,
+        "transform": "none"
+      },
+      "held": {
+        "radius": 24,
+        "scale": 1,
+        "transform": "none"
+      },
+      "released": {
+        "radius": 24,
+        "scale": 1,
+        "transform": "none"
+      }
+    }
+  ],
+  "errors": []
+}

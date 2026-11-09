@@ -115,13 +115,11 @@ for (const locale of ["en", "fa"])
       ["lg", 58],
     ] as const) {
       await selectSize(page, size);
-      const header = page.locator(".demo-primary .rdp-month_caption").last();
-      const month = header.getByRole("button").nth(0),
-        year = header.getByRole("button").nth(1);
-      const previous = page
-          .locator(".demo-primary .rdp-button_previous")
-          .last(),
-        next = page.locator(".demo-primary .rdp-button_next").last();
+      const header = page.locator(".demo-primary .mf-calendar-header").last();
+      const month = header.locator(".mf-calendar-caption button").nth(0),
+        year = header.locator(".mf-calendar-caption button").nth(1);
+      const previous = header.locator(":scope > button").first(),
+        next = header.locator(":scope > button").last();
       for (const button of [month, year, previous, next])
         await expect
           .poll(async () => (await button.boundingBox())!.height)
@@ -159,10 +157,9 @@ test("date ranges form a continuous band with round endpoints", async ({
     expect(
       await cell.evaluate((el) => getComputedStyle(el).backgroundImage),
     ).toContain("linear-gradient");
-    await expect(cell.locator("button")).toHaveCSS(
-      "border-top-left-radius",
-      "999px",
-    );
+    const button = cell.locator("button");
+    const bounds = (await button.boundingBox())!;
+    await expect.poll(() => button.evaluate(node => parseFloat(getComputedStyle(node).borderTopLeftRadius))).toBeCloseTo(Math.min(bounds.width, bounds.height) / 2, 0);
   }
 });
 
@@ -213,7 +210,9 @@ test("interrupted size changes retarget from the visible geometry and release th
     const before = el.getBoundingClientRect().height;
     root.classList.replace("mf-scale--sm", "mf-scale--lg");
     await new Promise(requestAnimationFrame);
-    const after = el.getBoundingClientRect().height;
+    // Compare the new animation origin, independent of a loaded frame advancing playback.
+    const frames = (el.getAnimations().at(-1)?.effect as KeyframeEffect).getKeyframes();
+    const after = parseFloat(String(frames[0].height));
     return { before, after };
   });
   expect(result.before).toBeGreaterThan(28);

@@ -1,3 +1,4 @@
+import { motionTransition } from "./bounded-motion";
 import {
   useCallback,
   useLayoutEffect,
@@ -19,25 +20,21 @@ export function useButtonGeometry(
   node: RefObject<HTMLButtonElement | null>,
   {
     expressive,
+    enabled = true,
     stiffness = 460,
     damping = 40,
     mass = 1,
     className,
     style,
-    children,
-    leading,
-    trailing,
     size,
   }: {
     expressive: boolean;
+    enabled?: boolean;
     stiffness?: number;
     damping?: number;
     mass?: number;
     className?: string;
     style?: CSSProperties;
-    children: unknown;
-    leading: unknown;
-    trailing: unknown;
     size: string;
   },
 ) {
@@ -85,7 +82,7 @@ export function useButtonGeometry(
   const animations = useRef<ReturnType<typeof animate>[]>([]);
   const measure = useCallback(() => {
     const button = node.current;
-    if (!button?.parentElement) return;
+    if (!enabled || !button?.parentElement) return;
     // Measure authored CSS without the inline geometry currently being animated.
     // The clone is inert, invisible and removed synchronously before paint.
     const probe = button.cloneNode(true) as HTMLButtonElement;
@@ -119,6 +116,9 @@ export function useButtonGeometry(
       transition: "none",
       animation: "none",
     });
+    // The clone has no outer press transform; remove its content compensation too.
+    const content = probe.querySelector<HTMLElement>(":scope > .mf-button-content");
+    if (content) content.style.transform = "none";
     button.parentElement.append(probe);
     const css = getComputedStyle(probe);
     const next = Object.fromEntries(
@@ -143,22 +143,16 @@ export function useButtonGeometry(
           values[key],
           next[key],
           shouldAnimate
-            ? {
-                type: "spring",
-                stiffness,
-                damping,
-                mass,
-                restDelta: 0.001,
-                restSpeed: 0.01,
-              }
+            ? motionTransition("resize")
             : { duration: 0 },
         );
       },
     );
     initialized.current = true;
     setReady(true);
-  }, [node, values, style, expressive, stiffness, damping, mass]);
+  }, [node, values, style, expressive, stiffness, damping, mass, enabled]);
   useLayoutEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     const button = node.current;
     const contentObserver =
@@ -170,6 +164,13 @@ export function useButtonGeometry(
       characterData: true,
       subtree: true,
     });
+    // Embedded actions inherit field metrics even when their own size stays sm.
+    const ancestorObserver = typeof MutationObserver !== "undefined"
+      ? new MutationObserver(measure) : undefined;
+    for (let ancestor = button?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      ancestorObserver?.observe(ancestor, { attributes: true, attributeFilter: ["class"] });
+      if (ancestor.classList.contains("mf-root")) break;
+    }
     measure();
     window.addEventListener("resize", measure);
     void document.fonts?.ready.then(() => {
@@ -178,16 +179,19 @@ export function useButtonGeometry(
     return () => {
       cancelled = true;
       contentObserver?.disconnect();
+      ancestorObserver?.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [measure, className, children, leading, trailing, size]);
+    // Actual text/artwork mutations are observed above. React element identities
+    // change on parent renders even when their DOM and geometry stay identical.
+  }, [measure, className, size, enabled]);
   useLayoutEffect(
     () => () => animations.current.forEach((animation) => animation.stop()),
     [],
   );
   return {
-    ready,
-    style: ready
+    ready: !enabled || ready,
+    style: enabled && ready
       ? ({
           ...values,
           iconSize: undefined,

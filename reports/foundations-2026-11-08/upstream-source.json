@@ -1,0 +1,49 @@
+{
+  "repository": "https://github.com/Grenish/expressive",
+  "revision": "eb96d3df46790079ae5bf7b22d721491260c1485",
+  "files": [
+    {
+      "source": "packages/registry/src/tokens/colors.ts",
+      "target": "src\\kit\\foundations\\color-engine.ts",
+      "sourceSha256": "c89df19ec92c7f88d88b6ec2ecdb36becc1061a1b92807f1e5a21e8de4aa5d6e"
+    },
+    {
+      "source": "packages/registry/src/tokens/typography.ts",
+      "target": "src\\kit\\foundations\\typography.ts",
+      "sourceSha256": "6b47ae3db8a3a2213dd5f2744da24dd8cce4e2df34f65f0057ad75227ebfe51c"
+    },
+    {
+      "source": "packages/registry/src/tokens/shape.ts",
+      "target": "src\\kit\\foundations\\owner-tokens.ts",
+      "adaptation": "Retained the owner corner scale and rounded controls; upstream corner values and cut/squircle control presets are not active.",
+      "sourceSha256": "26269963c8f805e0c42a20e656ae44f6efe67d2704fb39199a1e2400480d0a5a"
+    },
+    {
+      "source": "packages/registry/src/tokens/spacing.ts",
+      "target": "src\\kit\\foundations\\spacing.ts",
+      "sourceSha256": "1c9b3e0c6508ad23ad6e91ab43912e1a5f43a692176c2c1dc1f865dabd561ba8"
+    },
+    {
+      "source": "packages/registry/src/tokens/material-shapes.ts",
+      "target": "src\\kit\\foundations\\material-shapes.ts",
+      "sourceSha256": "849f4a4aa2019984c5e7aea25df5f36296fee77c77f156d6734ed26ccd6a54ca"
+    },
+    {
+      "source": "packages/registry/src/lib/shape-morph.ts",
+      "target": "src\\kit\\foundations\\shape-morph.ts",
+      "sourceSha256": "1364f8bcd44de708e448efef3c80ec35383155be34b811a106320922d40a8891"
+    },
+    {
+      "source": "packages/registry/src/lib/spring.ts",
+      "target": "src\\kit\\foundations\\spring.ts",
+      "sourceSha256": "2cb897ef65c089cc3125d9a36a0f819dd504e22c599439958cfc59b647ad344c"
+    }
+  ],
+  "excluded": [
+    "elevation",
+    "component replacement",
+    "GSAP",
+    "Tailwind migration",
+    "upstream motion curves"
+  ]
+}

@@ -7,7 +7,8 @@ test("variant previews share one dotted canvas with a solid divided header", asy
     const canvas=page.locator(".live-stage > .showcase-canvas");
     await expect(canvas).toHaveCount(1);
     await expect(canvas).toHaveCSS("background-size","20px 20px");
-    await expect(page.locator(".component-appearance-controls")).toHaveCSS("border-bottom-width","1px");
+    if(route === "fab") await expect(page.locator(".component-appearance-controls")).toHaveCSS("border-bottom-width","1px");
+    else await expect(page.locator(`.${route}-configuration`)).toBeVisible();
     for(const demo of await canvas.locator(".demo-primary:not(.demo-loading)").all()) await expect(demo).toHaveCSS("background-image","none");
   }
 });

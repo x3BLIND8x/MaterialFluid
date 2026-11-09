@@ -101,10 +101,19 @@ describe("shared design policy", () => {
       </MaterialFluidProvider>,
     );
     const fills = Array.from(
-      container.querySelectorAll<HTMLElement>(".mf-progress-segment > span"),
-      (el) => el.style.width,
+      container.querySelectorAll<HTMLElement>(".mf-progress-stage .mf-linear-wave"),
+      (el) => { const path = el.querySelector(".mf-progress-wave")?.getAttribute("d") ?? ""; const end = Number(path.match(/L([\d.]+),[^L]+$/)?.[1] ?? 0); return Math.round(end / 300 * 100); },
     );
-    expect(fills).toEqual(["100%", "100%", "100%", "50%", "0%", "0%", "0%"]);
+    expect(fills).toEqual([100, 100, 100, 50, 0, 0, 0]);
+    const paths = Array.from(
+      container.querySelectorAll(".mf-progress-stage .mf-progress-wave"),
+      (el) => el.getAttribute("d") ?? "",
+    );
+    const heights = (path: string) => new Set(
+      Array.from(path.matchAll(/[ML][\d.]+,([\d.]+)/g), (match) => match[1]),
+    );
+    paths.slice(0, 3).forEach((path) => expect(heights(path).size).toBe(1));
+    expect(heights(paths[3]).size).toBeGreaterThan(1);
     expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe(
       "50",
     );
@@ -115,7 +124,8 @@ describe("shared design policy", () => {
         <Progress
           label="Update"
           value={30}
-          presentation="status"
+          presentation="wavy"
+          showStatus
           status="Update in progress"
           remaining="8s left"
         />

@@ -1,3 +1,4 @@
+import { settledSpring, springRest } from "./motion-engine";
 import { useSizePolicy } from "./appearance";
 import { Progress } from "./feedback";
 import { useAppearanceProps, useComponentAppearance, ComponentAppearanceProvider, type AppearanceProps } from "./appearance";
@@ -31,7 +32,7 @@ import { OptionsExpansionBody, useOptionsExpansion } from "./options-expansion";
 function useFieldPadding() {
   const [focused, setFocused] = useState(false);
   const { motion: mode, reducedMotion } = useMaterialFluid();
-  const inset = useSpring(0, { stiffness: 420, damping: 28, mass: .8 });
+  const inset = useSpring(0, { stiffness: 420, damping: 28, mass: .8, ...springRest.pixel });
   useEffect(() => {
     if (mode === "expressive" && !reducedMotion) inset.set(focused ? 8 : 0);
     else inset.jump(focused ? 8 : 0);
@@ -653,7 +654,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     const { panel, side: optionsSide } = useOptionsExpansion(open, anchor);
     const { locale, motion: mode, reducedMotion } = useMaterialFluid();
     const expressive = mode === "expressive" && !reducedMotion;
-    const transition = expressive ? { type: "spring" as const, stiffness: 420, damping: 28, mass: .8 } : { duration: 0 };
+    const transition = expressive ? settledSpring({ type: "spring" as const, stiffness: 420, damping: 28, mass: .8 }) : { duration: 0 };
     return <FormField label={label} htmlFor={id} className={cx("mf-choice-field", className)}>
       <PopoverPrimitive.Root open={open} onOpenChange={next => { setOpen(next); if (!next) setQuery(""); }}>
         <PopoverPrimitive.Anchor asChild><div ref={anchor}>
@@ -954,7 +955,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
               const size = file.size < 1024 ? `${file.size} B` : file.size < 1048576 ? `${(file.size / 1024).toFixed(1)} KB` : `${(file.size / 1048576).toFixed(1)} MB`;
               return <motion.div role="listitem" key={`${file.name}-${file.size}-${file.lastModified}`} className="mf-file-row" data-status={status ?? "ready"}
                 initial={expressive ? { opacity: 0, height: 0 } : false} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                transition={expressive ? { type: "spring", stiffness: 340, damping: 30 } : { duration: 0 }}>
+                transition={expressive ? settledSpring({ type: "spring", stiffness: 340, damping: 30 }) : { duration: 0 }}>
                 <div className="mf-file-row-content">
                   <span className="mf-file-kind" aria-hidden="true">{file.name.includes(".") ? file.name.split(".").pop()!.slice(0, 5).toUpperCase() : "FILE"}</span>
                   <div className="mf-file-details">

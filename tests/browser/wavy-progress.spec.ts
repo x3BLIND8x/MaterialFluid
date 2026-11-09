@@ -108,14 +108,8 @@ for (const locale of ["en", "fa"])
       })
       .click();
     const progress = page.locator('.demo-primary [role="progressbar"]');
-    await expect(progress.locator(".mf-progress-segment")).toHaveCount(8);
+    await expect(progress.locator(".mf-progress-stage")).toHaveCount(2);
     await expect(progress).toHaveAttribute("aria-valuenow", "65");
-    await styles
-      .getByRole("button", {
-        name: locale === "en" ? "With status" : "با وضعیت",
-        exact: true,
-      })
-      .click();
     await expect(progress.locator(".mf-progress-status-text")).toBeVisible();
     await expect(progress.locator(".mf-progress-percent")).toHaveText(
       locale === "en" ? "65%" : "۶۵٪",

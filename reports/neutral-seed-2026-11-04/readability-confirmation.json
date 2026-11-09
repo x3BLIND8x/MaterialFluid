@@ -1,0 +1,149 @@
+[
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "path": "components/calendar",
+    "state": "default",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "path": "components/calendar",
+    "state": "default",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "components/alert-dialog",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "components/drawer",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "path": "components/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "components/bottom-sheet",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "path": "components/date-range-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "shadcn/carousel",
+    "state": "default",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "path": "shadcn/calendar",
+    "state": "default",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "path": "shadcn/calendar",
+    "state": "default",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "path": "shadcn/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "path": "shadcn/carousel",
+    "state": "default",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "en",
+    "path": "shadcn/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "components/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "components/date-range-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "locale": "fa",
+    "path": "shadcn/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "path": "components/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "path": "components/date-range-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "en",
+    "path": "shadcn/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "path": "components/date-picker",
+    "state": "opened",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "locale": "fa",
+    "path": "components/date-range-picker",
+    "state": "opened",
+    "violations": []
+  }
+]

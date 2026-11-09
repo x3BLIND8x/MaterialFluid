@@ -4,6 +4,7 @@ import {
   mkdir,
   readFile,
   readdir,
+  rm,
   stat,
   writeFile,
 } from "node:fs/promises";
@@ -14,9 +15,12 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const stageRoot = resolve(root, ".cache", `handoff-stage-${Date.now()}`);
 const payload = join(stageRoot, "MaterialFluid");
-const zipPath = join(root, "MaterialFluid-v0.11.zip");
+const { version } = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const archiveName = `MaterialFluid-v${version}.zip`;
+const zipPath = join(root, archiveName);
 const omittedDirectories = new Set([
   ".cache",
+  "backups",
   ".codex",
   ".agents",
   ".aws",
@@ -32,7 +36,6 @@ const omittedDirectories = new Set([
   "test-results",
   "__pycache__",
 ]);
-const omittedFiles = new Set(["materialfluid-0.11.0.tgz"]);
 const omittedPath = (path) =>
   path.split(/[\\/]/).some((part) => omittedDirectories.has(part)) ||
   path === "src/kit/vendor/material" ||
@@ -68,7 +71,6 @@ async function copyTree(source, destination, rel = "") {
       await copyTree(from, to, nextRel);
     } else if (
       entry.isFile() &&
-      !omittedFiles.has(nextRel) &&
       !/\.(?:tar|tgz|zip|log|tmp)$/i.test(entry.name) &&
       (!/^\.env(?:\.|$)/i.test(entry.name) ||
         entry.name.toLowerCase() === ".env.example")
@@ -95,7 +97,7 @@ const manifest = [
   "",
   "Excluded dependency folders, build outputs, caches, reviews, test reports, generated package archives, and the obsolete pre-generated Material SVG folder. The icon generator, generated icon data, complete showcase, public fonts, licenses, package lock, and Linux/Windows launchers are included.",
   "",
-  "After extracting MaterialFluid-v0.11.zip:",
+  `After extracting ${archiveName}:`,
   "1. Open the MaterialFluid folder.",
   "2. Run `npm ci`.",
   "3. Run `./Open Showcase.sh` on Linux or `Open Showcase.cmd` on Windows.",
@@ -159,5 +161,8 @@ const zipBytes = Buffer.concat([...local, directoryBytes, end]);
 await writeFile(zipPath, zipBytes);
 const zipStat = await stat(zipPath);
 const digest = createHash("sha256").update(zipBytes).digest("hex");
+if (!withinRoot(stageRoot) || dirname(stageRoot) !== join(root, ".cache"))
+  throw Error(`Refusing to remove unexpected staging path: ${stageRoot}`);
+await rm(stageRoot, { recursive: true, force: true });
 console.log(JSON.stringify({ archive: zipPath, includedFiles: files.length,
   zipBytes: zipStat.size, sha256: digest, excluded: Object.fromEntries(excluded) }, null, 2));

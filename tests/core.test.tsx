@@ -399,17 +399,21 @@ describe("approved palette settings", () => {
       darkBorderBrightness: 90,
     });
   });
-  it("restricts every selectable hue to full saturation and brightness", () => {
+  it("keeps the owner's saturation and brightness for every selectable hue and restores the exact default at 48 degrees", () => {
     for (let hue = 0; hue < 360; hue++) {
       const seed = seedFromHue(hue);
       const rgb = [1, 3, 5].map((offset) =>
         parseInt(seed.slice(offset, offset + 2), 16),
       );
-      expect(Math.max(...rgb)).toBe(255);
-      expect(Math.min(...rgb)).toBe(0);
+      expect(Math.max(...rgb)).toBe(238);
+      expect(Math.min(...rgb)).toBe(150);
       expect(seedHue(seed)).toBe(hue);
     }
-    expect(seedFromHue(360)).toBe("#ff0000");
+    expect(seedHue("#eedd96")).toBe(48);
+    expect(seedFromHue(48)).toBe("#eedd96");
+    expect(seedFromHue(408)).toBe("#eedd96");
+    expect(seedFromHue(360)).toBe(seedFromHue(0));
+    expect(seedFromHue(-1)).toBe(seedFromHue(359));
   });
 });
 describe("date-only values", () => {
@@ -531,9 +535,16 @@ describe("preferences and catalogue", () => {
       preferenceDefaults,
     );
   });
-  it("has exactly 58 unique component pages", () => {
-    expect(catalogue).toHaveLength(58);
-    expect(new Set(catalogue.map((c) => c.id)).size).toBe(58);
+  it("has exactly 45 unique component pages", () => {
+    expect(catalogue).toHaveLength(45);
+    expect(new Set(catalogue.map((c) => c.id)).size).toBe(45);
+    expect(catalogue.map(item => item.id)).toEqual([
+      "button", "icon-button", "button-group", "split-button", "fab", "fab-menu", "chips",
+      "calendar", "checkbox", "date-picker", "menu", "radio-group", "select", "slider", "switch", "text-field",
+      "breadcrumb", "navigation-bar", "navigation-drawer", "navigation-rail", "pagination", "sidebar", "tabs", "toolbar", "top-app-bar",
+      "accordion", "avatar", "bottom-sheet", "card", "carousel", "code-block", "dialog", "divider", "list", "shape", "side-sheet", "table",
+      "alert", "alert-dialog", "badge", "loading", "progress", "snackbar", "toast", "tooltip",
+    ]);
   });
   it("normalizes malformed stored preferences", () => {
     expect(
@@ -785,7 +796,7 @@ describe("suggestions, OTP validation, and calendar navigation", () => {
     expect(inputs.map(input => input.value).join("")).toBe("123654");
   });
   it("accepts only 123654 in the OTP showcase", () => {
-    render(<MaterialFluidProvider motion="minimal"><FormsDemo id="otp-input" locale="en" states={{}} fabMotion={fabMotionDefaults} onFabMotionChange={() => {}} /></MaterialFluidProvider>);
+    render(<MaterialFluidProvider motion="minimal"><FormsDemo id="otp-input" locale="en" states={{}} fabMotion={fabMotionDefaults} /></MaterialFluidProvider>);
     const first = screen.getAllByRole("textbox")[0];
     fireEvent.paste(first, { clipboardData: { getData: () => "123456" } });
     expect(screen.getByRole("alert").textContent).toBe("Incorrect code. Try again.");
@@ -1186,11 +1197,11 @@ describe("navigation treatments", () => {
     expect(screen.getByRole("tab", {name:"Second"}).getAttribute("aria-selected")).toBe("true");
     expect(screen.getByRole("tabpanel").textContent).toBe("Second view");
   });
-  it("keeps breadcrumb links native and gives each item Ghost behavior", () => {
+  it("keeps breadcrumb links native and the current item noninteractive", () => {
     render(<MaterialFluidProvider motion="minimal"><Breadcrumbs items={[{label:"Home",href:"#/"},{label:"Components"}]} /><Link href="https://example.com" target="_blank">Documentation</Link></MaterialFluidProvider>);
     expect(screen.getByRole("link", {name:"Home"}).getAttribute("href")).toBe("#/");
     expect(screen.getByRole("link", {name:"Home"}).classList.contains("mf-button--ghost")).toBe(true);
-    expect(screen.getByRole("button", {name:"Components"}).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByText("Components").getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", {name:"Documentation"}).getAttribute("target")).toBe("_blank");
   });
 });

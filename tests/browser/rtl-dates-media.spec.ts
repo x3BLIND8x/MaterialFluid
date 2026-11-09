@@ -7,11 +7,11 @@ for(const locale of ['en','fa']) {
     await expect(trigger).toHaveJSProperty('tagName','BUTTON');
     await expect(trigger.locator('input,button')).toHaveCount(0);
     await trigger.click();await expect(page.locator('.mf-date-popover')).toBeVisible();
-    const previous=page.locator('.mf-date-popover .rdp-button_previous');const next=page.locator('.mf-date-popover .rdp-button_next');
+    const previous=page.locator('.mf-date-popover .rdp-button_previous:visible');const next=page.locator('.mf-date-popover .rdp-button_next:visible');
     await expect(previous.locator('.mf-animated-icon')).toHaveAttribute('data-icon-name',locale==='fa'?'chevron-right':'chevron-left');
     await expect(next.locator('.mf-animated-icon')).toHaveAttribute('data-icon-name',locale==='fa'?'chevron-left':'chevron-right');
-    const before=await page.locator('.mf-date-popover .rdp-month_caption').innerText();await next.click();
-    await expect(page.locator('.mf-date-popover .rdp-month_caption').last()).not.toHaveText(before);
+    const before=await page.locator('.mf-date-popover .mf-calendar-caption').innerText();await next.click();
+    await expect(page.locator('.mf-date-popover .mf-calendar-caption').last()).not.toHaveText(before);
     await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
     await trigger.press('Space');await expect(page.locator('.mf-date-popover')).toBeVisible();await page.keyboard.press('Escape');
     const style=await trigger.evaluate(el=>{const s=getComputedStyle(el);return{height:s.height,radius:s.borderRadius,padding:s.padding}});

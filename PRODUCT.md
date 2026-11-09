@@ -16,11 +16,15 @@ External developers building general web applications on desktop and touch devic
 
 ## Product Purpose
 
-A reusable 58-page component kit and dedicated-page bilingual showcase. Success means coherent visuals, usable component APIs, working keyboard/touch interactions, and package-ready distribution.
+A reusable component kit and dedicated-page bilingual showcase. The active catalogue has 45 components in five groups: Actions, Selection & input, Navigation, Containment and Communication. Success means coherent visuals, usable component APIs, working keyboard/touch interactions, and package-ready distribution.
+
+The owner replaced both previous navigation lists on 2026-11-08. Only the active catalogue appears in navigation, search, counts and previous/next links. Existing package APIs and direct component routes remain compatible. The catalogue changes names and grouping; it retains MaterialFluid's palette, typography, geometry and authored motion.
+
+The separate #/motion playground provides ten interactive motion studies with live parameters, individual saved settings, presets, replay, and configuration export. Experiments remain local to that page; they do not overwrite kit defaults or the original catalogue.
 
 ## Capabilities and Constraints
 
-English/Persian and LTR/RTL; Gregorian/Persian calendars; sortable, filterable, paginated, selectable tables. No accounts or backend. Initial release excludes example websites, charts, rich text and complex upload engines. All dependencies must permit free redistribution. Source and package delivery; the owner has authorized a public GitHub v0.11 release.
+English/Persian and LTR/RTL; Gregorian/Persian calendars; sortable, filterable, paginated, selectable tables. No accounts or backend. Initial release excludes example websites, charts, rich text and complex upload engines. All dependencies must permit free redistribution. Source and package delivery; the owner has authorized a public GitHub 0.2.0 complete-overhaul release.
 
 ## Brand Commitments
 
@@ -34,14 +38,14 @@ WCAG 2.2 AA target, full keyboard and touch support, no hover-only functionality
 
 ## Product Principles
 
-- Palette behavior is adjustable live in Settings and persists locally: light/dark action brightness, primary/secondary/tertiary saturation, secondary/tertiary hue shift, surface tint and contrast. Bright action fills use adaptive readable foregrounds across the kit while transparent-action ink stays independently readable. Reset colors restores the confirmed defaults (85/90 brightness, 50/75/100 saturation, 0/30 hue shifts, 25 surface tint, 0 contrast) without changing the accent seed. Accent selection is hue-only at full HSV saturation/brightness; seed Reset preserves the original gold.
+- Palette behavior is adjustable live in Settings and persists locally: light/dark action brightness, primary/secondary/tertiary saturation, secondary/tertiary hue shift, surface tint and contrast. Bright action fills use adaptive readable foregrounds across the kit while transparent-action ink stays independently readable. Reset colors restores the confirmed defaults (85/90 brightness, 50/75/100 saturation, 0/30 hue shifts, 25 surface tint, 0 contrast) without changing the accent seed. Accent selection changes HSV hue while retaining the original gold's saturation and brightness. Its rounded 48-degree position restores the exact original gold, as does seed Reset.
 - Advanced color roles adds separate light/dark controls for colored icon/accent ink (40/50), Outline/Ghost/plain icons (40/90), selection containers, neutral backgrounds, text and borders. Toolbar and search icons use the plain role. Dark-mode Outline icons match their readable text color. Saved values persist and missing settings migrate from defaults. Text uses separate readable tones.
 - Danger follows the supplied reference image: solid bright red with white text/icons. Red brightness has its own light/dark controls, both defaulting to tone 49, within the generated error palette. Paired foregrounds adapt at custom brightness values.
 - Outline is the shared opaque neutral treatment matching Variant/Size selectors in both themes; Ghost is transparent. Showcase actions use kit variants, including Outline for Fluid/Minimal and Ghost for language, with no separate custom button palette.
-- Button and action-icon pages present five action variants together; other families use their single approved treatment, with shared Size and example-state controls and no Variant selector. Button has one five-variant row; the icon catalogue renders once with six selected-icon previews. Internal icon animations are globally paused while preserving the code.
+- Button has a live configurable example grouped into Example Presets, Appearance, Content and Behavior, with synchronized Web Components and React code. Its full-catalogue icon picker loads the optional pack only when needed. Square and Elevated treatments are excluded; Elevated is excluded for every component. Other families retain their current presentations until requested. Internal icon animations are globally paused while preserving the code.
 
 - Action buttons expose Primary, Secondary, Tertiary, Outline, Ghost and Danger variants. Component families use the simplified treatments described below, with Small, Medium (default) and Large sizes. Small is intentionally compact on desktop. Per-component size is the only sizing setting; there is no global density API.
-- Button color changes reveal from the center with a crisp ripple edge; hover does not trigger this reveal. Size changes spring actual dimensions and padding so parent layout changes continuously, with centered press transforms.
+- Button color changes reveal from the center with a crisp ripple edge; hover does not trigger this reveal. Size changes spring actual dimensions and padding so parent layout changes continuously, with centered surface press transforms. Button and IconButton text/icons stay at their resting size and position during press and release; only the surface silhouette and ripple animate.
 
 - Working behavior and cohesion before elaborate effects.
 - Component examples lead; supporting interface stays quiet.
@@ -61,10 +65,10 @@ Switch dragging snaps the thumb to the nearest endpoint with a short eased trans
 
 Checkbox ticks draw in over 180ms once the fill visibly covers the whole checkbox, without waiting for spring settling. Partial minus marks remain immediate. Radio rings and dots share one SVG coordinate system at every size. Switch thumbs anticipate a click with a small movement on press and complete the snap on release. Sliders initialize at their values without load animation.
 
-Surfaces & Data, Feedback, and Overlays now render one example treatment per component rather than six color variants. Neutral Outline surfaces, Primary selections, semantic badges, and Ghost actions follow the simplified controls/navigation direction. The catalogue has 58 pages: NotificationCenter replaces Snackbar, whose API and old route remain compatible through Toast. Notifications fit the available viewport height and support queued overflow, retained history, images, actions, and replies. The desktop sidebar collapses; constrained headers put global controls in a three-dot popover. Scrollbar tracks are transparent and the page canvas follows the active theme.
+Surfaces & Data, Feedback, and Overlays now render one example treatment per component rather than six color variants. Neutral Outline surfaces, Primary selections, semantic badges, and Ghost actions follow the simplified controls/navigation direction. The previous catalogue had 58 pages: NotificationCenter replaces Snackbar, whose API and old route remain compatible through Toast. Notifications fit the available viewport height and support queued overflow, retained history, images, actions, and replies. The desktop sidebar collapses; constrained headers put global controls in a three-dot popover. Scrollbar tracks are transparent and the page canvas follows the active theme.
 
 
-Standalone Chip is removed; Tree and CardGroup bring the catalogue to 58 pages. Notifications fit available height rather than a fixed count; opening the center dismisses active overlays while preserving history. Progress and Spinner use Material Expressive waves; upload progress reuses the shared indicator. Tables expose optional per-column search/value filters, stable widths, and drag/automatic column sizing. Field glyphs use a proportional 20/22/24px scale within separate 32/36/40px action targets, with 14px remove glyphs inside selected chips. Shared hover and press behavior follows IconButton.
+Standalone Chip is removed; Tree and CardGroup were part of the previous catalogue. Notifications fit available height rather than a fixed count; opening the center dismisses active overlays while preserving history. Progress and Spinner use Material Expressive waves; upload progress reuses the shared indicator. Tables expose optional per-column search/value filters, stable widths, and drag/automatic column sizing. Field glyphs use a proportional 20/22/24px scale within separate 32/36/40px action targets, with 14px remove glyphs inside selected chips. Shared hover and press behavior follows IconButton.
 
 Select, Combobox and MultiSelect expand the field outline into a continuous options surface without moving surrounding content. Height and corners morph over 300ms, including filtering, interrupted transitions and collapse; the chevron reverses over 400ms. Option rows rise 8px from a slight scale and 4px blur over 350ms, staggered by 50ms up to 250ms. The surface retains MaterialFluid colors and flat styling, follows upward collision placement, and skips spatial animation in Minimal or reduced-motion mode.
 
@@ -75,3 +79,37 @@ DatePicker is calendar-only: its field is a button trigger matching DateRangePic
 ## Consistency policy
 
 Shared kit components are the source of truth for the showcase. Fix colors, shape, state and motion in shared code; do not compensate with isolated page treatments. TableOfContents and the catalogue both use Tree. The component stage uses a dotted canvas. Miscellaneous identity/status colors are independent of the seed, with paired accessible foregrounds. Toasts use the same floating-surface colors as dialogs and popovers. Size options follow COMPONENT_POLICY.md and the exported componentSizePolicy, with no decorative variants that lack a distinct use case.
+
+
+The optional Neutral + seed preset combines neutral surface hierarchy with high-lightness primary fills generated from the accent seed. The showcase defaults to this preset and retains Original palette; the library provider preserves its standard default. Surface tint and accent strength are separate persisted controls.
+
+## Additive Button API, 2026-11-08
+
+Button preserves Small/Medium/Large and adds XS/XL (24/96px desktop), with s/m/l aliases. Registered icon names and React icon nodes support logical start/end placement with icon dimensions inherited from the Appearance size. Controlled/uncontrolled toggle selection exposes aria-pressed and selection callbacks; active, disabled, loading labels and determinate/indeterminate progress are supported. Native type/name/value/form/ref/event behavior remains available. Loading preserves the original label/icon and any explicit disabled state. Press content remains visually fixed. No Square or Elevated treatment is supported.
+
+The optional materialfluid/elements entry defines mf-button through defineMaterialFluidButton. It renders the same Button using the React peers, inherits native form behavior through the inner button and provides reflected attributes/properties plus asynchronous updateComplete. Importing this optional entry is safe on the server; registration requires a browser. It does not register or ship adapters for unrelated components.
+
+
+## Fixed component motion defaults, 2026-11-08
+
+Component pages have no Advanced panels. Button icons inherit their Appearance size, with no independent icon-size or ripple option in either code format. Button color/size/press/ripple overrides, provider buttonMotion/textMorph overrides, and icon/switch timing knobs are removed from public APIs. Keep all authored default values and animations. Private composition rules retain passive ToggleGroup segments and Calendar/Collapsible sizing behavior. The separate Motion playground retains isolated experiments through a private context. Active is a visual held hover background; it does not select, disable or activate the button.
+
+
+## Configuration and documentation tabs, 2026-11-08
+
+Catalogue pages open in Configuration with the live component and configuration controls only. Usage code, Web Components/React recipes, API tables, behavior notes, in-page documentation navigation and previous/next links live in the separate Documentation tab. Reuse exported Tabs and keep configuration state when switching tabs; changing component routes returns to Configuration. Button configuration follows the preview, Configuration heading and Example Presets, Appearance, Content and Behavior groups. Remove the preview footer caption and catalogue ordinal from this surface. Keyboard-visible focus on enabled Button and IconButton uses the same surface background as Active while retaining the focus ring. Focus does not change toggle selection. Motion drives authored springs/ripples; CSS owns styling and simple transitions; GSAP is not used.
+
+
+## Foundation adaptation, 2026-11-08
+
+Before the foundation work, a complete source/design snapshot (536 files) was saved and verified in backups/MaterialFluid-before-foundations-20261108-180759.zip. The foundation architecture adapts selected MIT source from Grenish/expressive revision eb96d3df46790079ae5bf7b22d721491260c1485; provenance is in reports/foundations-2026-11-08/upstream-source.json. Keep the owner theme and motion layers authoritative. There is no elevation system, shadow treatment, GSAP dependency, Tailwind migration or component replacement.
+
+The provider uses createFoundationTheme to combine the existing Material/Previous/Neutral + seed color engines, independent status palette and new semantic foundation variables. Tonal Spot remains the default; nine generation algorithms are available without changing saved/default palettes. All 24 pre-migration default color matrices remain exact. Owner fonts, original component metrics and 14/24/29px control radii remain. The exported Foundations namespace adds role-driven type styles, scoped CSS generation, 35 Material shape paths and morphing utilities, shared interaction/a11y policy, color-pair checks and a Motion adapter using the authored press/resize/dialog/popup springs. Effects retain fixed fades rather than spatial overshoot. No new per-component tuning props are added.
+
+The five foundation pages use their own Tree alongside the unchanged 45-component catalogue: Color, Typography, Shape, Motion and Accessibility. Typography/Shape/Accessibility separate Configuration from Documentation. Color keeps the original color page and adds the algorithm/palette explorer. Motion keeps the existing isolated experiments and adds a live overview of owner curves. Reference foundation structure is adapted to MaterialFluid visuals. Individual component copying is deferred to later owner requests. Accessibility checks demonstrate actual active color pairs and focus behavior; do not claim full accessibility certification.
+
+The foundation workbenches now include semantic typography formatting, continuously retargetable shapes, synchronized curve playback and functional accessibility presets. Button toggles are restricted to Tonal, Outlined and Ghost/Text, with Primary selected styling; progress follows the size variant's icon slot. See reports/foundation-workbenches-2026-11-09/REVIEW.md for local verification and limits.
+
+## Action refinements, 2026-11-09
+
+Button and IconButton support Emphasize as an ordinary toggle treatment with paired Primary fill and ink in both states. Tonal, Outlined and Ghost/Text retain their own off treatment and Primary on treatment; Filled and Danger do not toggle. IconButton has five sizes and narrow/default/wide widths, with no Square or Elevated option. A nullable selectedIcon uses the same Material symbol, outlined off and filled on through the authored reversible reveal; a separate selectedIcon swaps artwork. selectedLabel optionally names the selected action. Do not expose Playback/playing modes or new animation tuning parameters. Both action pages use grouped Example Presets, Appearance, Content and Behavior; React and optional Web Component recipes remain in Documentation.

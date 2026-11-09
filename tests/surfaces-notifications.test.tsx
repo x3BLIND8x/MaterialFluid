@@ -78,10 +78,10 @@ describe("notification queue and history", () => {
     await waitFor(() => expect(document.querySelectorAll(".mf-toast").length).toBeGreaterThan(3));
     const visibleCount = document.querySelectorAll(".mf-toast").length;
     expect(visibleCount).toBeLessThan(8);
-    expect(screen.queryByText(`Update ${visibleCount + 1}`)).toBeNull();
+    expect(screen.queryByText(`Update ${8 - visibleCount}`)).toBeNull();
     expect(screen.getByRole("button", {name:/more notifications/})).not.toBeNull();
     await user.click(screen.getAllByRole("button", {name:"Dismiss notification"})[0]);
-    await waitFor(() => expect(screen.getByText(`Update ${visibleCount + 1}`)).not.toBeNull());
+    await waitFor(() => expect(screen.getByText(`Update ${8 - visibleCount}`)).not.toBeNull());
     expect(document.querySelectorAll(".mf-toast")).toHaveLength(visibleCount);
     await user.click(screen.getByRole("button", {name:"History"}));
     const center = screen.getByRole("dialog", {name:"Notification center"});

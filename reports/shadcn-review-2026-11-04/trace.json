@@ -1,0 +1,26 @@
+[
+  {
+    "locale": "en",
+    "passed": true,
+    "preview": {
+      "height": 11,
+      "visibility": "hidden"
+    },
+    "compact": {
+      "connector": "none",
+      "node": 24
+    }
+  },
+  {
+    "locale": "fa",
+    "passed": true,
+    "preview": {
+      "height": 0,
+      "visibility": "hidden"
+    },
+    "compact": {
+      "connector": "none",
+      "node": 24
+    }
+  }
+]

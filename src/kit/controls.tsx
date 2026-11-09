@@ -1,3 +1,10 @@
+import { motionTransition } from "./bounded-motion";
+import { SelectionIcon } from "./selection-icon";
+import { useCurveValue } from "./curve-value";
+import { ButtonCompositionContext } from "./internal-motion";
+import { isButtonToggleVariant, normalizeButtonSize, type ButtonSizeInput, type IconButtonWidth } from "./component-policy";
+import { selectionTransition } from "./selection-motion";
+import { motionEngine } from "./motion-engine";
 import { ButtonRipple } from "./button-ripple";
 import { QUICK_PRESS_DURATION_MS, QUICK_PRESS_THRESHOLD_MS, useButtonPressAnimation } from "./button-press";
 import {
@@ -9,6 +16,8 @@ import {
 } from "./appearance";
 import {
   createContext,
+  Children,
+  isValidElement,
   forwardRef,
   useContext,
   useRef,
@@ -25,7 +34,6 @@ import {
   animate,
   motion,
   useMotionValue,
-  useSpring,
   useTransform,
   useMotionValueEvent,
   type MotionValue,
@@ -35,7 +43,7 @@ import * as Radio from "@radix-ui/react-radio-group";
 import * as Slide from "@radix-ui/react-slider";
 import { useMaterialFluid } from "./provider";
 import { cx, useControllable, setRef } from "./utils";
-import { AnimatedIcon, type AnimatedIconProps } from "./icons";
+import { AnimatedIcon, type IconName } from "./icons";
 import { RollingNumber } from "./rolling-number";
 import { SwitchIcon, type SwitchStateIcon } from "./switch-icon";
 import { useButtonGeometry } from "./button-geometry";
@@ -50,30 +58,31 @@ export const useButtonPressProgress = () => useContext(ButtonPressProgressContex
 export interface ButtonProps
   extends
     ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<AppearanceProps, "variant"> {
+    Omit<AppearanceProps, "variant" | "size"> {
   variant?: ComponentVariant | "filled" | "tonal" | "outlined" | "text";
-  size?: "sm" | "md" | "lg";
+  size?: ButtonSizeInput;
+  text?: string;
+  icon?: ReactNode;
+  selectedIcon?: ReactNode;
+  iconPosition?: "start" | "end";
+  ariaLabel?: string;
+  toggle?: boolean;
+  selected?: boolean;
+  defaultSelected?: boolean;
+  toggleOnClick?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
+  onSelectionChange?: (detail: { selected: boolean; value: string }) => void;
+  active?: boolean;
+  progress?: number | null | boolean | { value?: number; indeterminate?: boolean; label?: string };
+  showProgress?: boolean;
+  indeterminate?: boolean;
+  progressLabel?: string;
+  loadingText?: string;
   loading?: boolean;
   success?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
-  colorMotion?: { duration?: number } | false;
-  sizeMotion?: { stiffness?: number; damping?: number; mass?: number };
-  pressMotion?: {
-    scale?: number;
-    stiffness?: number;
-    damping?: number;
-    mass?: number;
-    radiusDepthRatio?: number;
-  };
-  ripple?:
-    | {
-        duration?: number;
-        opacity?: number;
-        easeOutStrength?: number;
-        releaseSpeed?: number;
-      }
-    | false;
+
 }
 // Keep the same compositing surface at rest and during a press. Dropping to
 // transform:none repaints fractional-height buttons with different edge rounding.
@@ -134,6 +143,11 @@ function buttonTransform(_values: unknown, transform: string) {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(rawProps, ref) {
     const defaults = useComponentAppearance();
+    const composition = useContext(ButtonCompositionContext);
+    const sizeMotion = composition.size ? undefined : false;
+    const colorMotion = composition.color ? undefined : false;
+    const pressMotion: { scale?: number; stiffness?: number; damping?: number; mass?: number; radiusDepthRatio?: number } | undefined = composition.press ? undefined : { scale: 1 };
+    const rippleOptions = composition.ripple ? undefined : false;
     const {
       variant = "filled",
       size = "md",
@@ -142,18 +156,38 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       leading,
       trailing,
       children,
+      text,
+      icon,
+      selectedIcon,
+      iconPosition = "start",
+      ariaLabel,
+      toggle: toggleRequested = false,
+      selected: controlledSelected,
+      defaultSelected = false,
+      toggleOnClick = true,
+      onSelectedChange,
+      onSelectionChange,
+      active = false,
+      progress,
+      showProgress,
+      indeterminate,
+      progressLabel,
+      loadingText,
       className,
-      pressMotion,
-      colorMotion,
-      sizeMotion,
-      ripple: rippleOptions,
       ...props
-    } = useAppearanceProps({ ...rawProps, variant: rawProps.variant ?? defaults.variant ?? "filled" }, {
+    } = useAppearanceProps({ ...rawProps, size: normalizeButtonSize(rawProps.size ?? defaults.size ?? "md"), variant: rawProps.variant ?? defaults.variant ?? "filled" }, {
       preserveVariant: true,
       preserveSize: true,
     });
 
-    const { motion: mode, reducedMotion, buttonMotion } = useMaterialFluid();
+    const toggle = toggleRequested && isButtonToggleVariant(variant);
+    const { motion: mode, reducedMotion, buttonMotion, locale } = useMaterialFluid();
+    const [selected, setSelected] = useControllable(controlledSelected, defaultSelected, onSelectedChange);
+    const progressVisible = loading || (showProgress ?? (progress !== undefined && progress !== false));
+    const progressOptions = typeof progress === "object" && progress !== null ? progress : undefined;
+    const progressValue = Math.max(0, Math.min(100, Number.isFinite(progressOptions?.value ?? progress) ? Number(progressOptions?.value ?? progress) : 0));
+    const progressUnknown = indeterminate ?? progressOptions?.indeterminate ?? (typeof progress !== "number" && progressOptions?.value === undefined);
+    const label = loading && loadingText !== undefined ? loadingText : children ?? text;
     const effectivePressMotion = pressMotion ?? {
       scale: 1 - buttonMotion.pressDepth / 100,
       stiffness: buttonMotion.stiffness,
@@ -167,24 +201,25 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const effectiveColorMotion = colorMotion ?? {
       duration: buttonMotion.colorDuration / 1000,
     };
-    const effectiveRipple = rippleOptions ?? {
+    const effectiveRipple = rippleOptions === false ? false : rippleOptions ?? {
       duration: buttonMotion.rippleDuration / 1000,
       opacity: buttonMotion.rippleOpacity / 100,
       easeOutStrength: buttonMotion.rippleFastStart / 100,
       releaseSpeed: buttonMotion.rippleReleaseSpeed,
     };
     const expressive = mode === "expressive" && !reducedMotion;
+    const progressIndicator = <span className="mf-button-loader" role="progressbar" aria-label={progressLabel ?? progressOptions?.label ?? (locale === "fa" ? "پیشرفت" : "Progress")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressUnknown ? undefined : progressValue}>
+          {progressUnknown ? <CircularWave animated={expressive} /> : <svg className="mf-button-determinate" viewBox="0 0 40 40" aria-hidden="true"><circle className="mf-wave-track" cx="20" cy="20" r="15"/><circle cx="20" cy="20" r="15" strokeDasharray={`${progressValue * .9424778} 94.24778`}/></svg>}
+        </span>;
     const node = useRef<HTMLButtonElement | null>(null);
     const geometry = useButtonGeometry(node, {
       expressive,
-      stiffness: effectiveSizeMotion?.stiffness ?? effectivePressMotion?.stiffness,
-      damping: effectiveSizeMotion?.damping ?? 40,
-      mass: effectiveSizeMotion?.mass ?? effectivePressMotion?.mass,
+      enabled: sizeMotion !== false,
+      stiffness: effectivePressMotion.stiffness,
+      damping: (effectiveSizeMotion === false ? undefined : effectiveSizeMotion.damping) ?? 40,
+      mass: effectivePressMotion.mass,
       className,
       style: props.style,
-      children,
-      leading,
-      trailing,
       size,
     });
     const previousColor = useRef<string | undefined>(undefined);
@@ -193,8 +228,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       id: number;
       from: string;
     }>();
+    const colorMotionEnabled = effectiveColorMotion !== false;
     const captureColor = useCallback(() => {
-      if (!node.current) return;
+      if (!node.current || !colorMotionEnabled) return;
       const button = node.current;
       if (!button.parentElement) return;
       // Read the authored color independently of hover/focus/press pseudo states.
@@ -213,14 +249,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       const previous = previousColor.current;
       if (next === previous) return;
       previousColor.current = next;
-      if (previous && !reducedMotion && effectiveColorMotion !== false) {
+      if (previous && !reducedMotion) {
         setColorReveal({ id: ++colorId.current, from: previous });
       } else {
         setColorReveal(undefined);
       }
-    }, [reducedMotion, effectiveColorMotion]);
-    useLayoutEffect(captureColor);
+    }, [reducedMotion, colorMotionEnabled]);
+    useLayoutEffect(captureColor, [captureColor, className, variant, props.style, selected, active, props.disabled, loading, success]);
     useEffect(() => {
+      if (!colorMotionEnabled) return;
       const root = node.current?.closest(".mf-root");
       if (!root) return;
       const observer = new MutationObserver(captureColor);
@@ -229,10 +266,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         attributeFilter: ["style", "data-theme"],
       });
       return () => observer.disconnect();
-    }, [captureColor]);
+    }, [captureColor, colorMotionEnabled]);
     const restRadius = useMotionValue(999);
     const [radiusMeasured, setRadiusMeasured] = useState(false);
     const pressScale = useMotionValue(1);
+    // Keep the content's final transform at identity while the surface compresses.
+    const contentScale = useTransform(pressScale, value => value > 0 ? 1 / value : 1);
     const pressProgress = useTransform(pressScale, (value) => {
       const pressedScale = effectivePressMotion?.scale ?? 0.94;
       return Math.max(
@@ -240,6 +279,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         Math.min(1, (1 - value) / Math.max(0.001, 1 - pressedScale)),
       );
     });
+    const autoFill = toggle && (selectedIcon == null || selectedIcon === "");
+    const selectionContent = (content: ReactNode): ReactNode => !autoFill ? content : Children.map(content, child => {
+      if (isValidElement<import("./icons").AnimatedIconProps>(child) && child.type === AnimatedIcon)
+        return <SelectionIcon name={child.props.name ?? "plus"} selected={selected} pressed={pressProgress} className={child.props.className} style={child.props.style}/>;
+      return child;
+    });
+    const displayedIcon = toggle && selected && selectedIcon != null && selectedIcon !== "" ? selectedIcon : icon;
+    const renderedIcon = typeof displayedIcon === "string"
+      ? autoFill ? <SelectionIcon name={displayedIcon as IconName} selected={selected} pressed={pressProgress}/> : <AnimatedIcon name={displayedIcon as IconName}/>
+      : selectionContent(displayedIcon);
     const rippleProgress = useMotionValue(0);
     const rippleLevels = useRef(new Map<number, number>());
     const updateRippleProgress = useCallback(
@@ -344,10 +393,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         }}
         type={props.type ?? "button"}
         disabled={props.disabled || loading}
-        aria-busy={loading || undefined}
+        aria-label={props["aria-label"] ?? ariaLabel ?? (progressVisible && typeof label === "string" ? label : undefined)}
+        aria-busy={loading || (progressVisible && (progressUnknown || progressValue < 100)) || undefined}
+        aria-pressed={toggle ? selected : props["aria-pressed"]}
+        data-toggle={toggle || undefined}
+        data-active={active || undefined}
+        onClick={event => {
+          props.onClick?.(event);
+          if (event.defaultPrevented || props.disabled || loading || !toggle || !toggleOnClick) return;
+          setSelected(!selected);
+          onSelectionChange?.({ selected: !selected, value: String(props.value ?? "") });
+        }}
         data-success={success || undefined}
         className={cx(
           "mf-button",
+          renderedIcon && (label === undefined || label === null || label === "") && !leading && !trailing && "mf-button--icon-only",
           `mf-button--${variant}`,
           `mf-size--${size}`,
           className,
@@ -464,36 +524,34 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             }
           />
         ))}
-        {loading ? (
-          <span className="mf-button-loader" aria-hidden="true"><CircularWave animated={expressive} /></span>
-        ) : (
-          leading
-        )}
-        {children}
-        {trailing}
+        <motion.span className="mf-button-content" style={{ scale: contentScale }}>
+        {iconPosition === "start" ? (progressVisible ? progressIndicator : selectionContent(leading) ?? (renderedIcon && <span className="mf-action-icon">{renderedIcon}</span>)) : selectionContent(leading)}
+        {selectionContent(label)}
+        {iconPosition === "end" && (progressVisible ? progressIndicator : renderedIcon && <span className="mf-action-icon">{renderedIcon}</span>)}
+        {selectionContent(trailing)}
+        </motion.span>
         </ButtonPressProgressContext.Provider>
       </motion.button>
     );
   },
 );
-export interface IconButtonProps extends Omit<
-  ButtonProps,
-  "leading" | "trailing"
-> {
-  label: string;
-}
+export type IconButtonProps = Omit<ButtonProps, "leading" | "trailing" | "ariaLabel"> & {
+  width?: IconButtonWidth;
+  selectedLabel?: string;
+} & ({ label: string; ariaLabel?: string } | { label?: string; ariaLabel: string } | { label?: string; ariaLabel?: string; "aria-label": string });
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  function IconButton({ label, className, variant, ...props }, ref) {
+  function IconButton({ label, ariaLabel, selectedLabel, className, variant, width = "default", selectedIcon, icon, children, selected: controlledSelected, defaultSelected = false, onSelectedChange, ...props }, ref) {
     const defaults = useComponentAppearance();
-    return (
-      <Button
-        {...props}
-        ref={ref}
-        variant={variant ?? defaults.variant ?? "ghost"}
-        aria-label={label}
-        className={cx("mf-icon-button", className)}
-      />
-    );
+    const effectiveVariant = variant ?? defaults.variant ?? "ghost";
+    const [selected, setSelected] = useControllable(controlledSelected, defaultSelected, onSelectedChange);
+    const toggled = props.toggle && isButtonToggleVariant(effectiveVariant) && selected;
+    const showSelectedIcon = toggled && selectedIcon != null && selectedIcon !== "";
+    return <Button {...props} ref={ref} variant={effectiveVariant}
+      aria-label={toggled && selectedLabel ? selectedLabel : label ?? ariaLabel ?? props["aria-label"]}
+      icon={showSelectedIcon ? selectedIcon : icon} selectedIcon={selectedIcon}
+      selected={selected} onSelectedChange={setSelected}
+      className={cx("mf-icon-button", `mf-icon-button--${width}`, className)}
+    >{showSelectedIcon ? undefined : children}</Button>;
   },
 );
 export const FAB = forwardRef<HTMLButtonElement, ButtonProps>(function FAB(
@@ -610,9 +668,11 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       damping: buttonMotion.damping,
       mass: buttonMotion.mass,
     });
-    const pointer = useRef<{ id: number; startX: number; startY: number } | null>(null);
+    const pointer = useRef<{ id: number; startX: number; startY: number; moved: boolean } | null>(null);
     const suppressClickUntil = useRef(0);
     const displayed = preview ?? selected;
+    const resetValue = useRef(rawProps.defaultValue ?? rawProps.value ?? "");
+    const choose = (next: string) => set(next === selected ? resetValue.current : next);
     const groupElement = useRef<HTMLDivElement | null>(null);
     const attachGroup = useCallback((element: HTMLDivElement | null) => {
       groupElement.current = element;
@@ -655,7 +715,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
       pointer.current = null;
       if (!cancel && x !== undefined && y !== undefined) {
         const next = optionAt(group, x, y);
-        if (next !== undefined) set(next);
+        if (next !== undefined) { if (active.moved) set(next); else choose(next); }
       }
       suppressClickUntil.current = performance.now() + 400;
       setPreview(null);
@@ -673,7 +733,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
           if (!event.pointerType || !event.isPrimary || event.button !== 0) return;
           const next = optionAt(event.currentTarget, event.clientX, event.clientY);
           if (next === undefined) return;
-          pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
+          pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
           event.currentTarget.setPointerCapture(event.pointerId);
           setPreview(next);
           startPillPress();
@@ -681,6 +741,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
         onPointerMove={event => {
           const active = pointer.current;
           if (active?.id !== event.pointerId) return;
+          if (Math.hypot(event.clientX-active.startX,event.clientY-active.startY)>4) active.moved=true;
           if (event.pointerType === "touch" && Math.abs(event.clientY - active.startY) > Math.max(8, Math.abs(event.clientX - active.startX))) {
             finish(event.currentTarget, true);
             return;
@@ -700,17 +761,15 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
           animate={pillBounds}
           style={{ borderRadius: pressedRadius, scale: pillScale, transformOrigin: "center" }}
           transition={mode === "expressive" && !reducedMotion
-            ? { type: "spring", stiffness: 620, damping: 42, mass: .65 }
+            ? selectionTransition
             : { duration: 0 }}
         />}
+        <ButtonCompositionContext.Provider value={{ size: true, color: false, press: false, ripple: false }}>
         {options.map(option => (
           <Button
             key={option.value}
             variant="ghost"
             size={size}
-            colorMotion={false}
-            pressMotion={{ scale: 1 }}
-            ripple={false}
             type="button"
             disabled={option.disabled}
             aria-pressed={displayed === option.value}
@@ -718,7 +777,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
             title={iconOnly ? option.ariaLabel : undefined}
             data-icon-only={iconOnly || undefined}
             data-value={option.value}
-            onClick={event => { if (event.detail === 0 || performance.now() >= suppressClickUntil.current) set(option.value); }}
+            onClick={event => { if (event.detail === 0 || performance.now() >= suppressClickUntil.current) choose(option.value); }}
             onKeyDown={event => { if (!event.repeat && (event.key === " " || event.key === "Enter")) startPillPress(); }}
             onKeyUp={event => { if (event.key === " " || event.key === "Enter") releasePillPress(); }}
             className="mf-segment"
@@ -726,6 +785,7 @@ export const ToggleGroup = forwardRef<HTMLDivElement, ToggleGroupProps>(
             <span className="mf-segment-label">{option.label}</span>
           </Button>
         ))}
+        </ButtonCompositionContext.Provider>
       </motion.div>
     );
   },
@@ -748,7 +808,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
   const dotRadius = useTransform([selected, pressed, radioEmphasis], ([value, depth, emphasis]: number[]) => Math.min(6, Math.max(0, value * 6 * emphasis * (1 - depth * .3))));
   useEffect(() => {
     const animation = animate(radioEmphasis, fluid && radioPreview === "outgoing" ? .9 : 1,
-      fluid ? { type: "spring", stiffness: 420, damping: 28, mass: .8 } : { duration: 0 });
+      fluid ? motionTransition("resize") : { duration: 0 });
     return () => animation.stop();
   }, [radioPreview, fluid, radioEmphasis]);
   const previousPreview = useRef(radioPreview);
@@ -757,7 +817,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     previousPreview.current = radioPreview;
     if (!radio || (radioPreview !== "outgoing" && !wasOutgoing)) return;
     const animation = animate(outerScale, fluid && radioPreview === "outgoing" ? .96 : 1,
-      fluid ? { type: "spring", stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass } : { duration: 0 });
+      fluid ? motionTransition("press") : { duration: 0 });
     return () => animation.stop();
   }, [radioPreview, radio, fluid, outerScale, buttonMotion]);
   useMotionValueEvent(radius, "change", value => {
@@ -771,7 +831,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     }
     onReadyChange?.(active && radius.get() >= Math.SQRT1_2 * 100);
     const animation = animate(selected, active ? 1 : 0, fluid && !partial
-      ? { type: "spring", stiffness: 420, damping: 28, mass: .8 }
+      ? motionTransition("resize")
       : { duration: 0 });
     return () => animation.stop();
   }, [active, fluid, partial, selected, pressed, radius, onReadyChange, radio]);
@@ -787,7 +847,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
     let holding = false;
     let pointerHeld = false;
     const originalTransform = button.style.transform;
-    const spring = { type: "spring" as const, stiffness: buttonMotion.stiffness, damping: buttonMotion.damping, mass: buttonMotion.mass };
+    const spring = motionTransition("press");
     outerScale.set(1);
     const unsubscribeOuter = outerScale.on("change", value => {
       button.style.transform = `${originalTransform} scale(${radio ? Math.min(1, value) : value})`.trim();
@@ -813,7 +873,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
       animation?.stop();
       animation = fillFrom > .1
         ? animate(pressed, [fillFrom, 0, 1], { duration: .08, times: [0, .25, 1], ease: "easeOut" })
-        : animate(pressed, 1, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
+        : animate(pressed, 1, motionTransition("resize"));
     };
     const up = (event: Event) => {
       // Clicking label text can blur its button while the pointer is still held.
@@ -830,7 +890,7 @@ function ChoiceFill({ active, partial = false, radio = false, radioPreview, onRe
         outerAnimation = animate(outerScale, 1, spring);
         if (!partialRef.current) {
           animation?.stop();
-          animation = animate(pressed, 0, { type: "spring", stiffness: 420, damping: 28, mass: .8 });
+          animation = animate(pressed, 0, motionTransition("resize"));
         }
       };
       if (elapsed < QUICK_PRESS_THRESHOLD_MS) {
@@ -885,7 +945,8 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
 
     return (
       <label className={cx("mf-choice", className)} onClick={event => { if (!(event.target as Element).closest("button, input")) event.preventDefault(); }}>
-        <Check.Root {...props} checked={current} onCheckedChange={setChecked} ref={ref} className="mf-checkbox">
+        <Check.Root {...props} checked={current} onCheckedChange={setChecked} ref={ref} className="mf-checkbox" asChild>
+          <motion.button initial={false} animate={{borderRadius:current === false ? "25%" : "50%"}} transition={motionEngine.layout(animated)}>
           <ChoiceFill active={current === true || (current === "indeterminate" && colorDesign === "material")} partial={current === "indeterminate" && colorDesign !== "material"} onReadyChange={setFillReady} />
           <Check.Indicator forceMount className="mf-checkbox-mark" data-ready={(current === "indeterminate" && (colorDesign !== "material" || fillReady)) || (current === true && fillReady) ? "true" : undefined}>
             {current === true && fillReady && (
@@ -908,6 +969,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
               </svg>
             )}
           </Check.Indicator>
+        </motion.button>
         </Check.Root>
         <span>{label}</span>
       </label>
@@ -976,10 +1038,6 @@ export interface SwitchProps
   label: ReactNode;
   icon?: "wifi" | "bluetooth" | SwitchStateIcon;
   languageLabels?: { off: string; on: string };
-  iconMotion?: Pick<
-    AnimatedIconProps,
-    "duration" | "stagger" | "slashDelay" | "strokeWidth" | "animated"
-  >;
   name?: string;
   value?: string;
 }
@@ -994,7 +1052,6 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
       size,
       icon,
       languageLabels,
-      iconMotion,
       name,
       value = "on",
       className,
@@ -1135,13 +1192,12 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
                 {active ? languageLabels.on : languageLabels.off}
               </motion.span>
             ) : icon && icon !== "wifi" && icon !== "bluetooth" ? (
-              <SwitchIcon {...iconMotion} name={icon} active={active} animated={mode === "expressive" && !reducedMotion && iconMotion?.animated !== false} />
+              <SwitchIcon name={icon} active={active} animated={mode === "expressive" && !reducedMotion} />
             ) : icon ? (
               <AnimatedIcon
-                {...iconMotion}
                 name={active ? icon : `${icon}-off`}
                 animateOnMount
-                animated={iconMotion?.animated ?? true}
+                animated
                 active={active}
                 size={18}
               />
@@ -1239,7 +1295,7 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
     }, []);
     // Damping ratio .7 gives the reference demo's .3 bounce, with physical
     // parameters so retargeting preserves velocity instead of restarting a tween.
-    const pointerSpring = useSpring(0, { stiffness: 360, damping: 26.56, mass: 1, restDelta: .0001 });
+    const pointerSpring = useCurveValue(0);
     const pointerSpringRange = useRef<{ index: number; low: number; high: number; target: number } | null>(null);
     const wheelMotionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const keyboardMotionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -1315,7 +1371,7 @@ export const Slider = forwardRef<HTMLSpanElement, SliderProps>(
       const low = drag.index > 0 ? drag.values[drag.index - 1] + gap : minimum;
       const high = drag.index < drag.values.length - 1 ? drag.values[drag.index + 1] - gap : maximum;
       pointerSpringRange.current = { index: drag.index, low, high, target };
-      pointerSpring.set(target);
+      pointerSpring.setTarget(target);
     };
     const finishPointer = (element: HTMLSpanElement, commit: boolean) => {
       const drag = pointerDrag.current;

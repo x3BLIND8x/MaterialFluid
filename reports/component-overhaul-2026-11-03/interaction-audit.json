@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Input mouse and keyboard focus",
+    "passed": true
+  },
+  {
+    "name": "context-menu immediate reopen",
+    "passed": true
+  },
+  {
+    "name": "menubar immediate reopen",
+    "passed": true
+  },
+  {
+    "name": "navigation-menu immediate reopen",
+    "passed": true
+  },
+  {
+    "name": "Chart variants",
+    "passed": true
+  },
+  {
+    "name": "Table column striping",
+    "passed": true
+  },
+  {
+    "name": "Resizable pointer snap",
+    "passed": true
+  },
+  {
+    "name": "Tooltip width reveal",
+    "passed": true
+  },
+  {
+    "name": "Narrow sidebar collapse",
+    "passed": true
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "locale": "en",
+    "id": "carousel",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "badge",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "tabs",
+    "passed": true
+  },
+  {
+    "locale": "en",
+    "id": "date-picker",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "carousel",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "badge",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "tabs",
+    "passed": true
+  },
+  {
+    "locale": "fa",
+    "id": "date-picker",
+    "passed": true
+  }
+]

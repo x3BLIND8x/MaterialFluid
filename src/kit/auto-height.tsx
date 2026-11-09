@@ -1,5 +1,6 @@
+import { useCurveValue } from "./curve-value";
 import { forwardRef, useLayoutEffect, useRef, type HTMLAttributes } from "react";
-import { useMotionValueEvent, useSpring } from "motion/react";
+import { useMotionValueEvent } from "motion/react";
 import { useMaterialFluid } from "./provider";
 import { cx, setRef } from "./utils";
 
@@ -8,7 +9,7 @@ export const AutoHeight = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
   const element = useRef<HTMLDivElement | null>(null);
   const content = useRef<HTMLDivElement | null>(null);
   const initialized = useRef(false);
-  const height = useSpring(0, { stiffness: 420, damping: 32, mass: .8 });
+  const height = useCurveValue(0);
   const { motion: mode, reducedMotion } = useMaterialFluid();
   useMotionValueEvent(height, "change", value => { if (element.current) element.current.style.height = `${value}px`; });
   useLayoutEffect(() => {
@@ -23,7 +24,7 @@ export const AutoHeight = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
       const next = Math.max(contentHeight + inset, number(computed.minHeight));
       if (Math.abs(height.get() - next) < .5) return;
       if (!initialized.current || mode !== "expressive" || reducedMotion) height.jump(next);
-      else height.set(next);
+      else height.setTarget(next);
       initialized.current = true;
       if (element.current) element.current.style.height = `${height.get()}px`;
     };
