@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useLayoutEffect } from "react";
 import { animate, motion, useMotionValue, useTransform, useMotionValueEvent } from "motion/react";
 
 
@@ -22,6 +22,27 @@ export function ButtonRipple({
   onFinished: () => void;
 }) {
   const scale = useMotionValue(animated ? 0 : 1);
+  const element = useRef<HTMLSpanElement>(null);
+  const extent = useMotionValue(diameter);
+  const left = useTransform(extent, value => x - value / 2);
+  const top = useTransform(extent, value => y - value / 2);
+  useLayoutEffect(() => {
+    const button = element.current?.closest("button");
+    if (!button) return;
+    // Follow the unscaled layout box; pressing scales the surface separately.
+    const measure = () => extent.set(2 * Math.hypot(
+      Math.max(x, button.offsetWidth - x),
+      Math.max(y, button.offsetHeight - y),
+    ));
+    measure();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(button, {box: "border-box"});
+    return () => observer.disconnect();
+  }, [x, y, extent]);
   const opacity = useMotionValue(0);
   const expansion = useRef<ReturnType<typeof animate> | null>(null);
   const finished = useRef(onFinished);
@@ -73,13 +94,14 @@ export function ButtonRipple({
   }, [released, releaseSpeed, opacity, animated, duration, strength, alpha]);
   return (
     <motion.span
+      ref={element}
       className="mf-button-ripple"
       aria-hidden="true"
       style={{
-        left: x - diameter / 2,
-        top: y - diameter / 2,
-        width: diameter,
-        height: diameter,
+        left,
+        top,
+        width: extent,
+        height: extent,
         scale,
         opacity,
       }}

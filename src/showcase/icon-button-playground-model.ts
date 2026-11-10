@@ -5,13 +5,13 @@ export type IconButtonPreset = "default" | "edit" | "favorite" | "emphasize" | "
 export interface IconButtonExample {
   preset: IconButtonPreset; variant: ComponentVariant; size: ButtonSize; width: IconButtonWidth;
   icon: string; selectedIcon: string | null; selectedLabel: string; label: string; toggle: boolean; selected: boolean;
-  toggleOnClick: boolean; disabled: boolean; active: boolean; loading: boolean;
+  emphasize: boolean; toggleOnClick: boolean; disabled: boolean; active: boolean; loading: boolean;
   progressMode: "off" | "determinate" | "indeterminate"; progress: number;
   type: "button" | "submit" | "reset"; name: string; value: string;
 }
 export const iconButtonExampleDefaults: IconButtonExample = {
   preset:"default",variant:"ghost",size:"md",width:"default",icon:"menu",selectedIcon:null,selectedLabel:"",label:"Open menu",
-  toggle:false,selected:false,toggleOnClick:true,disabled:false,active:false,loading:false,
+  toggle:false,selected:false,emphasize:false,toggleOnClick:true,disabled:false,active:false,loading:false,
   progressMode:"off",progress:60,type:"button",name:"action",value:"menu",
 };
 export const iconButtonPresetNames: [IconButtonPreset,string,string][] = [
@@ -23,7 +23,7 @@ export function applyIconButtonPreset(preset: IconButtonPreset,current:IconButto
   const values:Partial<Record<IconButtonPreset,Partial<IconButtonExample>>>={
     edit:{variant:"tonal",icon:"edit",label:"Edit"},
     favorite:{variant:"tonal",icon:"heart",selectedIcon:"check",label:"Favorite",toggle:true,value:"favorite"},
-    emphasize:{variant:"emphasize",icon:"play_arrow",selectedIcon:"pause",selectedLabel:"Pause",label:"Play",toggle:true},
+    emphasize:{variant:"tonal",emphasize:true,icon:"play_arrow",selectedIcon:"pause",selectedLabel:"Pause",label:"Play",toggle:true},
     wide:{variant:"outlined",icon:"edit",label:"Edit",width:"wide"},
     disabled:{icon:"delete",label:"Delete",disabled:true},
   };
@@ -38,7 +38,7 @@ export function iconButtonSelectedLabel(value:IconButtonExample,fa:boolean) {
 }
 const html=(value:string)=>value.replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 export function iconButtonExampleCode(input:IconButtonExample,framework:"react"|"web",fa=false) {
-  const toggle=input.toggle&&isButtonToggleVariant(input.variant),value={...input,toggle,selected:toggle&&input.selected};
+  const toggle=input.toggle&&isButtonToggleVariant(input.variant,input.emphasize),value={...input,toggle,selected:toggle&&input.selected};
   const label=iconButtonExampleLabel(value,fa)||"Icon action",selectedLabel=iconButtonSelectedLabel(value,fa);
   const icons=[...new Set([value.icon,value.selectedIcon].filter((name):name is string=>!!name))];
   const iconImport=icons.length?'\nimport { materialIcons } from "materialfluid/icons";':"";
@@ -46,6 +46,7 @@ export function iconButtonExampleCode(input:IconButtonExample,framework:"react"|
   const formFields=value.type!=="button"?'<input name="project" value="MaterialFluid" aria-label="Project" />':"";
   if(framework==="web"){
     const attrs=[`aria-label="${html(label)}"`,`variant="${value.variant}"`,`size="${value.size}"`,`width="${value.width}"`];
+    if(toggle&&value.emphasize)attrs.push("emphasize");
     if(value.icon)attrs.push(`icon="${html(value.icon)}"`);
     if(value.selectedIcon)attrs.push(`selected-icon="${html(value.selectedIcon)}"`);
     if(selectedLabel)attrs.push(`selected-label="${html(selectedLabel)}"`);
@@ -58,6 +59,7 @@ export function iconButtonExampleCode(input:IconButtonExample,framework:"react"|
     return `<script type="module">\nimport { defineMaterialFluidIconButton } from "materialfluid/elements";${icons.length?'\nimport { registerMaterialIcons } from "materialfluid";':""}${iconImport}\nimport "materialfluid/styles.css";\nimport "materialfluid/fonts.css";\n${register}\ndefineMaterialFluidIconButton();\n</script>\n\n${formFields?`<form>\n  ${formFields}\n  ${markup}\n</form>`:markup}\n\n<script type="module">\nconst button = document.querySelector("mf-icon-button");\n${action}\n</script>`;
   }
   const attrs=[`label={${JSON.stringify(label)}}`,`variant="${value.variant}"`,`size="${value.size}"`,`width="${value.width}"`];
+  if(toggle && value.emphasize) attrs.push("emphasize");
   if(value.icon)attrs.push(`icon={${JSON.stringify(value.icon)}}`);
   if(value.selectedIcon)attrs.push(`selectedIcon={${JSON.stringify(value.selectedIcon)}}`);else if(toggle)attrs.push("selectedIcon={null}");
   if(selectedLabel)attrs.push(`selectedLabel={${JSON.stringify(selectedLabel)}}`);

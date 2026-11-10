@@ -1,0 +1,48 @@
+{
+  "reference": "https://md3.io/components/split-button/",
+  "documentation": "https://md3.io/docs/components/split-button/",
+  "reviewed": "2026-11-10",
+  "license": "MIT",
+  "files": [
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/config.ts",
+      "sha256": "b765415e03b8b7bdc18fa4a4be2062e6e8d3d959805411c933c65a4050696e67"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/constants.ts",
+      "sha256": "906e1c0cf1a315f58e78022595f728107d618f0ae5e3bc7cbc4bd15e47fc87c8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/split-button.ts",
+      "sha256": "2e64c609a9f142d73a23dec9e8b335edccfb7e7b8a9a92d9b7b1df9162fbca9d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/api.ts",
+      "sha256": "27318fe1d43e545558b22704f8e2c560deaaafd5a52600740f56fba0f0a82b2c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/features/buttons.ts",
+      "sha256": "e7c79f491f059dbbec180492f4ca0257cb7174001bcd5809099d7cabf672643c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/features/menu.ts",
+      "sha256": "3c6430fba26b6a6327f50fbd8a5c26b4126aaa9d675df174a722b3df51f58e89"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/elements/split-button.ts",
+      "sha256": "8193b1df71d86f36ca0a4989167d945defd245b34d75c11a8aaded12bbe6784b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/react/split-button.ts",
+      "sha256": "fb6255e2c7465d0c19eebd646ab4f77019e0edcf5f1289cb3b15712080780246"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/styles/components/_split-button.scss",
+      "sha256": "29ab660343959075a98d90245570922c9c62d3678aa9d5a2134c28abc5bec2c7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/split-button/types.ts",
+      "sha256": "822bbd8023fc5c93a06d220c2f757607cf66f6d46b76074f7f7f6507679f2f97"
+    }
+  ]
+}

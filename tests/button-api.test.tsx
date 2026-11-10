@@ -9,9 +9,9 @@ afterEach(cleanup);
 const wrap = (element: React.ReactNode) => <MaterialFluidProvider motion="minimal">{element}</MaterialFluidProvider>;
 describe("additive Button API", () => {
   it("animates its own symbol when selectedIcon is null and supports a separate selected icon",()=>{
-    const {rerender}=render(wrap(<Button variant="emphasize" toggle icon="heart" selectedIcon={null}>Favorite</Button>));
+    const {rerender}=render(wrap(<Button variant="tonal" emphasize toggle icon="heart" selectedIcon={null}>Favorite</Button>));
     const button=screen.getByRole('button',{name:'Favorite'});expect(button.querySelector('[data-icon-fill="outlined"]')).not.toBeNull();fireEvent.click(button);expect(button.querySelector('[data-icon-fill="filled"]')).not.toBeNull();
-    rerender(wrap(<Button variant="emphasize" toggle selected icon="heart" selectedIcon="check">Favorite</Button>));expect(button.querySelector('[data-icon-name="check"]')).not.toBeNull();expect(button.querySelector('.mf-selection-icon')).toBeNull();
+    rerender(wrap(<Button variant="tonal" emphasize toggle selected icon="heart" selectedIcon="check">Favorite</Button>));expect(button.querySelector('[data-icon-name="check"]')).not.toBeNull();expect(button.querySelector('.mf-selection-icon')).toBeNull();
   });
   it("restricts persistent toggles to tonal, outlined and text treatments, including aliases", () => {
     const change=vi.fn();

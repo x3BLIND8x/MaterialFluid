@@ -28,15 +28,15 @@ for(const config of [{locale:'en',theme:'light',width:1440},{locale:'fa',theme:'
   await expect(button).toHaveCSS('background-color',off);
   await button.evaluate((node:HTMLButtonElement)=>node.click());await expect(button).toHaveAttribute('aria-pressed','false');await expect(button.locator('[data-icon-name="play_arrow"]')).toHaveCount(1);
   expect((await new AxeBuilder({page}).include('.showcase-frame').withTags(['wcag2a','wcag2aa']).analyze()).violations).toEqual([]);
-  await page.screenshot({path:`reports/icon-button-2026-11-09/config-${config.locale}-${config.theme}-${config.width}.png`,fullPage:true});
+  if(!process.env.MF_SKIP_SCREENSHOTS)await page.screenshot({path:`reports/icon-button-2026-11-09/config-${config.locale}-${config.theme}-${config.width}.png`,fullPage:true});
   await page.getByRole('tab',{name:config.locale==='fa'?'مستندات':'Documentation',exact:true}).click();
-  await expect(page.locator('.usage-code')).toContainText('variant="emphasize"');await expect(page.locator('.usage-code')).toContainText('selectedIcon');
+  await expect(page.locator('.usage-code')).toContainText('variant="tonal"');await expect(page.locator('.usage-code')).toContainText(' emphasize');await expect(page.locator('.usage-code')).toContainText('selectedIcon');
   await page.getByRole('button',{name:'Web Components',exact:true}).click();await expect(page.locator('.usage-code')).toContainText('<mf-icon-button');
   expect((await new AxeBuilder({page}).include('.showcase-frame').withTags(['wcag2a','wcag2aa']).analyze()).violations).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
 
-test('null selected icon reveals the same symbol in Button and IconButton with reversible fill animation',async({page})=>{
+test('null selected icon crossfades real outline and filled artwork in Button and IconButton',async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('materialfluid.preferences',JSON.stringify({locale:'en',motion:'expressive'})));
   for(const route of ['button','icon-button']){
     await page.goto('/#/components/'+route);
@@ -46,16 +46,16 @@ test('null selected icon reveals the same symbol in Button and IconButton with r
     const button=page.locator('.button-preview-form > button');await expect(button.locator('.mf-selection-icon')).toHaveCount(1);
     await expect(button.locator('.mf-selection-icon')).toHaveAttribute('data-icon-fill','outlined');
     const trace=await button.evaluate(async node=>{
-      const circle=node.querySelector('clipPath circle')!,read=()=>parseFloat(getComputedStyle(circle).r);
+      const layer=node.querySelector('.mf-selection-icon-fill')!,read=()=>parseFloat(getComputedStyle(layer).opacity);
       const original=node.querySelector('.mf-selection-icon')!.getAttribute('data-icon-name');
       (node as HTMLButtonElement).click();const frames:number[]=[];const end=performance.now()+650;
       while(performance.now()<end){frames.push(read());await new Promise(requestAnimationFrame);}
       return {frames,original,current:node.querySelector('.mf-selection-icon')!.getAttribute('data-icon-name')};
     });
-    expect(trace.current).toBe(trace.original);expect(new Set(trace.frames.map(n=>n.toFixed(2))).size).toBeGreaterThan(3);expect(trace.frames.at(-1)!).toBeGreaterThan(16);
-    await button.evaluate((node:HTMLButtonElement)=>node.click());await expect.poll(()=>button.locator('clipPath circle').evaluate(node=>parseFloat(getComputedStyle(node).r))).toBeLessThan(.1);
+    expect(trace.current).toBe(trace.original);expect(new Set(trace.frames.map(n=>n.toFixed(2))).size).toBeGreaterThan(3);expect(trace.frames.at(-1)!).toBeCloseTo(1);await expect(button.locator('clipPath,mask')).toHaveCount(0);
+    await button.evaluate((node:HTMLButtonElement)=>node.click());await expect.poll(()=>button.locator('.mf-selection-icon-fill').evaluate(node=>parseFloat(getComputedStyle(node).opacity))).toBeLessThan(.1);
     await page.emulateMedia({reducedMotion:'reduce'});await button.evaluate((node:HTMLButtonElement)=>node.click());await expect(button.locator('.mf-selection-icon')).toHaveAttribute('data-icon-fill','filled');
-    await expect.poll(()=>button.locator('clipPath circle').evaluate(node=>parseFloat(getComputedStyle(node).r))).toBeGreaterThan(16);await page.emulateMedia({reducedMotion:'no-preference'});
+    await expect.poll(()=>button.locator('.mf-selection-icon-fill').evaluate(node=>parseFloat(getComputedStyle(node).opacity))).toBeCloseTo(1);await page.emulateMedia({reducedMotion:'no-preference'});
   }
 });
 
@@ -84,8 +84,37 @@ test('IconButton Web Component exposes selected-icon/width/state methods and nat
   await button.click();await expect(button).toHaveAttribute('aria-pressed','true');await expect(host.locator('[data-icon-name="check"]')).toHaveCount(1);
   await expect(page.locator('#icon-element-form')).toHaveAttribute('data-changed',JSON.stringify({selected:true,value:'favorite'}));
   await host.evaluate(async node=>{const element=node as MaterialFluidIconButtonElement;element.setSelectedIcon(null).setWidth('wide').setSize('xl').deselect();await element.updateComplete;});await expect(button.locator('[data-icon-fill="outlined"]')).toHaveCount(1);
-  await host.evaluate(async node=>{const element=node as MaterialFluidIconButtonElement;element.setVariant('emphasize').setIcon('play_arrow').setSelectedIcon('pause').setAriaLabel('Play').setSelectedLabel('Pause').select();await element.updateComplete;});await expect(button).toHaveAccessibleName('Pause');
+  await host.evaluate(async node=>{const element=node as MaterialFluidIconButtonElement;element.setVariant('tonal').setEmphasize(true).setIcon('play_arrow').setSelectedIcon('pause').setAriaLabel('Play').setSelectedLabel('Pause').select();await element.updateComplete;});await expect(button).toHaveAccessibleName('Pause');
   await host.evaluate(async node=>{const element=node as MaterialFluidIconButtonElement;element.toggleSelected().disable();await element.updateComplete;});await expect(button).toBeDisabled();await expect(button).toHaveAccessibleName('Play');
   await host.evaluate(async node=>{const element=node as MaterialFluidIconButtonElement;element.enable();element.toggle=false;element.type='submit';element.name='action';element.value='save';await element.updateComplete;});await button.click();await expect(page.locator('#icon-element-form')).toHaveAttribute('data-submitted','save');
   await page.locator('#icon-element-form input').fill('Changed');await host.evaluate(async node=>{const element=node as MaterialFluidIconButtonElement;element.type='reset';await element.updateComplete;});await button.click();await expect(page.locator('#icon-element-form input')).toHaveValue('Original');
+});
+
+test('all button color changes fade without promoting the pointer ripple',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('materialfluid.preferences',JSON.stringify({locale:'en',motion:'expressive'})));
+  for(const route of ['button','icon-button']){
+    await page.goto('/#/components/'+route);await page.locator(route==='button'?'.button-preview-form:not(.icon-button-preview-form)':'.icon-button-preview-form').waitFor();await pick(page,'#example-presets','favorite');const button=page.locator('.button-preview-form > button');await expect(button).toHaveAttribute('aria-pressed','false');
+    await button.hover();await page.mouse.down();await expect(button.locator('.mf-button-ripple')).toHaveCount(1);await page.mouse.up();await expect(button).toHaveAttribute('aria-pressed','true');
+    await expect(button.locator('.mf-button-ripple-reveal,.mf-button-ripple-color,.mf-button-color-reveal')).toHaveCount(0);await expect(button).not.toHaveAttribute('data-color-transition',/.+/);
+    expect(await button.evaluate(el=>getComputedStyle(el).transitionProperty)).toContain('background-color');
+    await button.evaluate((el:HTMLButtonElement)=>el.click());await expect(button).toHaveAttribute('aria-pressed','false');await pick(page,`#${route}-appearance`,'outlined');await expect(button.locator('.mf-button-ripple-reveal,.mf-button-color-reveal')).toHaveCount(0);
+  }
+});
+
+for(const route of ['button','icon-button'])test(`${route} ripple follows a growing size without restarting`,async({page})=>{
+  await page.setViewportSize({width:route==='icon-button'?390:1440,height:1000});
+  await page.addInitScript(()=>localStorage.setItem('materialfluid.preferences',JSON.stringify({locale:'en',motion:'expressive'})));
+  await page.goto('/#/components/'+route);await page.locator(route==='button'?'.button-preview-form:not(.icon-button-preview-form)':'.icon-button-preview-form').waitFor();
+  await pick(page,`#${route}-appearance`,'xs');const button=page.locator('.button-preview-form > button');await expect.poll(()=>button.evaluate(el=>(el as HTMLElement).offsetHeight)).toBe(24);
+  await button.hover();await page.mouse.down();const ripple=button.locator('.mf-button-ripple');await expect(ripple).toHaveCSS('opacity','0.2');await expect.poll(()=>ripple.evaluate(el=>new DOMMatrix(getComputedStyle(el).transform).a)).toBeCloseTo(1,3);
+  const original=await ripple.elementHandle(),small=await ripple.evaluate(el=>parseFloat(getComputedStyle(el).width));
+  await page.locator(`#${route}-appearance button[data-value="xl"]`).evaluate((el:HTMLButtonElement)=>el.click());
+  await expect.poll(()=>button.evaluate(el=>(el as HTMLElement).offsetHeight)).toBe(96);
+  await expect.poll(()=>ripple.evaluate(el=>{
+    const css=getComputedStyle(el),diameter=parseFloat(css.width),x=parseFloat(css.left)+diameter/2,y=parseFloat(css.top)+diameter/2,button=el.closest('button')!;
+    return Math.abs(diameter-2*Math.hypot(Math.max(x,button.offsetWidth-x),Math.max(y,button.offsetHeight-y)));
+  })).toBeLessThan(1);
+  expect(await ripple.evaluate(el=>parseFloat(getComputedStyle(el).width))).toBeGreaterThan(small*2);
+  expect(await ripple.evaluate((el,previous)=>el===previous,original)).toBe(true);expect(await ripple.evaluate(el=>new DOMMatrix(getComputedStyle(el).transform).a)).toBeCloseTo(1,3);
+  await page.mouse.up();await expect(ripple).toHaveCount(0);
 });

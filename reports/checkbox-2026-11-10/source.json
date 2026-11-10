@@ -1,0 +1,76 @@
+{
+  "reference": "https://md3.io/components/checkbox/",
+  "documentation": "https://md3.io/docs/components/checkbox/",
+  "tree": "dc522a69ac5a89eeea241388465306c017d8d27d",
+  "source": [
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/checkbox/api.ts",
+      "sha256": "2ac307cd69cf1b854740a447f955d3389ec11ded3f4c5f5031b7144b1767a312"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/checkbox/checkbox.ts",
+      "sha256": "2f80492fb89d85cbc43025bd1fb222ab4da68d731cc0e8d176e80c9c6f041a73"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/checkbox/config.ts",
+      "sha256": "f9853ed0f724530ce01e6dfecddbfa81de41247a16402c77319360eeff8f0fd2"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/checkbox/constants.ts",
+      "sha256": "d1f09d85964d83857e4b9256c264d0633d6329051748c85e5a61bd2b1090d667"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/checkbox/index.ts",
+      "sha256": "5e34815e9b4161a08f13694236bc8de60dd112d92f0597baaf0254b1ef1f8a36"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/checkbox/types.ts",
+      "sha256": "372486f73298c6a987a6898f57dfe0fe9bf078f206d7234db2117e290255554f"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/core/utils/mobile.ts",
+      "sha256": "b049b8fb85b67369621641facb5b1432a90a5ed79d99e01569f1d2cd21731a02"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/checkbox.ts",
+      "sha256": "f9af1e63b32c8d9dd84d63e307b0cad0e2e21a9eecac62c9975c5d5bc028f3c7"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/checkbox.ts",
+      "sha256": "0d58986e39d339f9a4aebb091c527cd519321151614143f1c2b0918877162106"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/checkbox.ts",
+      "sha256": "58ae67723fb64e9de9f2763831139abeaa8ce7410f8ce3c64fc76dfc033c408c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/components/_checkbox.scss",
+      "sha256": "f1dead37050700ab082871b7df66e1e0f86f793ce01a973dd6250b2ff8a7b09e"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/elements/_checkbox.scss",
+      "sha256": "c7953cf63cf31da2f5bfccaa3d4ed9b14080c6a2e07e64cbcb3dc826556f30e3"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/checkbox.ts",
+      "sha256": "93be36d15ef27323318d4ec15884702216816d96acd25f3cec6b7e9d2bb5501e"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/checkbox/checkbox.test.ts",
+      "sha256": "debfa0b8584bbde77880129f3c3375e435466d07090087eccccab8cf889ddf28"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/checkbox/document-cache.test.ts",
+      "sha256": "0f2dcf5859e4bbb542d5d261559b6ca0ab7a6f2b0b597d9580620a8f474000ad"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/types/checkbox-events.fixture.ts",
+      "sha256": "314ebfb060dd3b121dc35138891db5cae8d9ae3ec8f7d05adbb655bfacd49fb8"
+    }
+  ],
+  "decisions": [
+    "Current source/tests make model methods silent, despite stale documentation.",
+    "Owner authored artwork, sizes, palettes and finite motion are preserved.",
+    "Native input backs the existing public button ref for validation/submission/reset."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "license": "MIT",
+  "reference": "https://md3.io/components/button-group/",
+  "source": "https://github.com/floor/material/tree/main/src/components/button-group",
+  "reviewed": "2026-11-09",
+  "files": [
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/button-group/button-group.ts",
+      "name": "button-group.ts",
+      "sha256": "f4e4f74a8ef1254618135cb4a5e55281284f67f2a5040097edc31b5ab687fce0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/button-group/config.ts",
+      "name": "config.ts",
+      "sha256": "1a93f8e2ca3f5cf33234d562959385a210b3f4b8118e36f6a7f9e7b7feb65c78"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/button-group/constants.ts",
+      "name": "constants.ts",
+      "sha256": "720e0dfd2078aa992339b246a9f753e4f3e0b6b3e81150338cde5a3200d40362"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/floor/material/main/src/components/button-group/types.ts",
+      "name": "types.ts",
+      "sha256": "7038480a67325709743a84d8fb89594f1284096f335a9bbe13009f06e3ff2ee7"
+    }
+  ],
+  "documentation": "https://md3.io/docs/components/button-group/"
+}

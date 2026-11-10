@@ -5,14 +5,14 @@ export interface ButtonExample {
   preset: ButtonPreset; variant: ComponentVariant; size: ButtonSize; text: string; icon: string;
   iconPosition: "start" | "end";
   selectedIcon: string | null;
-  toggle: boolean; selected: boolean; toggleOnClick: boolean; disabled: boolean; active: boolean;
+  toggle: boolean; selected: boolean; emphasize: boolean; toggleOnClick: boolean; disabled: boolean; active: boolean;
   loading: boolean; loadingText: string;
   progressMode: "off" | "determinate" | "indeterminate"; progress: number;
   type: "button" | "submit" | "reset"; name: string; value: string;
 }
 export const buttonExampleDefaults: ButtonExample = {
   preset: "default", variant: "filled", size: "md", text: "Filled", icon: "", selectedIcon: null, iconPosition: "start",
-  toggle: false, selected: false, toggleOnClick: true, disabled: false, active: false, loading: false,
+  toggle: false, selected: false, emphasize: false, toggleOnClick: true, disabled: false, active: false, loading: false,
   loadingText: "", progressMode: "off", progress: 60, type: "button", name: "action", value: "save",
 };
 export const buttonPresetNames: [ButtonPreset, string, string][] = [
@@ -36,14 +36,15 @@ export function buttonExampleText(value: ButtonExample, fa: boolean) {
 }
 const html = (value: string) => value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 export function buttonExampleCode(input: ButtonExample, framework: "react" | "web") {
-  const toggle = input.toggle && isButtonToggleVariant(input.variant);
+  const toggle = input.toggle && isButtonToggleVariant(input.variant,input.emphasize);
   const value = { ...input, toggle, selected: toggle && input.selected };
   const iconNames=[...new Set([value.icon,value.selectedIcon].filter((name):name is string=>!!name))];
   const iconImports = iconNames.length ? '\nimport { materialIcons } from "materialfluid/icons";' : "";
   const registration = iconNames.length ? `\nregisterMaterialIcons({ ${iconNames.map(name=>`[${JSON.stringify(name)}]: materialIcons[${JSON.stringify(name)}]`).join(", ")} });\n` : "";
   if (framework === "web") {
     const attrs = [`variant="${html(value.variant)}"`, `size="${value.size}"`];
-    if (value.icon) { attrs.push(`icon="${html(value.icon)}"`, `icon-position="${value.iconPosition}"`); }
+    if (toggle && value.emphasize) attrs.push("emphasize");
+  if (value.icon) { attrs.push(`icon="${html(value.icon)}"`, `icon-position="${value.iconPosition}"`); }
     if (value.selectedIcon) attrs.push(`selected-icon="${html(value.selectedIcon)}"`);
     if (!value.text) attrs.push('aria-label="Action"');
     for (const key of ["toggle", "selected", "disabled", "active", "loading"] as const) if (value[key]) attrs.push(key);
@@ -55,6 +56,7 @@ export function buttonExampleCode(input: ButtonExample, framework: "react" | "we
     return `<script type="module">\nimport { defineMaterialFluidButton } from "materialfluid/elements";${iconNames.length ? '\nimport { registerMaterialIcons } from "materialfluid";' : ""}${iconImports}\nimport "materialfluid/styles.css";\nimport "materialfluid/fonts.css";\n${registration}\ndefineMaterialFluidButton();\n</script>\n\n${value.type === "button" ? markup : `<form id="example-form">\n  <input name="project" value="MaterialFluid" aria-label="Project" />\n  ${markup}\n</form>`}\n\n<script type="module">\nconst button = document.querySelector("mf-button");\nbutton.addEventListener("${value.toggle ? "change" : "click"}", event => console.log(${value.toggle ? "event.detail" : '"Action activated"'}));${value.type === "submit" ? '\ndocument.querySelector("#example-form").addEventListener("submit", event => {\n  event.preventDefault();\n  console.log(new FormData(event.currentTarget, event.submitter));\n});' : ""}\n</script>`;
   }
   const attrs = [`variant="${value.variant}"`, `size="${value.size}"`];
+  if(toggle && value.emphasize) attrs.push("emphasize");
   if (value.icon) { attrs.push(`icon=${JSON.stringify(value.icon)}`, `iconPosition="${value.iconPosition}"`); }
   if (value.toggle) attrs.push(value.selectedIcon ? `selectedIcon=${JSON.stringify(value.selectedIcon)}` : "selectedIcon={null}");
   if (!value.text) attrs.push('aria-label="Action"');

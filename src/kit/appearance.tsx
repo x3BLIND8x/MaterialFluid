@@ -11,7 +11,7 @@ export const componentVariants = [
 ] as const;
 export const componentSizes = ["sm", "md", "lg"] as const;
 /** Previous color names remain available for existing consumers. */
-export type ComponentVariant = (typeof componentVariants)[number] | "emphasize" | "primary" | "secondary" | "tertiary" | "outline" | "danger";
+export type ComponentVariant = (typeof componentVariants)[number] | "primary" | "secondary" | "tertiary" | "outline" | "danger";
 export type ComponentSize = (typeof componentSizes)[number];
 export type LabelPosition = "top" | "bottom" | "start" | "end" | "none";
 export interface AppearanceProps {

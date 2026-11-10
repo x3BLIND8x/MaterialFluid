@@ -1,7 +1,7 @@
 import { foundationPages, type FoundationPageId } from "./foundations/model";
 import { normalizeComponentSize, sizesForComponent } from "../kit/component-policy";
 import { LayoutGroup } from "motion/react";
-import { Component, useState, useEffect, lazy, Suspense, useRef, type ReactNode } from "react";
+import { Component, useState, useEffect, useMemo, useCallback, lazy, Suspense, useRef, type ReactNode } from "react";
 import { MaterialFluidProvider } from "../kit/provider";
 import {
   ComponentAppearanceProvider,
@@ -32,6 +32,18 @@ import { buttonExampleDefaults, buttonExampleText, buttonExampleCode, type Butto
 const ButtonPlayground = lazy(() => import("./button-playground"));
 import { iconButtonExampleDefaults, iconButtonExampleCode, type IconButtonExample } from "./icon-button-playground-model";
 const IconButtonPlayground = lazy(() => import("./icon-button-playground"));
+import { buttonGroupDefaults, buttonGroupExampleCode, localizeButtonGroupExample, type ButtonGroupExample } from "./button-group-playground-model";
+const ButtonGroupPlayground = lazy(() => import("./button-group-playground"));
+import { splitButtonDefaults, splitButtonExampleCode, localizeSplitButtonExample, type SplitButtonExample } from "./split-button-playground-model";
+import {fabDefaults,fabExampleCode,localizeFABExample,type FABExample} from "./fab-playground-model";
+import {fabMenuDefaults,fabMenuExampleCode,localizeFABMenuExample,type FABMenuExample} from "./fab-menu-playground-model";
+const FABMenuPlayground=lazy(()=>import("./fab-menu-playground"));
+import {extendedFABDefaults,extendedFABExampleCode,localizeExtendedFABExample,type ExtendedFABExample} from "./extended-fab-playground-model";
+const ExtendedFABPlayground=lazy(()=>import("./extended-fab-playground"));
+import {checkboxDefaults,checkboxExampleCode,localizeCheckbox,type CheckboxExample} from "./checkbox-playground-model";
+const CheckboxPlayground=lazy(()=>import("./checkbox-playground"));
+const FABPlayground=lazy(()=>import("./fab-playground"));
+const SplitButtonPlayground = lazy(() => import("./split-button-playground"));
 import CatalogueDemo from "./demos/catalogue";
 const FoundationPage = lazy(() => import("./foundations/page"));
 const MotionPage = lazy(() => import('./motion/Page'));
@@ -78,10 +90,23 @@ export default function App() {
   const variant: ComponentVariant = "filled";
   const [buttonExample, setButtonExample] = useState<ButtonExample>(() => ({ ...buttonExampleDefaults }));
   const [iconButtonExample, setIconButtonExample] = useState<IconButtonExample>(() => ({ ...iconButtonExampleDefaults }));
+  const [buttonGroupExample, setButtonGroupExample] = useState<ButtonGroupExample>(() => ({...buttonGroupDefaults,items:buttonGroupDefaults.items.map(item=>({...item}))}));
+  const updateButtonGroup = useCallback((next: ButtonGroupExample) => { setButtonGroupExample(next); setCopied(false); setCopyError(false); }, []);
+  const [splitButtonExample, setSplitButtonExample] = useState<SplitButtonExample>(()=>({...splitButtonDefaults,items:splitButtonDefaults.items.map(item=>({...item}))}));
+  const updateSplitButton=useCallback((next:SplitButtonExample)=>{setSplitButtonExample(next);setCopied(false);setCopyError(false);},[]);
   const [buttonCode, setButtonCode] = useState<"react" | "web">("react");
   const [size, setSize] = useState<ComponentSize>("md");
   const [labelPosition, setLabelPosition] = useState<LabelPosition>("top");
-  const fixedControls = ["fab-menu", "chips", "split-button","button-group", "toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider", "text-field", "textarea"];
+  const [fabKind,setFABKind]=useState("icon");
+  const [extendedFABExample,setExtendedFABExample]=useState<ExtendedFABExample>(()=>({...extendedFABDefaults}));
+  const updateExtendedFAB=useCallback((next:ExtendedFABExample)=>{setExtendedFABExample(next);setCopied(false);setCopyError(false);},[]);
+  const [fabExample,setFABExample]=useState<FABExample>(()=>({...fabDefaults}));
+  const updateFAB=useCallback((next:FABExample)=>{setFABExample(next);setCopied(false);setCopyError(false);},[]);
+  const [fabMenuExample,setFABMenuExample]=useState<FABMenuExample>(()=>({...fabMenuDefaults,items:fabMenuDefaults.items.map(item=>({...item}))}));
+  const updateFABMenu=useCallback((next:FABMenuExample)=>{setFABMenuExample(next);setCopied(false);setCopyError(false);},[]);
+  const [checkboxExample,setCheckboxExample]=useState<CheckboxExample>(()=>({...checkboxDefaults,items:checkboxDefaults.items.map(item=>({...item}))}));
+  const updateCheckbox=useCallback((next:CheckboxExample)=>{setCheckboxExample(next);setCopied(false);setCopyError(false);},[]);
+  const fixedControls = ["fab","fab-menu", "chips", "split-button","button-group", "toggle", "toggle-group", "checkbox", "radio-group", "switch", "slider", "text-field", "textarea"];
   const fabMotion = fabMotionDefaults;
   const heading = useRef<HTMLHeadingElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -117,7 +142,7 @@ export default function App() {
   const firstRoute = useRef(true);
   const locale = prefs.locale,
     fa = locale === "fa";
-  const t = (en: string, persian: string) => (fa ? persian : en);
+  const t = useCallback((en: string, persian: string) => (fa ? persian : en), [fa]);
   const entry = findEntry(route) ?? catalogue[0];
   const effectiveSize = normalizeComponentSize(entry.id, size);
   const sizeOptions = sizesForComponent(entry.id);
@@ -157,15 +182,15 @@ export default function App() {
     document.documentElement.dir = fa ? "rtl" : "ltr";
     document.title = `${motionPage ? t('Motion playground','آزمایشگاه حرکت') : colorsPage ? t("Color system", "سیستم رنگ") : fa ? entry.fa : displayName(entry.name)} · MaterialFluid`;
   }, [locale, fa, entry, colorsPage, motionPage]);
-  const results = catalogue.filter((c) =>
+  const results = useMemo(() => catalogue.filter((c) =>
     `${c.name} ${displayName(c.name)} ${c.fa} ${text(c.description, locale)}`
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
-  );
+  ), [search, locale]);
   useEffect(() => {
     if (search.trim()) { setExpandedFamilies(families.map(group => group.id)); }
   }, [search]);
-  const nav = (
+  const nav = useMemo(() => (
     <div className="catalogue-navigation">
       <Tree className="foundation-tree" size="sm" iconMode="none" label={t("Foundations", "زیرساخت‌ها")} value={colorsPage ? "color" : motionPage ? "motion" : foundationId} defaultExpanded={["foundations"]} items={[{value:"foundations",label:t("Foundations","زیرساخت‌ها"),children:foundationPages.map(([value,en,persian])=>({value,label:fa?persian:en,href:value==="color"?"#/colors":value==="motion"?"#/motion":`#/foundations/${value}`}))}]}/>
       <SearchField className="nav-search" label={t("Search components", "جستجوی کامپوننت‌ها")}
@@ -191,7 +216,7 @@ export default function App() {
         )}
       </nav>
     </div>
-  );
+  ), [colorsPage, motionPage, foundationPage, foundationId, entry.id, expandedFamilies, fa, locale, results, search, t]);
   const stateLabels: Record<DemoState, [string, string]> = {
     disabled: ["Disabled", "غیرفعال"],
     loading: ["Loading", "در حال بارگذاری"],
@@ -203,7 +228,7 @@ export default function App() {
   };
   const previous = catalogue[catalogue.indexOf(entry) - 1];
   const next = catalogue[Math.max(0, catalogue.indexOf(entry)) + 1];
-  const usage = entry.id === "icon-button" ? iconButtonExampleCode(iconButtonExample, buttonCode, fa) : entry.id === "button" ? buttonExampleCode({ ...buttonExample, text: buttonExampleText(buttonExample, fa) }, buttonCode) : usageFor(entry, { variant, size: effectiveSize, labelPosition });
+  const usage = entry.id === "checkbox" ? checkboxExampleCode(localizeCheckbox(checkboxExample,fa),buttonCode) : entry.id === "fab-menu" ? fabMenuExampleCode(localizeFABMenuExample(fabMenuExample,fa),buttonCode) : entry.id === "fab" ? fabKind==="extended" ? extendedFABExampleCode(localizeExtendedFABExample(extendedFABExample,fa),buttonCode) : fabExampleCode(localizeFABExample(fabExample,fa),buttonCode) : entry.id === "split-button" ? splitButtonExampleCode(localizeSplitButtonExample(splitButtonExample,fa),buttonCode) : entry.id === "button-group" ? buttonGroupExampleCode(localizeButtonGroupExample(buttonGroupExample,fa), buttonCode) : entry.id === "icon-button" ? iconButtonExampleCode(iconButtonExample, buttonCode, fa) : entry.id === "button" ? buttonExampleCode({ ...buttonExample, text: buttonExampleText(buttonExample, fa) }, buttonCode) : usageFor(entry, { variant, size: effectiveSize, labelPosition });
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(usage);
@@ -313,7 +338,7 @@ export default function App() {
             </div>
   );
   const configuration = <>
-            {entry.id === "icon-button" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example", "بارگیری نمونه")}/>}><IconButtonPlayground value={iconButtonExample} onChange={next => { setIconButtonExample(next); setCopied(false); setCopyError(false); }} fa={fa}/></Suspense></DemoBoundary> : entry.id === "button" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example", "بارگیری نمونه")}/>}><ButtonPlayground value={buttonExample} onChange={next => { setButtonExample(next); setCopied(false); setCopyError(false); }} fa={fa}/></Suspense></DemoBoundary> : <>
+            {entry.id === "checkbox" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example","بارگیری نمونه")}/>}><CheckboxPlayground value={checkboxExample} onChange={updateCheckbox} fa={fa}/></Suspense></DemoBoundary> : entry.id === "fab-menu" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example","بارگیری نمونه")}/>}><FABMenuPlayground value={fabMenuExample} onChange={updateFABMenu} fa={fa}/></Suspense></DemoBoundary> : entry.id === "fab" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example","بارگیری نمونه")}/>}>{fabKind==="extended"?<ExtendedFABPlayground value={extendedFABExample} onChange={updateExtendedFAB} fa={fa} onKindChange={setFABKind}/>:<FABPlayground value={fabExample} onChange={updateFAB} fa={fa} onKindChange={setFABKind}/>}</Suspense></DemoBoundary> : entry.id === "split-button" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example","بارگیری نمونه")}/>}><SplitButtonPlayground value={splitButtonExample} onChange={updateSplitButton} fa={fa}/></Suspense></DemoBoundary> : entry.id === "button-group" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example", "بارگیری نمونه")}/>}><ButtonGroupPlayground value={buttonGroupExample} onChange={updateButtonGroup} fa={fa}/></Suspense></DemoBoundary> : entry.id === "icon-button" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example", "بارگیری نمونه")}/>}><IconButtonPlayground value={iconButtonExample} onChange={next => { setIconButtonExample(next); setCopied(false); setCopyError(false); }} fa={fa}/></Suspense></DemoBoundary> : entry.id === "button" ? <DemoBoundary fa={fa}><Suspense fallback={<Spinner label={t("Loading example", "بارگیری نمونه")}/>}><ButtonPlayground value={buttonExample} onChange={next => { setButtonExample(next); setCopied(false); setCopyError(false); }} fa={fa}/></Suspense></DemoBoundary> : <>
             <section
               id="examples"
               aria-label={t("Live examples", "نمونه‌های زنده")}
@@ -430,7 +455,7 @@ export default function App() {
                   "کامپوننت‌های نوع‌دار. توکن‌های مشترک. محتوای شما.",
                 )}
               </p>
-              {["button", "icon-button"].includes(entry.id) && <ToggleGroup label={t("Code framework", "چارچوب کد")} value={buttonCode} onValueChange={value => { setButtonCode(value as "react" | "web"); setCopied(false); setCopyError(false); }} options={[{value:"web",label:"Web Components"},{value:"react",label:"React"}]} size="sm" />}
+              {["button", "icon-button", "button-group", "split-button", "fab", "fab-menu", "checkbox"].includes(entry.id) && <ToggleGroup label={t("Code framework", "چارچوب کد")} value={buttonCode} onValueChange={value => { setButtonCode(value as "react" | "web"); setCopied(false); setCopyError(false); }} options={[{value:"web",label:"Web Components"},{value:"react",label:"React"}]} size="sm" />}
               <pre
                 className="usage-code"
                 tabIndex={0}

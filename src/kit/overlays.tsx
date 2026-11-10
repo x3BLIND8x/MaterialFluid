@@ -368,14 +368,21 @@ export const Popover = forwardRef<HTMLDivElement, PopoverProps>(
   },
 );
 export interface MenuItem {
+  kind?: "item"|"separator"|"label";
+  items?: MenuItem[];
   id: string;
   label: ReactNode;
   icon?: ReactNode;
   disabled?: boolean;
   destructive?: boolean;
-  onSelect?: () => void;
+  onSelect?: (event?:Event) => void;
 }
 export interface MenuProps extends AppearanceProps {
+  side?: "top"|"right"|"bottom"|"left";
+  focusFirst?: boolean;
+  layer?: "top";
+  align?: "start"|"center"|"end";
+  sideOffset?: number;
   trigger: ReactNode;
   items: MenuItem[];
   label?: string;
@@ -392,10 +399,19 @@ export const menuMotionDefaults: MenuMotionSettings = {
   x: savedMenu.x, y: savedMenu.y, scale: savedMenu.scale, rotate: savedMenu.rotate, opacity: savedMenu.opacity, blur: savedMenu.blur,
   transition: settledSpring({type:'spring',stiffness:savedMenu.stiffness,damping:savedMenu.damping,mass:savedMenu.mass,velocity:savedMenu.velocity,restDelta:savedMenu.restDelta,restSpeed:savedMenu.restSpeed,delay:savedMenu.delay}),
 };
+function MenuLayer({top,children}:{top:boolean;children:ReactNode}) {
+  const element=useRef<HTMLDivElement>(null);
+  useLayoutEffect(()=>{const node=element.current;if(!top||!node?.showPopover)return;node.showPopover();return()=>{if(node.matches(":popover-open"))node.hidePopover();};},[top]);
+  return top?<div ref={element} popover="manual" className="mf-menu-top-layer">{children}</div>:<>{children}</>;
+}
+function MenuEntries({items,top,className}:{items:MenuItem[];top:boolean;className?:string}){
+  const {motion:mode,reducedMotion}=useMaterialFluid();
+  return <>{items.map(item=>item.kind==="separator"?<MenuPrimitive.Separator key={item.id} className="mf-menu-separator"/>:item.kind==="label"?<MenuPrimitive.Label key={item.id} className="mf-menu-label">{item.label}</MenuPrimitive.Label>:item.items?<MenuPrimitive.Sub key={item.id}><MenuPrimitive.SubTrigger disabled={item.disabled} className="mf-menu-item mf-menu-subtrigger">{item.icon}<span className="mf-menu-sub-label">{item.label}</span><AnimatedIcon name="chevron-right"/></MenuPrimitive.SubTrigger><Portal className={className}><MenuLayer top={top}><MenuPrimitive.SubContent asChild sideOffset={4} collisionPadding={12} className={cx("mf-floating mf-menu mf-menu-motion",className)}><motion.div {...motionEngine.popup(mode==="expressive"&&!reducedMotion)}><MenuEntries items={item.items} top={top} className={className}/></motion.div></MenuPrimitive.SubContent></MenuLayer></Portal></MenuPrimitive.Sub>:<MenuPrimitive.Item key={item.id} disabled={item.disabled} onSelect={item.onSelect} className={cx("mf-menu-item",item.destructive&&"mf-destructive")}>{item.icon}{item.label}</MenuPrimitive.Item>)}</>;
+}
 export const Menu = forwardRef<HTMLDivElement, MenuProps>(
   function Menu(rawProps, ref) {
     const { menu: motionSettings } = useContext(MotionPreviewContext);
-    const { trigger, items, label, className, open, defaultOpen, onOpenChange } = useAppearanceProps({ ...rawProps, variant: "outline" });
+    const { trigger, items, label, className, open, defaultOpen, onOpenChange, layer, align, sideOffset=8, side, focusFirst } = useAppearanceProps({ ...rawProps, variant: "outline" });
 
     const { dir, motion: mode, reducedMotion } = useMaterialFluid();
     const [isOpen, setOpen] = useControllable(open, defaultOpen ?? false, onOpenChange);
@@ -416,35 +432,24 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(
           else keyboardOpen.current = false;
         }} onKeyDown={event => { if (["Enter", " ", "ArrowDown"].includes(event.key)) keyboardOpen.current = true; }}>{trigger}</MenuPrimitive.Trigger></ButtonCompositionContext.Provider>
         <Portal className={className}>
-          {isOpen && <MenuPrimitive.Content
+          {isOpen && <MenuLayer top={layer==="top"}><MenuPrimitive.Content
             forceMount asChild
             ref={ref}
             onFocusCapture={event => {
-              if (keyboardOpen.current && event.target === event.currentTarget) {
+              if ((keyboardOpen.current || focusFirst) && event.target === event.currentTarget) {
                 event.currentTarget.querySelector<HTMLElement>('[role="menuitem"]:not([data-disabled])')?.focus();
               }
             }}
-            sideOffset={8}
+            side={side}
+            sideOffset={sideOffset}
+            align={align}
             aria-label={label}
             className={cx("mf-floating mf-menu mf-menu-motion", className)}
           >
             <motion.div initial={expressive ? entrance : false} animate={{x:0,y:0,scale:1,rotate:0,opacity:1,filter:'blur(0px)'}} exit={expressive ? entrance : {opacity:1}} transition={expressive ? config.transition : {duration:0}}>
-            <TooltipScope>{items.map((item) => (
-              <MenuPrimitive.Item
-                key={item.id}
-                disabled={item.disabled}
-                onSelect={item.onSelect}
-                className={cx(
-                  "mf-menu-item",
-                  item.destructive && "mf-destructive",
-                )}
-              >
-                {item.icon}
-                {item.label}
-              </MenuPrimitive.Item>
-            ))}</TooltipScope>
+            <TooltipScope><MenuEntries items={items} top={layer==="top"} className={className}/></TooltipScope>
             </motion.div>
-          </MenuPrimitive.Content>}
+          </MenuPrimitive.Content></MenuLayer>}
         </Portal>
       </MenuPrimitive.Root>
     );

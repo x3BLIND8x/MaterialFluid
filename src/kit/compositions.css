@@ -19,3 +19,16 @@
   height: auto;
   fill: var(--mf-primary);
 }
+
+/* Split actions share Button roles, typography and press geometry. */
+.mf-root .mf-split-button { display:inline-flex; align-items:stretch; gap:2px; max-width:100%; vertical-align:middle; overflow:clip; overflow-clip-margin:16px; }
+.mf-root .mf-split-button > .mf-button { flex:0 0 auto; max-width:100%; }
+.mf-root .mf-split-button > .mf-split-button-leading { flex:1 1 auto; min-width:48px; }
+.mf-root .mf-split-button-leading > .mf-button-content { min-width:0; flex:1 1 auto; }
+.mf-root .mf-split-button-label { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.mf-root .mf-split-button > .mf-split-button-trailing { width:var(--mf-control-height); min-width:var(--mf-control-height); padding:0; }
+.mf-root .mf-split-button-chevron { display:inline-flex; align-items:center; justify-content:center; flex:none; width:var(--mf-action-icon-size,22px); height:var(--mf-action-icon-size,22px); }
+.mf-root .mf-split-button-chevron > .mf-animated-icon { width:100% !important; height:100% !important; }
+mf-split-button { display:inline-flex; vertical-align:middle; }
+
+@media (pointer:coarse) { .mf-root .mf-split-button > .mf-split-button-trailing { width:max(44px,var(--mf-control-height)); min-width:max(44px,var(--mf-control-height)); } }

@@ -19,22 +19,14 @@ for(const locale of ['en','fa']) {
     const range=page.locator('.demo-primary .mf-select-trigger').first();await expect(range).toBeVisible();
     expect(await range.evaluate(el=>{const s=getComputedStyle(el);return{height:s.height,radius:s.borderRadius,padding:s.padding}})).toEqual(style);
   });
-  test(`${locale} playback retains media order and page ratio reads current / total`,async({page})=>{
+  test(`${locale} connected groups follow reading order and pagination arrows remain directional`,async({page})=>{
     await page.addInitScript(locale=>localStorage.setItem('materialfluid.preferences',JSON.stringify({locale,motion:'minimal'})),locale);
     await page.goto('/#/components/button-group');
-    const playback=page.getByRole('group',{name:locale==='fa'?'پخش':'Playback',exact:true});
-    const rewind=playback.getByRole('button',{name:locale==='fa'?'۱۰ ثانیه به عقب':'Rewind 10 seconds'});
-    const forward=playback.getByRole('button',{name:locale==='fa'?'۱۰ ثانیه به جلو':'Forward 10 seconds'});
-    expect((await rewind.boundingBox())!.x).toBeLessThan((await forward.boundingBox())!.x);
-    await playback.getByRole('button',{name:locale==='fa'?'پخش':'Play',exact:true}).click();
-    await expect(playback.getByRole('button',{name:locale==='fa'?'مکث':'Pause',exact:true})).toHaveAttribute('aria-pressed','true');
-    await playback.getByRole('button',{name:locale==='fa'?'توقف':'Stop',exact:true}).click();
-    const pages=page.getByRole('group',{name:locale==='fa'?'صفحه‌بندی':'Pagination',exact:true});
-    await pages.getByRole('button',{name:locale==='fa'?'بعدی':'Next',exact:true}).click();
-    const ratio=pages.locator('output');await expect(ratio).toHaveCSS('direction','ltr');
-    const positions=await ratio.evaluate(el=>Array.from(el.children).map(child=>child.getBoundingClientRect().x));
-    expect(positions[0]).toBeLessThan(positions[1]);expect(positions[1]).toBeLessThan(positions[2]);
-    await expect(ratio).toHaveAttribute('aria-label',locale==='fa'?'صفحهٔ ۲ از ۵':'Page 2 of 5');
+    await page.locator('#example-presets button[data-value="single"]').evaluate((node:HTMLButtonElement)=>node.click());
+    const group=page.locator('.button-group-preview > .mf-button-group');await expect(group).toHaveAttribute('data-selection','single');
+    const actions=group.locator(':scope > button');const first=await actions.first().boundingBox(),last=await actions.last().boundingBox();
+    expect(locale==='fa'?first!.x>last!.x:first!.x<last!.x).toBe(true);
+    await actions.first().focus();await page.keyboard.press('Enter');await expect(actions.first()).toHaveAttribute('aria-pressed','true');
     await page.goto('/#/components/pagination');
     const previous=page.getByRole('button',{name:locale==='fa'?'صفحه قبل':'Previous page',exact:true});
     const next=page.getByRole('button',{name:locale==='fa'?'صفحه بعد':'Next page',exact:true});

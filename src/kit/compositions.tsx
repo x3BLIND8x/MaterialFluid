@@ -1,36 +1,16 @@
-import { forwardRef, type HTMLAttributes, type ReactNode, type SVGProps } from "react";
-import { Button, ButtonGroup, FAB, IconButton, Toggle, type ButtonProps, type ChoiceOption } from "./controls";
-import { AnimatedIcon } from "./icons";
-import { Drawer, Menu, type DrawerProps, type MenuItem } from "./overlays";
-import { useAppearanceProps, type AppearanceProps, type ComponentSize } from "./appearance";
+import { forwardRef, type HTMLAttributes, type SVGProps } from "react";
+import { Toggle, type ChoiceOption } from "./controls";
+import { Drawer, type DrawerProps } from "./overlays";
+import { useAppearanceProps, type AppearanceProps } from "./appearance";
 import { useMaterialFluid } from "./provider";
 import { cx, useControllable } from "./utils";
 import "./compositions.css";
 
-export interface SplitButtonProps extends Omit<ButtonProps, "children" | "size"> {
-  size?: ComponentSize;
-  label: string;
-  menuLabel: string;
-  items: MenuItem[];
-}
-export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(function SplitButton(
-  { label, menuLabel, items, disabled, size, variant, className, ...props }, ref,
-) {
-  return <ButtonGroup label={label} size={size} className={className}>
-    <Button {...props} ref={ref} disabled={disabled} size={size} variant={variant}>{label}</Button>
-    <Menu label={menuLabel} size={size} items={items} trigger={<IconButton disabled={disabled} size={size} variant={variant} label={menuLabel}><AnimatedIcon name="chevron-down" /></IconButton>} />
-  </ButtonGroup>;
-});
+export { SplitButton, SplitButtonItem } from "./split-button";
+export type { SplitButtonProps, SplitButtonHandle, SplitButtonItemProps, SplitButtonEvent, SplitButtonEventType } from "./split-button";
 
-export interface FABMenuProps extends AppearanceProps {
-  label: string;
-  items: MenuItem[];
-  icon?: ReactNode;
-  disabled?: boolean;
-}
-export function FABMenu({ label, items, icon, disabled, size }: FABMenuProps) {
-  return <Menu label={label} size={size} items={items} trigger={<FAB size={size} aria-label={label} disabled={disabled}>{icon ?? <AnimatedIcon name="plus" />}</FAB>} />;
-}
+export {FABMenu,FABMenuItem} from "./fab-menu";
+export type {FABMenuProps,FABMenuItemProps,FABMenuHandle,FABMenuColor,FABMenuPresentation,FABMenuPlacement,FABMenuSelection,FABMenuEvents,FABMenuSurface} from "./fab-menu";
 
 export interface ChipsProps extends Omit<HTMLAttributes<HTMLDivElement>, "defaultValue" | "onChange">, AppearanceProps {
   label: string;

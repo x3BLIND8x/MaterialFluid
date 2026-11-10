@@ -503,3 +503,33 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 ## Expressive foundations
 
 Selected color, typography, shape, spacing, spring-math and shape-morph source is adapted from https://github.com/Grenish/expressive at eb96d3df46790079ae5bf7b22d721491260c1485. Copyright (c) 2026 Grenish rai, MIT. The full license is retained in licenses/expressive-MIT.txt. Material shape path data derives from Jetpack Compose MaterialShapes and androidx.graphics.shapes, Copyright The Android Open Source Project, Apache-2.0. Existing Apache-2.0 terms apply; see licenses/material-symbols.txt for the Apache license text. No upstream elevation system, GSAP adapter or component replacement is included.
+
+
+## Material button-group behavior reference
+
+The ButtonGroup additions adapt the public API, selection semantics and neighbor-compression policy from Floor IO's Material library, https://github.com/floor/material/tree/main/src/components/button-group, under its MIT license. MaterialFluid retains its own components, color roles, owner sizes and finite motion. The full upstream notice is retained in licenses/floor-material-MIT.txt.
+
+
+## Material split-button behavior reference
+
+SplitButton adapts API, paired shapes, expansion semantics, chevron feedback and usage cases from Floor IO Material, https://github.com/floor/material/tree/main/src/components/split-button and its MIT-licensed React/element adapters and split-button styles. MaterialFluid keeps its own Buttons, Menus, palettes, fonts, dimensions, finite motion and reduced-motion behavior. Source URLs and reviewed SHA-256 hashes are recorded in reports/split-button-2026-11-10/source.json. The full notice remains in licenses/floor-material-MIT.txt.
+
+
+## Material FAB behavior reference
+
+FAB adds color, size, placement, native form, event and imperative API cases adapted from Floor IO Material, https://github.com/floor/material/tree/main/src/components/fab and its React/element adapters and FAB styles, under MIT. MaterialFluid retains its shared Button, owner radii, palettes and finite motion; source elevation and public motion tuning are excluded. Reviewed source hashes are recorded in reports/fab-2026-11-10/source.json. The complete notice remains in licenses/floor-material-MIT.txt.
+
+
+## Material FAB Menu behavior reference
+
+FABMenu adapts the list/menu presentations, placements, keyboard policy, event/API semantics, declarative item adapters and reveal ordering from Floor IO Material, https://github.com/floor/material/tree/main/src/components/fab-menu and its MIT-licensed adapters/styles/tests. MaterialFluid retains shared Button/FAB/Menu primitives, semantic role pairs, owner fonts/radii/finite curves and reduced motion. Source URLs and reviewed SHA-256 hashes are in reports/fab-menu-2026-11-10/source.json. Source spring/timing constants and elevation are not imported. The full MIT notice remains in licenses/floor-material-MIT.txt.
+
+
+## Material Extended FAB behavior reference
+
+ExtendedFAB adapts the API, sizing, label semantics, width modes, logical/physical placement, scroll-collapse and event cases from Floor IO Material, https://github.com/floor/material/tree/main/src/components/extended-fab and its MIT-licensed React/element adapters and styles/tests. MaterialFluid preserves its Button/FAB role pairs, authored fonts/radii and finite motion. Reviewed source URLs/hashes and upstream tree identity are recorded in reports/extended-fab-2026-11-10/source.json. Elevation and public timing/icon/ripple overrides are excluded. The full upstream notice remains in licenses/floor-material-MIT.txt.
+
+
+## Material Checkbox behavior reference
+
+Checkbox adapts state, native forms, parent/child usage and imperative API cases from Floor IO Material's MIT-licensed checkbox source and adapters. Reviewed URLs and SHA-256 hashes are in reports/checkbox-2026-11-10/source.json. MaterialFluid retains its authored tick/mixed motion, semantic colors and sizes. The full notice is retained in licenses/floor-material-MIT.txt.

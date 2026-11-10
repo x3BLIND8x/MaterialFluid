@@ -1,0 +1,81 @@
+{
+  "reference": "https://md3.io/components/extended-fab/",
+  "tree": "dc522a69ac5a89eeea241388465306c017d8d27d",
+  "source": [
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/extended-fab/api.ts",
+      "sha256": "45fe8edbaae0ee738f0494cb12cd859d78a6c2bc7afe896586dbe2fceb1da87c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/extended-fab/config.ts",
+      "sha256": "394a4b509ce2448e52e07b6d3079e763591efe7fb0fa75a930b7bd3ffef8630c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/extended-fab/constants.ts",
+      "sha256": "06a15273c6684e2834923b94042ac46330614a8133ec5c683530f1488b2edf9e"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/extended-fab/extended-fab.ts",
+      "sha256": "a40c5e15cd05fa6bf426c6ec119cde85111ebac53b604e4929b1553fb8a18152"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/extended-fab/index.ts",
+      "sha256": "f9838a1f72572aa63563b2463ae68492f93ed1a6fd042d61d7da924acee8ee03"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/extended-fab/types.ts",
+      "sha256": "c4feb0f51a2069665eced52cfbc4876c00d655b21e665beda0c866f26b65ed5c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/extended-fab.ts",
+      "sha256": "0d0ecf643aab0e5e44911db1ac3eb6e9bb6558daf406197e7498c4dbfb063c17"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/extended-fab.ts",
+      "sha256": "6588ac66a2400ba99b67a51e618d90b1c0244cd5706181dab3ab22f90322b90c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/extended-fab.ts",
+      "sha256": "bc5b9f20078e1bed3169a2d84a572b97e2a6f34afa46d1a340ec913cc1a62dc1"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/components/_extended-fab.scss",
+      "sha256": "fa8208bc3436795d776519bb9d2f6ec1a5b949b999b3d2774014111386f66925"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/elements/_extended-fab.scss",
+      "sha256": "34fed4dd0b63f6d00166d5e9bdbfe306f2407667fa768be42d1ee533660be506"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/extended-fab.ts",
+      "sha256": "d690bb872aaf38d45d321c24c85da030537f0a8c9bfcf7e14278c9ad7162c27d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/extended-fab/aria-label.fixture.ts",
+      "sha256": "45995b85773e13ca29b8dab2931475b2b60c58182cf0b5b3be35a73e058c4c7d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/extended-fab/aria-label.test.ts",
+      "sha256": "8a840e5e525a62559248499fba6abd003cc4cc16de2169448cdb659173d772a0"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/extended-fab/events.test.ts",
+      "sha256": "b9c3c514a234cad2de6c0b1ad6f165cc61e5e1049fa79023063e675878edd19c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/styles/extended-fab-sizes.test.ts",
+      "sha256": "4d28935369e56316ab34c9e454509e5e9ace0137f59135356a5e9af19231913a"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/types/extended-fab-events.fixture.ts",
+      "sha256": "745c82fac54d0cc9d72bbcd342b0ef0edae114c1ab8d8cfe926c6b3c4d63386f"
+    }
+  ],
+  "excluded": [
+    "elevation/lower/raise",
+    "Square",
+    "independent icon sizing",
+    "public ripple/motion/entrance tuning"
+  ],
+  "note": "Actual fixed/fluid CSS semantics reviewed; fixed is intrinsic content width, fluid is 100%. Owner primitives, paired colors, fonts/radii and finite curves retained. Source paths point to main; SHA-256 identifies the reviewed contents and tree records the inspected tree identity."
+}

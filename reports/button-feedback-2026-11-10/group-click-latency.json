@@ -1,0 +1,39 @@
+{
+  "measurement": "milliseconds from DOM click through React commit to next requestAnimationFrame; local Edge, six clicks per build; not a hardware-independent benchmark",
+  "before": {
+    "development": [
+      216.8,
+      194.8,
+      182.7,
+      181.3,
+      196.4,
+      221.1
+    ],
+    "production": [
+      35,
+      35.1,
+      29.9,
+      24.6,
+      23.1,
+      24.3
+    ]
+  },
+  "after": {
+    "development": [
+      69.1,
+      51.1,
+      72.2,
+      67.9,
+      66.7,
+      57.6
+    ],
+    "production": [
+      13.4,
+      12.9,
+      12.5,
+      13.2,
+      12,
+      11.9
+    ]
+  }
+}

@@ -212,7 +212,6 @@ export default function ControlsDemo({
       {
         const { name, label } = {
           filled: { name: "bell", label: t("Notifications", "اعلان‌ها") },
-          emphasize: { name: "play_arrow", label: t("Play", "پخش") },
           tonal: { name: "heart", label: t("Favorite", "علاقه‌مندی") },
           outlined: { name: "edit", label: t("Edit", "ویرایش") },
           primary: { name: "bell", label: t("Notifications", "اعلان‌ها") },

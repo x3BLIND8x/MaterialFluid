@@ -1,5 +1,5 @@
 /* Previous keeps the pre-redesign action roles, including the current aliases. */
-.mf-root[data-color-design="previous"] :is(.mf-variant--filled, .mf-variant--emphasize) {
+.mf-root[data-color-design="previous"] .mf-variant--filled {
   --mf-variant-fill: var(--mf-palette-primary-fill); --mf-variant-on-fill: var(--mf-palette-on-primary-fill);
   --mf-solid-hover: var(--mf-palette-primary-fill-hover); --mf-icon-ink: var(--mf-variant-on-fill);
 }

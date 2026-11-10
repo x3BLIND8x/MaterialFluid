@@ -1,0 +1,79 @@
+{
+  "reference": "https://md3.io/components/fab-menu/",
+  "source": [
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab-menu/config.ts",
+      "sha256": "20ed4f104eecab87947528e3e4d9851e8e3951d448481f30e9699a143f3ab147"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab-menu/constants.ts",
+      "sha256": "f2dcfac107c39e3e44f1f72c9b41929ffbb85e244428cfb47a4511060a14d09f"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab-menu/fab-menu.ts",
+      "sha256": "464e460c7d8cfb8af4fc826d547ce4de293d61aa838baed8f6e69547e309d979"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab-menu/index.ts",
+      "sha256": "4e64d4c74112c3e018cf5642f0d9d46db803f873914590bd4fa5fc229d2ee75d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab-menu/stagger.ts",
+      "sha256": "c1daf21ae165eb5cfd8a1308184d1e8bfac0786e4b816aa4e005963843e9b6b0"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab-menu/types.ts",
+      "sha256": "edb4520d3c4827d8236c8e2fd205e8428be22e541a28d83688a09c0d27998114"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/fab-menu.ts",
+      "sha256": "d901219b100d790f48d4afb27af619926bb2d7258d60d6e15c980a0b1ad313b6"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/fab-menu-item.ts",
+      "sha256": "da9a26089528bb5d5e2ff578103572e2738ec515f9587e949dbd4a8a260c81bb"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/fab-menu.ts",
+      "sha256": "a9a6d876fcef91fea79d00192767401d2cf16dbe5f50a79121fa78eb5edf5e2d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/fab-menu-item.ts",
+      "sha256": "5cc1a9a4dfc1f657a6fa51fc46ad5374695703a1130f67afd5fbbd4b4f68f913"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/fab-menu.ts",
+      "sha256": "e2c741b9a6742c4a00f529b622fdffbaed498355ab9b3c9b60ee47341eb44626"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/components/_fab-menu.scss",
+      "sha256": "5a5097c524a0411b50f3d0c00c29fb17005d95d041e2440db057e0920bbbcf5e"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/elements/_fab-menu.scss",
+      "sha256": "5c27c67903c5d070818bbf09d2d71faf4b920ff0b268adeed5b026ba2297b82d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/fab-menu-item.ts",
+      "sha256": "f2d6379388a236ee65203b0ea6c466d7bf137c34cb2a7f2dc552a81d690b0871"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/fab-menu.ts",
+      "sha256": "3810a2e70f83693224aca7f710fdc2b196060997a009d5a46c14000d4c8f765b"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/fab-menu/fab-menu.test.ts",
+      "sha256": "467b910dbb8c593ac7f8c19d039401003edd79069dff3c258ccf04ad97184541"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/styles/fab-menu.test.ts",
+      "sha256": "fe1ff9cd42f21ec15d89e71760aedb792976b5684c9778dd43ea788289313968"
+    }
+  ],
+  "exclusions": [
+    "elevation",
+    "square",
+    "public animation overrides"
+  ],
+  "adaptation": "Existing shared Button/FAB/Menu, semantic tokens, owner finite popup curve and simple whole-surface color fades; source timing and spring constants are not substituted for owner curves."
+}

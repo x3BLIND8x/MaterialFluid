@@ -150,13 +150,6 @@
   min-width: 0;
   transform-origin: center;
 }
-.mf-button-color-reveal {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-}
 .mf-button[data-mf-sized] > .mf-button-content > .mf-animated-icon {
   width: var(--mf-button-icon-size) !important;
   height: var(--mf-button-icon-size) !important;

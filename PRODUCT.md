@@ -45,7 +45,7 @@ WCAG 2.2 AA target, full keyboard and touch support, no hover-only functionality
 - Button has a live configurable example grouped into Example Presets, Appearance, Content and Behavior, with synchronized Web Components and React code. Its full-catalogue icon picker loads the optional pack only when needed. Square and Elevated treatments are excluded; Elevated is excluded for every component. Other families retain their current presentations until requested. Internal icon animations are globally paused while preserving the code.
 
 - Action buttons expose Primary, Secondary, Tertiary, Outline, Ghost and Danger variants. Component families use the simplified treatments described below, with Small, Medium (default) and Large sizes. Small is intentionally compact on desktop. Per-component size is the only sizing setting; there is no global density API.
-- Button color changes reveal from the center with a crisp ripple edge; hover does not trigger this reveal. Size changes spring actual dimensions and padding so parent layout changes continuously, with centered surface press transforms. Button and IconButton text/icons stay at their resting size and position during press and release; only the surface silhouette and ripple animate.
+- Button color changes fade across the whole surface; the click ripple stays independent feedback. Size changes spring actual dimensions and padding so parent layout changes continuously, with centered surface press transforms. Button and IconButton text/icons stay at their resting size and position during press and release; only the surface silhouette and ripple animate.
 
 - Working behavior and cohesion before elaborate effects.
 - Component examples lead; supporting interface stays quiet.
@@ -112,4 +112,24 @@ The foundation workbenches now include semantic typography formatting, continuou
 
 ## Action refinements, 2026-11-09
 
-Button and IconButton support Emphasize as an ordinary toggle treatment with paired Primary fill and ink in both states. Tonal, Outlined and Ghost/Text retain their own off treatment and Primary on treatment; Filled and Danger do not toggle. IconButton has five sizes and narrow/default/wide widths, with no Square or Elevated option. A nullable selectedIcon uses the same Material symbol, outlined off and filled on through the authored reversible reveal; a separate selectedIcon swaps artwork. selectedLabel optionally names the selected action. Do not expose Playback/playing modes or new animation tuning parameters. Both action pages use grouped Example Presets, Appearance, Content and Behavior; React and optional Web Component recipes remain in Documentation.
+Button and IconButton expose emphasize as a boolean toggle behavior, independently of Appearance, with paired Primary fill and ink in both states. It requires toggle; it is never an appearance variant. Tonal, Outlined and Ghost/Text retain their own off treatment and Primary on treatment when emphasize is false. Emphasize also permits Filled toggles. Danger remains an ordinary action. IconButton has five sizes and narrow/default/wide widths, with no Square or Elevated option. A nullable selectedIcon uses the same Material symbol, outlined off and filled on through a smooth crossfade between the actual outline and filled artwork; a separate selectedIcon swaps artwork. selectedLabel optionally names the selected action. Do not expose Playback/playing modes or new animation tuning parameters. Both action pages use grouped Example Presets, Appearance, Content and Behavior; React and optional Web Component recipes remain in Documentation.
+
+
+## Button Group additions, 2026-11-09
+
+ButtonGroup adds standard/connected layouts, action/single/multi selection, required selection, selected-only labels, five owner action sizes, density, orientation, equal widths, per-item disabled states and native keyboard activation. ButtonGroupItem or the buttons list opts into these additions; existing arbitrary-child frames remain compatible. Standard buttons retain their layout width during selection and pressing; selected-only labels reserve their width in Standard groups. Connected selected buttons round all four corners; unselected buttons retain joined corners. All buttons preserve the shared radius press animation with fixed text/icons. Groups use a 16px overflow painting margin so spring overshoot remains visible horizontally and vertically without scrollbars. React and optional Web Component APIs and recipes follow the selected configuration. Keep only grouped Example Presets, Appearance, Content and Behavior in Configuration. No Square, Elevated or public press/ripple timing knobs.
+
+
+## Button color and ripple sizing, 2026-11-10
+
+All Button color changes use a simple whole-surface fade, including toggle selection, appearance and theme changes. The click ripple stays independent feedback and never becomes the selected color. Remove the color-wave layers and tracking. Active ripples follow the button's current unscaled dimensions, including selected-label and size growth, without restarting their progress or changing the original click point. Preserve press-driven radius deformation, fixed content and reduced motion.
+
+
+## Button Group activation performance, 2026-11-10
+
+Live selection must not rerender the unchanged catalogue navigation and configuration form. Keep callbacks current when those surfaces are cached so later item removal, selection-mode changes and framework recipes retain the actual current selection. Activating a preset example changes its runtime selection without marking its configuration Custom. Preserve authored motion and native click/keyboard behavior.
+
+
+## Split Button additions, 2026-11-10
+
+SplitButton composes the shared Button and Menu: paired owner colors, five owner sizes, 2px gap, press-linked radii, fixed content, inner-corner feedback and a rotating/centering chevron. Opening rounds the trailing half without selecting either half or replacing its appearance. Preserve label/menuLabel and the native leading-button ref. Add text/children, trailingLabel/groupLabel/ariaLabel, items or SplitButtonItem declarations (including nested choices, headings and separators), controlled/default expansion, select/expand/collapse/change and open/close aliases, external expansion without items, native submit/reset, top-layer menus and imperative content/state/lifecycle methods. Small coarse-pointer targets stay enlarged. Keep the 45-entry catalogue unchanged. Configuration contains only Example Presets, Appearance, Content (full optional icon catalogue) and Behavior; React/Web Components recipes and API stay in Documentation. No Elevated, Square or public motion overrides. All ordinary color changes fade; ripples remain independent feedback and track live geometry.

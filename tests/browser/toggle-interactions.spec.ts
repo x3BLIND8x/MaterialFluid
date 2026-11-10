@@ -55,7 +55,7 @@ test("icon variants configure one shared preview", async ({ page }) => {
   const preview=page.locator(".icon-button-preview-form > .mf-icon-button");
   await expect(preview).toHaveCount(1);
   const variants=page.locator('#icon-button-appearance .mf-toggle-group[aria-label="Variant"]');
-  for(const value of ["filled","emphasize","tonal","outlined","ghost","danger"]){
+  for(const value of ["filled","tonal","outlined","ghost","danger"]){
     await variants.locator(`button[data-value="${value}"]`).click();
     await expect(preview).toHaveClass(new RegExp(`mf-variant--${value}\\b`));
     await expect(preview).toHaveCount(1);

@@ -1,0 +1,56 @@
+{
+  "reference": "https://md3.io/components/fab/",
+  "source": [
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab/api.ts",
+      "sha256": "68e5e4fb5533881deb2d4ceb0b33e395fa3e28574df7875305cac4ad7ad318b1"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab/config.ts",
+      "sha256": "28736d3cb483f72e192e797df2c65f6e87b16a4bc07fe19383ce1cc5f4ee497a"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab/constants.ts",
+      "sha256": "a70c9fb0c732778e5e965a09dcd1d1a58d495c7b3dd685b61a3fb4d8b04b5f1d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab/fab.ts",
+      "sha256": "7c1a41422bd4c6deca9cafc900ebf74003bc7070aac45d3c652be69d31ed26ad"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/fab/types.ts",
+      "sha256": "06c301d175ce58493041601d8c00b3884765c862b32c34f4733bf2e5b8eec9ea"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/core/dom/create.ts",
+      "sha256": "e93a25e3e7ec78c10e6a2792127cb503d2e5e72c169285450e2b9414c535a058"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/fab.ts",
+      "sha256": "7a07b0b43ad4d610a32ea1ced8418d6a76b66c8fe4593c07d591a1c7c2899d38"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/floating-placement.ts",
+      "sha256": "2a2d10d87b8b5d585bfab2852feee4f8aa6db5ee3180cbf56f4e88045643ce59"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/fab.ts",
+      "sha256": "84eb88295ee2c68abfeb705ca7895b407dacdae51ce5d81f2f7fdf6298365d20"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/components/_fab.scss",
+      "sha256": "1890c928794db755662b046843a5de6d00fdc329ffda25c571b914d3dd9d0c5b"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/fab/behavior.test.ts",
+      "sha256": "e5a347c681359075ef0c8abe91dfb090cc42a3932a1819ef4827b3be68774e91"
+    }
+  ],
+  "excluded": [
+    "elevation and lower/raise",
+    "square",
+    "independent icon sizing",
+    "ripple and motion overrides"
+  ],
+  "note": "Reference page direct access returned cache miss/HTTP403; authoritative source, API, adapters, styles, tests and placement helper inspected from floor/material main. Existing source license retained."
+}

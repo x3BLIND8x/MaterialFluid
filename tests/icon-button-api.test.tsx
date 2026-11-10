@@ -9,10 +9,10 @@ const wrap=(node:React.ReactNode)=><MaterialFluidProvider motion="minimal">{node
 describe("additive IconButton API",()=>{
   it("uses official outline/fill geometry when selectedIcon is null and keeps Emphasize a normal toggle",()=>{
     const changed=vi.fn();const {rerender}=render(wrap(<IconButton label="Favorite" variant="tonal" icon="heart" selectedIcon={null} toggle onSelectedChange={changed}/>));
-    const button=screen.getByRole('button',{name:'Favorite'}),outline=button.querySelector('.mf-selection-icon-outline')!.getAttribute('d'),fill=button.querySelector('.mf-selection-icon-fill')!.getAttribute('d');
+    const button=screen.getByRole('button',{name:'Favorite'}),outline=button.querySelector('.mf-selection-icon-outline path')!.getAttribute('d'),fill=button.querySelector('.mf-selection-icon-fill path')!.getAttribute('d');
     expect(outline).not.toBe(fill);expect(button.querySelector('[data-icon-fill="outlined"]')).not.toBeNull();fireEvent.click(button);expect(button.querySelector('[data-icon-fill="filled"]')).not.toBeNull();expect(changed).toHaveBeenCalledExactlyOnceWith(true);
-    rerender(wrap(<IconButton label="Play" selectedLabel="Pause" variant="emphasize" icon="play_arrow" selectedIcon="pause" toggle defaultSelected={false}/>));
-    expect(button.className).toContain('mf-variant--emphasize');expect(button.querySelector('[data-icon-name="pause"]')).not.toBeNull();fireEvent.click(button);expect(screen.getByRole('button',{name:'Play'}).getAttribute('aria-pressed')).toBe('false');fireEvent.click(button);expect(screen.getByRole('button',{name:'Pause'}).getAttribute('aria-pressed')).toBe('true');
+    rerender(wrap(<IconButton label="Play" selectedLabel="Pause" variant="tonal" emphasize icon="play_arrow" selectedIcon="pause" toggle defaultSelected={false}/>));
+    expect(button.className).toContain('mf-variant--tonal');expect(button.querySelector('[data-icon-name="pause"]')).not.toBeNull();fireEvent.click(button);expect(screen.getByRole('button',{name:'Play'}).getAttribute('aria-pressed')).toBe('false');fireEvent.click(button);expect(screen.getByRole('button',{name:'Pause'}).getAttribute('aria-pressed')).toBe('true');
   });
   it("swaps selected icons in uncontrolled toggles and emits one payload per activation",()=>{
     const changed=vi.fn();render(wrap(<IconButton label="Favorite" variant="tonal" icon="heart" selectedIcon="check" toggle value="favorite" onSelectionChange={changed}/>));

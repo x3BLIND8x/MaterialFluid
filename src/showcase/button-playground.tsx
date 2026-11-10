@@ -11,10 +11,10 @@ export default function ButtonPlayground({ value, onChange, fa }: { value: Butto
   const t = (en: string, persian: string) => fa ? persian : en;
   const [iconsReady, setIconsReady] = useState(false), [status, setStatus] = useState("");
   useEffect(() => { let live = true; if (!iconsReady && [value.icon,value.selectedIcon].some(name=>name&&!coreIcons[name])) void loadIconChoices().then(() => { if (live) setIconsReady(true); }).catch(() => { if (live) setStatus(t("Icon could not load. Choose it again to retry.", "آیکون بارگیری نشد؛ دوباره آن را انتخاب کنید.")); }); return () => { live = false; }; }, [value.icon,value.selectedIcon,iconsReady,fa]);
-  const toggleAllowed = isButtonToggleVariant(value.variant), toggle = value.toggle && toggleAllowed;
+  const toggleAllowed = isButtonToggleVariant(value.variant,value.emphasize), toggle = value.toggle && toggleAllowed;
   const update = (patch: Partial<ButtonExample>) => {
     const next = { ...value, text: buttonExampleText(value, fa), ...patch, preset: "custom" as const };
-    if (!isButtonToggleVariant(next.variant)) { next.toggle = false; next.selected = false; }
+    if (!isButtonToggleVariant(next.variant,next.emphasize)) { next.toggle = false; next.selected = false; }
     onChange(next);
   };
   const label = buttonExampleText(value, fa);
@@ -22,7 +22,7 @@ export default function ButtonPlayground({ value, onChange, fa }: { value: Butto
     <div className="live-stage"><div className="showcase-canvas"><div className="demo-primary"><form className="demo-stack button-preview-form" onSubmit={event => { event.preventDefault(); setStatus(t("Form submitted", "فرم ارسال شد")); }} onReset={() => setStatus(t("Form reset", "فرم بازنشانی شد"))}>
       {value.type !== "button" && <TextField label={t("Project", "پروژه")} name="project" defaultValue="MaterialFluid" />}
       <Button variant={value.variant} size={value.size} icon={value.icon&&(iconsReady||coreIcons[value.icon])?value.icon:undefined} selectedIcon={value.selectedIcon&&(iconsReady||coreIcons[value.selectedIcon])?value.selectedIcon:null} iconPosition={value.iconPosition}
-        aria-label={!label ? t("Action", "اقدام") : undefined} toggle={toggle} selected={value.selected} onSelectedChange={selected => update({ selected })} toggleOnClick={value.toggleOnClick}
+        aria-label={!label ? t("Action", "اقدام") : undefined} emphasize={value.emphasize} toggle={toggle} selected={value.selected} onSelectedChange={selected => update({ selected })} toggleOnClick={value.toggleOnClick}
         disabled={value.disabled} active={value.active} loading={value.loading} loadingText={value.loadingText || undefined}
         progress={value.progressMode === "off" ? undefined : value.progressMode === "indeterminate" ? null : value.progress}
         type={value.type} name={value.name} value={value.value} onClick={() => setStatus(t("Action activated", "اقدام اجرا شد"))}>{label}</Button>
@@ -32,7 +32,7 @@ export default function ButtonPlayground({ value, onChange, fa }: { value: Butto
       <section id="example-presets"><div className="section-heading"><h2>{t("Configuration", "پیکربندی")}</h2><Button variant="ghost" size="sm" onClick={() => { onChange({ ...buttonExampleDefaults }); setStatus(""); }}>{t("Reset example", "بازنشانی نمونه")}</Button></div>
         <Choice label={t("Example Presets", "نمونه‌های آماده")} value={value.preset} onValueChange={preset => { onChange(applyButtonPreset(preset as ButtonPreset, { ...value, text: label })); setStatus(""); }} options={buttonPresetNames.map(([preset, en, persian]) => ({ value: preset, label: t(en, persian) }))} /></section>
       <section id="button-appearance"><h3>{t("Appearance", "ظاهر")}</h3><div className="button-configuration-fields">
-        <Choice label={t("Variant", "گونه")} value={value.variant} onValueChange={variant => update({ variant: variant as ComponentVariant })} options={[["filled",t("Filled","پر")],["emphasize",t("Emphasize","تأکیدی")],["tonal",t("Tonal","تونال")],["outlined",t("Outlined","خطی")],["ghost",t("Text / Ghost","متنی / شفاف")],["danger",t("Danger","خطر")]].map(([key,label])=>({value:key,label}))}/>
+        <Choice label={t("Variant", "گونه")} value={value.variant} onValueChange={variant => update({ variant: variant as ComponentVariant })} options={[["filled",t("Filled","پر")],["tonal",t("Tonal","تونال")],["outlined",t("Outlined","خطی")],["ghost",t("Text / Ghost","متنی / شفاف")],["danger",t("Danger","خطر")]].map(([key,label])=>({value:key,label}))}/>
         <Choice label={t("Size", "اندازه")} value={value.size} onValueChange={size => update({ size: size as ButtonSize })} options={buttonSizes.map(size => ({ value: size, label: ({xs:"XS",sm:"S",md:"M",lg:"L",xl:"XL"})[size], ariaLabel: ({xs:t("Extra Small","خیلی کوچک"),sm:t("Small","کوچک"),md:t("Medium","متوسط"),lg:t("Large","بزرگ"),xl:t("Extra Large","خیلی بزرگ")})[size] }))}/>
       </div></section>
       <section id="button-content"><h3>{t("Content", "محتوا")}</h3><div className="button-configuration-fields">
@@ -43,6 +43,7 @@ export default function ButtonPlayground({ value, onChange, fa }: { value: Butto
       </div></section>
       <section id="button-behavior"><h3>{t("Behavior", "رفتار")}</h3><div className="button-behavior-switches">
         <Switch label={t("Toggle button", "دکمه انتخابی")} checked={toggle} disabled={!toggleAllowed} onCheckedChange={toggle => update({toggle})}/>
+        <Switch label={t("Emphasize", "تأکید")} checked={value.emphasize} disabled={value.variant === "danger" || value.variant === "tertiary"} onCheckedChange={emphasize=>update({emphasize})}/>
         <Switch label={t("Selected", "انتخاب‌شده")} checked={toggle && value.selected} disabled={!toggle} onCheckedChange={selected => update({selected})}/>
         <Switch label={t("Toggle on click", "تغییر انتخاب با کلیک")} checked={value.toggleOnClick} disabled={!toggle} onCheckedChange={toggleOnClick => update({toggleOnClick})}/>
         <Switch label={t("Disabled", "غیرفعال")} checked={value.disabled} onCheckedChange={disabled => update({disabled})}/>

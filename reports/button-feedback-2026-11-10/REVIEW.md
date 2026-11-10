@@ -1,0 +1,16 @@
+## Button color fade and live ripple sizing, 2026-11-10
+
+Supersedes the previous click-color-wave behavior: all Button color changes now use the existing whole-surface fade. Removed color-wave layers, color probes, selection-color tracking and animation-settling state. Pointer ripples remain ordinary translucent feedback. Their diameter and position now track the button's live, unscaled border box with ResizeObserver while retaining the original click point and animation progress. This covers size changes and Connected selected-label growth without restarting the ripple. No public API or animation parameter was added.
+
+Verification: 22 targeted Button/IconButton/ButtonGroup unit tests and eight production Edge browser checks passed. Browser coverage includes whole-button color fades in both button types, XS-to-XL growth on desktop/narrow screens, preservation of the active ripple node/progress, Connected selected-label growth, stable Standard selected-only label widths at 1440/390px, selected corner rounding, press radius, and horizontal/vertical overshoot painting room. Root typecheck, targeted ESLint, production showcase/library builds and diff whitespace checks passed. The existing optional-icon bundle warning remains. Full-browser-suite, other browser engines and manual screen-reader checks were not repeated for this internal animation correction.
+
+Fresh library declaration emission and packaged asset copying passed. The temporary preview was stopped; the existing development server was preserved.
+
+
+## Button Group click latency, 2026-11-10
+
+Reproduced the owner-reported delay specifically during activation in the development showcase. Every selection rerendered the 45-entry navigation and full configuration form. Cached unchanged navigation/search results, stabilized the group update callback, and isolated unchanged configuration JSX from live selection/status updates. Localized item identities stay stable while selection changes. Runtime selection retains the Example Preset; configuration edits still mark Custom. Event callbacks read current selection so later removal or selection-mode edits do not restore stale values. Shared component APIs and authored motion curves are unchanged.
+
+A six-click local Edge probe measured median click-to-next-animation-frame latency from 195.6ms to 67.3ms in development and 27.25ms to 12.7ms in production. These are local measurements, not a hardware-independent performance guarantee. Raw observations: reports/button-feedback-2026-11-10/group-click-latency.json.
+
+Validation: all 12 production Button Group browser checks passed, including paired locale/theme/viewport matrices, native keyboard activation, selected-label/ripple growth, stable Standard widths, connected corners, press radius, painting bounds, documentation state retention, navigation search and new English/Persian current-selection-after-edit regressions. All seven group API/model unit tests passed. Final root typecheck, targeted ESLint, showcase production build and diff whitespace checks passed. Existing optional-icon chunk warnings remain. No library files or public APIs changed, so library packaging checks were not repeated for this showcase render optimization. The temporary preview was stopped and the existing development server was preserved.

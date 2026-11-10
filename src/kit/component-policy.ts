@@ -3,18 +3,24 @@ import type { ComponentSize } from "./appearance";
 export type ButtonSize = ComponentSize | "xs" | "xl";
 export type ButtonSizeInput = ButtonSize | "s" | "m" | "l";
 export type IconButtonWidth = "narrow" | "default" | "wide";
+export const fabSizes = ["default", "medium", "large"] as const;
 export const buttonSizes = ["xs", "sm", "md", "lg", "xl"] as const;
 /** Filled and destructive actions do not represent persistent selections. */
-export function isButtonToggleVariant(variant: string) {
-  return ["tonal", "secondary", "outlined", "outline", "ghost", "text", "emphasize"].includes(variant);
+export function isButtonToggleVariant(variant: string, emphasize = false) {
+  return ["tonal", "secondary", "outlined", "outline", "ghost", "text"].includes(variant) || emphasize && ["filled", "primary"].includes(variant);
 }
 export function normalizeButtonSize(size: ButtonSizeInput = "md"): ButtonSize {
   return size === "s" ? "sm" : size === "m" ? "md" : size === "l" ? "lg" : size;
 }
 
 /** Sizes describe useful layouts, not an obligation to render three copies. */
-export const componentSizePolicy: Record<string, { sizes: readonly ButtonSize[]; reason: string }> = {
+export const componentSizePolicy: Record<string, { sizes: readonly ButtonSize[]; reason: string; referenceSizes?:readonly string[] }> = {
+  "fab-menu": {sizes:["sm","md","lg"],referenceSizes:fabSizes,reason:"Reference FAB sizes and expressive list/menu presentations; legacy density sizes remain compatible."},
+  "extended-fab": {sizes:["sm","md","lg"],referenceSizes:["small","medium","large"],reason:"Labelled primary actions with 56/80/96px compact and extended states."},
+  fab: {sizes:["sm","md","lg"],referenceSizes:fabSizes,reason:"Existing action sizes stay compatible; explicit FAB sizes add 56, 80 and 96px footprints."},
   button: { sizes: buttonSizes, reason: "Extra Small for compact actions; Extra Large for prominent standalone actions. Existing sizes retain their geometry." },
+  "split-button": { sizes: buttonSizes, reason: "Both halves share the owner action sizes from XS through XL." },
+  "button-group": { sizes: buttonSizes, reason: "Shared action sizes from XS through XL." },
   "icon-button": { sizes: buttonSizes, reason: "Compact through prominent icon actions; existing Small, Medium and Large metrics remain unchanged." },
   carousel: { sizes: ["md"], reason: "Responsive viewport; slide content owns its geometry." },
   sidebar: { sizes: ["md"], reason: "Responsive workspace composition manages its own layout." },
