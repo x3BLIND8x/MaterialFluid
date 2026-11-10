@@ -1,3 +1,5 @@
+import {radiosDefaults,radiosPresets,radiosOptions,applyRadiosPreset,radiosExampleCode} from "../src/showcase/radios-playground-model.ts";
+import {switchDefaults,switchPresets,applySwitchPreset,switchExampleCode} from "../src/showcase/switch-playground-model.ts";
 import {checkboxDefaults,checkboxPresets,applyCheckboxPreset,checkboxExampleCode} from "../src/showcase/checkbox-playground-model.ts";
 import {extendedFABDefaults,extendedFABPresets,applyExtendedFABPreset,extendedFABExampleCode} from "../src/showcase/extended-fab-playground-model.ts";
 import {fabMenuDefaults,fabMenuPresets,applyFABMenuPreset,fabMenuExampleCode} from "../src/showcase/fab-menu-playground-model.ts";
@@ -105,6 +107,56 @@ const timing=<ExtendedFAB pressMotion={{scale:.8}}/>;
 // @ts-expect-error Elevation is excluded.
 ref.current?.lower();
 void [example,rich,elevated,square,iconSize,ripple,timing,extendedFABSizes];
+`);
+const radiosExamples=[...radiosPresets.map(([preset])=>applyRadiosPreset(preset,radiosDefaults)),...["sm","md","lg"].flatMap(size=>["horizontal","vertical"].flatMap(direction=>["start","end"].map(labelPosition=>({...radiosDefaults,size,direction,labelPosition})))),...Object.entries(radiosOptions).map(([options,items])=>({...radiosDefaults,options,items,selected:items[0].value})),{...radiosDefaults,label:'A "B" <C>',name:'name "test"',selected:null,required:true},{...radiosDefaults,items:radiosDefaults.items.map((item,index)=>({...item,labelBefore:index%2===0,disabled:index===1}))}];
+for(const[index,example]of radiosExamples.entries()){await writeFile(`${folder}/radios-api-${index}.tsx`,radiosExampleCode(example,"react"));await writeFile(`${folder}/radios-api-${index}.html`,radiosExampleCode(example,"web"));}
+await writeFile(`${folder}/radios-methods.tsx`, `
+import {createRef} from "react";
+import {RadioGroup,Radios,Radio,type RadioGroupHandle,type RadiosChangePayload} from "materialfluid";
+import {defineMaterialFluidRadios,type MaterialFluidRadiosElement} from "materialfluid/elements";
+const ref=createRef<RadioGroupHandle>(),native=createRef<HTMLDivElement>();
+const callback=(event:RadiosChangePayload)=>console.log(event.value,event.option,event.originalEvent);
+const source=<Radios ref={ref} ariaLabel="Choice" required onChange={callback} onValueChange={(value:string|null)=>console.log(value)}><><Radio value="a" labelBefore>Alpha</Radio><Radio value="b" label="Beta" disabled/></></Radios>;
+const compatible=<RadioGroup ref={native} label="Choice" options={[{value:"a",label:"Alpha"}]} orientation="horizontal" onValueChange={(value:string)=>console.log(value)}/>;
+ref.current?.setValue("a").setValue(null).addOption({value:"b",label:"Beta",labelBefore:true}).disable().enableOption("b").enable().disableOption("a").removeOption("b").on("change",callback).off("change",callback);
+ref.current?.radios[0].input.checkValidity();ref.current?.getSelected();ref.current?.getValue();ref.current?.element;ref.current?.getClass("label");ref.current?.lifecycle.destroy();
+defineMaterialFluidRadios();const host:MaterialFluidRadiosElement=document.createElement("mf-radios");host.options=[{value:"a",label:"Alpha"}];host.value="a";host.defaultValue="a";host.setValue(null).addOption({value:"b",label:"Beta"}).disable().enableOption("b").enable().disableOption("a").removeOption("b");host.checkValidity();host.reportValidity();host.radios[0]?.input.focus();void host.updateComplete;
+// @ts-expect-error Elevated is excluded.
+const elevated=<Radios variant="elevated"/>;
+// @ts-expect-error Square is excluded.
+const square=<RadioGroup shape="square"/>;
+// @ts-expect-error Ripple options are private defaults.
+const ripple=<Radios ripple={false}/>;
+// @ts-expect-error The private model bridge is not public API.
+const bridge=<RadioGroup onNullableValueChange={console.log}/>;
+// @ts-expect-error Only change is emitted; native focus listeners belong on inputs.
+ref.current?.on("focus",console.log);
+void[source,compatible,elevated,square,ripple,bridge];
+`);
+const switchExamples=[...switchPresets.map(([preset])=>applySwitchPreset(preset,switchDefaults)),...["sm","md","lg"].flatMap(size=>["start","end"].flatMap(labelPosition=>[false,true].map(checked=>({...switchDefaults,size,labelPosition,checked})))),{...switchDefaults,label:'A "B" <C>',name:'name "test"',value:'<yes & "ok">',ariaLabel:'Switch "one"',disabled:true},{...switchDefaults,glyphs:"none"},{...switchDefaults,glyphs:"custom",icon:"rocket_launch",unselectedIcon:""}];
+for(const[index,example]of switchExamples.entries()){await writeFile(`${folder}/switch-api-${index}.tsx`,switchExampleCode(example,"react"));await writeFile(`${folder}/switch-api-${index}.html`,switchExampleCode(example,"web"));}
+await writeFile(`${folder}/switch-methods.tsx`, `
+import {createRef} from "react";
+import {Switch,type SwitchHandle,type SwitchChangePayload} from "materialfluid";
+import {defineMaterialFluidSwitch,type MaterialFluidSwitchElement} from "materialfluid/elements";
+const ref=createRef<SwitchHandle>();const native=createRef<HTMLButtonElement>();
+const callback=(event:SwitchChangePayload)=>console.log(event.checked,event.value,event.valueAttribute,event.nativeEvent);
+const item=<Switch ref={ref} label="Sync" labelPosition="start" supportingText="Uses data" error required onChange={callback}/>;
+const compatible=<Switch ref={native} label="Sync" icon="wifi" onCheckedChange={console.log}/>;
+ref.current?.check().uncheck().toggle().setValue("true").setValueAttribute("yes").setLabel("New").setSupportingText("Offline",true).removeSupportingText().setError(false).disable().enable().on("change",callback).off("change",callback);
+ref.current?.input?.checkValidity();ref.current?.element;ref.current?.supportingTextElement;ref.current?.isError();
+defineMaterialFluidSwitch();const host:MaterialFluidSwitchElement=document.createElement("mf-switch");host.checked=true;host.defaultChecked=false;host.setSupportingText("Help",true).removeSupportingText().check().uncheck().toggle().setValue("1");host.checkValidity();host.reportValidity();void host.updateComplete;
+// @ts-expect-error Action appearances are excluded.
+const elevated=<Switch variant="elevated"/>;
+// @ts-expect-error Square is excluded.
+const square=<Switch shape="square"/>;
+// @ts-expect-error Public animation overrides are excluded.
+const animation=<Switch transition={{duration:1}}/>;
+// @ts-expect-error Checked value is boolean.
+const wrong:SwitchChangePayload={checked:true,value:"yes",valueAttribute:"yes"};
+// @ts-expect-error Misspelled event name.
+ref.current?.on("chnage",callback);
+void[item,compatible,elevated,square,animation,wrong];
 `);
 const checkboxExamples=[...checkboxPresets.map(([preset])=>applyCheckboxPreset(preset,checkboxDefaults)),...["sm","md","lg"].flatMap(size=>["start","end"].flatMap(labelPosition=>["unchecked","checked","mixed"].map(state=>({...checkboxDefaults,size,labelPosition,state})))),{...applyCheckboxPreset("parent",checkboxDefaults),error:true,required:true},{...checkboxDefaults,label:'A "B" <C>',name:'name "test"',value:'<yes & "ok">',ariaLabel:'Choice "one"',disabled:true}];
 for(const[index,example]of checkboxExamples.entries()){await writeFile(`${folder}/checkbox-api-${index}.tsx`,checkboxExampleCode(example,"react"));await writeFile(`${folder}/checkbox-api-${index}.html`,checkboxExampleCode(example,"web"));}
@@ -323,5 +375,5 @@ const result = spawnSync(
 );
 if (result.status !== 0) throw Error(result.stdout || result.stderr);
 console.log(
-  `All ${catalogue.length} default and ${catalogue.length} size examples, ${buttonExamples.length} Button and ${iconButtonExamples.length} IconButton React examples, ${groupExamples.length} ButtonGroup, ${splitExamples.length} SplitButton, ${fabExamples.length} FAB, ${extendedExamples.length} ExtendedFAB, ${checkboxExamples.length} Checkbox, ${fabMenuExamples.length} FABMenu, plus ${Object.keys(shadcnExamples).length} compatibility examples, Progress presentations and the FileInput size policy typecheck against the installed package. Matching Button Web Component HTML recipes were generated; browser checks validate the adapter.`,
+  `All ${catalogue.length} default and ${catalogue.length} size examples, ${buttonExamples.length} Button and ${iconButtonExamples.length} IconButton React examples, ${groupExamples.length} ButtonGroup, ${splitExamples.length} SplitButton, ${fabExamples.length} FAB, ${extendedExamples.length} ExtendedFAB, ${checkboxExamples.length} Checkbox, ${switchExamples.length} Switch, ${radiosExamples.length} Radios, ${fabMenuExamples.length} FABMenu, plus ${Object.keys(shadcnExamples).length} compatibility examples, Progress presentations and the FileInput size policy typecheck against the installed package. Matching Button Web Component HTML recipes were generated; browser checks validate the adapter.`,
 );

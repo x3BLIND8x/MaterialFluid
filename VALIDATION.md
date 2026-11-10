@@ -431,3 +431,61 @@ Validation completed during release preparation:
 - Checkbox desktop and narrow screenshots were reviewed. Source hashes, adaptation decisions and attribution are recorded in reports/checkbox-2026-11-10 and THIRD_PARTY_NOTICES.md.
 
 Limits: this is a targeted release regression batch, not every historical browser test. Local Edge/axe checks do not establish Safari/Firefox, manual screen-reader or physical-device acceptance. Existing optional-icon/application bundle-size warnings remain. The owner development server is preserved.
+
+
+## Switch reference additions, 2026-11-10
+
+The reference page/docs could not be fetched in this run. Reviewed authoritative Floor Material switch source, API, config, supporting-text features, React/Web adapters, styles and tests instead. Exact source URLs and SHA-256 hashes are retained in source.json; the MIT notice remains in licenses/floor-material-MIT.txt.
+
+The shared Switch now supports optional rich label/children or ariaLabel, start/end label placement, independent selected/unselected glyphs, supporting text, independent error state, required/native forms, external form ownership and default-state reset. Existing native button refs, three owner sizes, end-label default, connection/state/language treatments, RTL drag/cancel interaction and owner colors remain compatible. Handle travel uses the authored finite press curve; glyph dimensions follow component size and custom glyph changes fade. No Square, Elevated, independent icon-size or public timing/animation controls were added.
+
+SwitchHandle exposes the real input, root and live supporting-text node, checked/value-token methods, labels/help/error, enable/disable, focus/blur/change/tap/swipe subscriptions and destruction. Model setters are silent; native activation emits checked, boolean value, HTML valueAttribute and the original native change event. Replacing/removing help does not clear error. Space and Enter toggle once, with repeat guards. The native button ref retains its usual DOM methods and the typed extension remains optional.
+
+The optional mf-switch preserves original rich label nodes and default/live checked state, emits one CustomEvent change, integrates real native form values/required/reset behavior, and supports quiet methods, attributes, icons, language labels, lifecycle and reconnection. Icon content uses named catalogue glyphs or ReactNode artwork instead of unsanitized source HTML.
+
+Configuration contains Example Presets, Appearance, Content and Behavior only; React/Web recipes, API and notes remain in Documentation. Custom glyph presets load the optional full catalogue when needed; icon selection covers all 4,322 names. The 45-entry visible catalogue is unchanged.
+
+Evidence:
+
+- Full unit suite: 245 tests in 19 files passed with a 15-second runner timeout. The initial 5-second run passed 243 and timed out in existing palette/calendar cases under simultaneous build/browser load. No assertions were removed. Eight Switch-specific cases cover refs, native events/forms, setters, descriptions/error persistence, glyphs, controlled state, keyboard, cleanup and recipe generation.
+- Root typecheck and full lint passed; production showcase/library builds and fresh declarations/assets passed. The final color-only correction was rebuilt and checked in all four browser matrices. Final incremental root verification is recorded in VALIDATION.md.
+- Installed-package smoke passed 85 exports/SSR (including Switch error/help/form rendering), foundation namespace/35 shapes, server-safe optional elements, full icons and assets. Consumer compilation passed all 45 default and 45 size recipes, 24 Switch cases and the existing component/compatibility fixtures, including native refs, method/payload typing and excluded APIs. Both recipe formats were generated; this is not a claim that every generated HTML document was executed.
+- Eleven production Edge cases passed: five existing catalogue checks, four Switch locale/theme/viewport matrices, drag/required/reset/full-icon behavior and coarse-pointer activation/48px targets. The final four matrices passed again with explicit semantic error-border and error/helper axe checks. The separate Web Component case passed source events, quiet setters, dirty defaults, forms, rich labels, focus, normalized tap/swipe, errors, disabled state and lifecycle.
+- Desktop/narrow captures were reviewed. Later viewport checks confirmed the apparent skip-link overlap in the initial full-page captures was a capture artifact at nonzero scroll, rather than an observed live layout defect. See reports/radios-2026-11-10/shell-capture-probe.json.
+
+Limits: local Edge/axe/keyboard automation does not establish other browser engines, physical-device or manual screen-reader acceptance. Existing optional-icon/application chunk warnings remain. This is a component adaptation, not a new Git release.
+
+Final confirmation: incremental root typecheck passed against the final source. The final four Switch matrices passed semantic error-border and error/helper axe assertions; final installed-package smoke and 24 Switch consumer recipes passed against the rebuilt assets. Full lint and final targeted lint/whitespace checks passed. The existing development server was preserved; only the owned preview was stopped.
+
+
+## Radio Buttons reference additions, 2026-11-10
+
+Reviewed the reference configuration page, current factory/config/API/types, native radio implementation, React/Web declaration adapters, source styles and source fixtures. The separate documentation/preview URLs could not be fetched. Exact reviewed URLs, SHA-256 hashes and upstream tree identity are in source.json; the Floor Material MIT notice remains in licenses/floor-material-MIT.txt.
+
+RadioGroup retains native div refs, its horizontal default, three owner sizes, authored ChoiceFill press/preview/selection geometry and owner semantic color roles. Add direction, global and per-option label placement, native form inputs/required/reset and external ownership, nullable selection methods, selected-option access, dynamic options, group/per-option disabling, typed events, getClass, radio/input descriptors and lifecycle. Programmatic methods do not emit change. Native activation emits exactly one value/option/originalEvent payload. Blank values report null while retaining the selected blank configuration; explicit null or unknown setters clear selection.
+
+The new Radios alias defaults to vertical and provides nullable controlled model requests. RadioGroup retains its legacy string model callback for compatibility. Radio declarations accept labels/children, arrays/fragments, disabled and labelBefore. Native-compatible refs stay available for both. Space and arrows select, skip disabled options, respect orientation/RTL and preserve roving focus. Radios and the Web adapter submit on Enter without changing selection; legacy RadioGroup retains Enter suppression. Default submitter names/values remain included.
+
+The optional mf-radios/mf-radio adapter keeps native declarations in the host, supports dynamic declaration text/flags/addition/removal and JS options, separates default and live/dirty values, restores form defaults, preserves individual disable flags across group enable/disable, clears removed selections, and supports native validation, RTL, methods, reconnection and destruction. Source configuration tuning and arbitrary indicator glyphs are excluded: indicators remain the owner's semantic circles.
+
+The showcase uses only Example Presets, Appearance, Content and Behavior in Configuration. Current React/Web recipes and API details live in Documentation. Presets cover plans, vertical direction, labels before, empty selection, disabled option/group and required selection; content options include plans, delivery and sizes. The visible 45-entry catalogue is unchanged. No Square, Elevated, public ripple or motion controls were introduced.
+
+Validation:
+
+- Full suite: 257 unit tests in 20 files passed with the established 15-second runner allowance. There are 12 Radio/model/lifecycle tests. The final focused Radio/Checkbox/Switch batch passed all 29 tests.
+- A deliberately synchronous retained-input probe first reproduced four callbacks after destroy, before React unmounted. Immediate alive guards now stop callbacks in the three shared checkables, and Web destroy delegates to the component handle before removing its host. The final core and Web lifecycle regressions passed.
+- Root typecheck and full lint passed. Final changed-source lint, showcase/library production builds, fresh declarations/assets and whitespace checks passed. Final package and incremental root confirmations are appended below.
+- Twelve production Edge cases passed: five catalogue regressions, four paired locale/theme/viewport matrices, forms/required/reset/current configuration, coarse 48px targets and touch activation, and the existing frame-sampled radio preview regression. They check fixed semantic indicators, old outgoing/new pressed dot geometry, sizes, labels, native form values, disabled skipping, RTL keyboard behavior, overflow, axe, configuration/documentation separation and both code formats.
+- The separate development Web Component case passed default/live value, single native change metadata, quiet clearing and unknown values, dynamic declaration text/disabled/add/remove, required/forms/reset, source Enter submission, native RTL/direction, reconnect and synchronous destruction suppression.
+- Installed smoke passed 87 required exports/SSR, including actual declaration rendering, foundation namespace/35 shapes, server-safe optional elements, icons/assets, all 45 default/45 size recipes, 25 Radio recipes and the existing component/compatibility fixtures. Both recipe formats were generated; this does not claim every generated HTML recipe was executed.
+- Desktop and narrow captures were reviewed. The earlier skip-link warning was disproved by live viewport checks: at rest its bottom is above the viewport at both zero and 650px scroll, and focus places it at y=8px. Full-page captures at nonzero scroll made the fixed link/sticky sidebar appear within the document. Radio captures now scroll to the top first; the inaccurate shell follow-up was removed. See reports/radios-2026-11-10/shell-capture-probe.json.
+
+Limits: local Edge/axe/keyboard checks do not establish Safari/Firefox, physical-device or manual screen-reader acceptance. Existing optional-icon/application chunk warnings remain. No new Git release is claimed. The owner development server remains running.
+
+Final confirmation: all 257 unit tests, 29 focused checkable API tests, the final Web lifecycle case, 12 production regressions and four canonical recapture matrices passed. Final root typecheck and installed-package smoke passed; the package compiled 25 Radio recipes plus existing fixtures and verified 87 exports. The viewport probe resolved the earlier capture-only shell warning without changing product styling. The owned preview was stopped and the owner development server was preserved.
+
+## 0.2.1 Git follow-up verification, 2026-11-10
+
+At the owner's request, prepare the completed Switch and Radio additions for a follow-up commit on main with package version 0.2.1. The already published v0.2.1 tag remains unchanged.
+
+Fresh checks passed: full lint, root typecheck, all 257 unit tests in 20 files, production showcase/library builds, fresh declarations and copied assets, and installed-package smoke with 87 exports and the full consumer recipe compilation. All 17 selected production Edge cases passed across the initial run and a focused rerun; two initially exceeded the 30-second page-setup timeout before assertions, then passed individually with a 90-second allowance. Both separate development Web Component cases passed. No assertions were removed. Build output retains the existing large optional-icon/application chunk warnings. Generated changes to older catalogue screenshots were discarded; Switch and Radio evidence remains included. Browser and manual-accessibility limits documented above still apply.

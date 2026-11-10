@@ -533,3 +533,13 @@ ExtendedFAB adapts the API, sizing, label semantics, width modes, logical/physic
 ## Material Checkbox behavior reference
 
 Checkbox adapts state, native forms, parent/child usage and imperative API cases from Floor IO Material's MIT-licensed checkbox source and adapters. Reviewed URLs and SHA-256 hashes are in reports/checkbox-2026-11-10/source.json. MaterialFluid retains its authored tick/mixed motion, semantic colors and sizes. The full notice is retained in licenses/floor-material-MIT.txt.
+
+
+## Material Switch behavior reference
+
+Switch adapts the state, supporting text/error, native form, icon and imperative/event API cases from Floor IO Material, https://github.com/floor/material/tree/main/src/components/switch and its MIT-licensed adapters, styles and tests. MaterialFluid retains owner geometry, color roles, existing connection/state icons, drag interaction and finite motion. Reviewed source hashes are in reports/switch-2026-11-10/source.json. The full MIT notice remains in licenses/floor-material-MIT.txt.
+
+
+## Material Radio Buttons behavior reference
+
+Radios/RadioGroup adapt selection, dynamic options, disable controls, labels, native forms, typed event/API and declarative adapter cases from Floor IO Material, https://github.com/floor/material/tree/main/src/components/radios and its MIT-licensed React/Web adapters, styles and tests. MaterialFluid retains its authored ChoiceFill motion, owner sizes/colors and compatible RadioGroup API. Reviewed source URLs/hashes are in reports/radios-2026-11-10/source.json. The full notice remains in licenses/floor-material-MIT.txt.

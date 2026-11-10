@@ -25,6 +25,7 @@ import {
 import {
   createContext,
   Children,
+  Fragment,
   isValidElement,
   forwardRef,
   useContext,
@@ -33,6 +34,7 @@ import {
   useLayoutEffect,
   useEffect,
   useCallback,
+  useId,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
@@ -46,13 +48,12 @@ import {
   type MotionValue,
 } from "motion/react";
 import * as Check from "@radix-ui/react-checkbox";
-import * as Radio from "@radix-ui/react-radio-group";
+import type * as RadioPrimitive from "@radix-ui/react-radio-group";
 import * as Slide from "@radix-ui/react-slider";
 import { useMaterialFluid } from "./provider";
 import { cx, useControllable, setRef } from "./utils";
 import { AnimatedIcon, type IconName } from "./icons";
 import { RollingNumber } from "./rolling-number";
-import { SwitchIcon, type SwitchStateIcon } from "./switch-icon";
 import { useButtonGeometry } from "./button-geometry";
 import { CircularWave } from "./wavy-progress";
 
@@ -1705,6 +1706,7 @@ export const Checkbox = forwardRef<
           button.current?.focus();
         }}
         onChange={(event) => {
+          if(!alive.current)return;
           const next = event.currentTarget.checked;
           update(next);
           const payload: CheckboxChangePayload = {
@@ -1723,334 +1725,602 @@ export const Checkbox = forwardRef<
     </label>
   );
 });
+export interface RadioOptionConfig extends ChoiceOption {
+  labelBefore?: boolean;
+}
+export interface RadioProps extends Omit<RadioOptionConfig, "label"> {
+  label?: ReactNode;
+  children?: ReactNode;
+}
+/** Declarative option, consumed by RadioGroup/Radios. */
+export function Radio(_props: RadioProps) {
+  return null;
+}
+function radioDeclarations(children: ReactNode): RadioOptionConfig[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement(child)) return [];
+    if (child.type === Fragment)
+      return radioDeclarations(
+        (child.props as { children?: ReactNode }).children,
+      );
+    if (child.type !== Radio) return [];
+    const p = child.props as RadioProps;
+    return [
+      {
+        value: p.value,
+        label: p.label ?? p.children,
+        disabled: p.disabled,
+        labelBefore: p.labelBefore,
+        ariaLabel: p.ariaLabel,
+      },
+    ];
+  });
+}
+export interface RadiosChangePayload {
+  value: string | null;
+  originalEvent: Event | undefined;
+  option: RadioOptionConfig | null;
+}
+export interface RadiosEvents {
+  change: (event: RadiosChangePayload) => void;
+}
+export interface RadioItem {
+  element: HTMLElement;
+  input: HTMLInputElement;
+  label: HTMLLabelElement;
+  config: RadioOptionConfig;
+  destroy: () => void;
+}
+export interface RadioGroupHandle extends HTMLDivElement {
+  readonly element: HTMLDivElement;
+  readonly radios: RadioItem[];
+  readonly lifecycle: { destroy: () => void };
+  getClass(name: string): string;
+  getValue(): string | null;
+  setValue(value: string | null): RadioGroupHandle;
+  getSelected(): RadioOptionConfig | null;
+  addOption(option: RadioOptionConfig): RadioGroupHandle;
+  removeOption(value: string): RadioGroupHandle;
+  enable(): RadioGroupHandle;
+  disable(): RadioGroupHandle;
+  isDisabled(): boolean;
+  enableOption(value: string): RadioGroupHandle;
+  disableOption(value: string): RadioGroupHandle;
+  on<K extends keyof RadiosEvents>(
+    name: K,
+    callback: RadiosEvents[K],
+  ): RadioGroupHandle;
+  off<K extends keyof RadiosEvents>(
+    name: K,
+    callback: RadiosEvents[K],
+  ): RadioGroupHandle;
+  destroy(): void;
+}
 export interface RadioGroupProps
   extends
-    Radio.RadioGroupProps,
+    Omit<RadioPrimitive.RadioGroupProps, "value" | "defaultValue" | "onChange">,
     Omit<AppearanceProps, "variant" | "labelPosition"> {
-  labelPosition?: "end";
-  options: ChoiceOption[];
-  label: string;
+  labelPosition?: "start" | "end";
+  labelBefore?: boolean;
+  direction?: "horizontal" | "vertical";
+  options?: RadioOptionConfig[];
+  label?: string;
+  ariaLabel?: string;
+  form?: string;
+  value?: string | null;
+  defaultValue?: string | null;
+  onChange?: (event: RadiosChangePayload) => void;
 }
-export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
-  function RadioGroup(rawProps, ref) {
-    const {
-      options,
-      label,
-      className,
-      value,
-      defaultValue = "",
-      onValueChange,
-      ...props
-    } = useAppearanceProps({
-      ...rawProps,
-      labelPosition: "end",
-      variant: "outline",
-    });
-    const [selected, setSelected] = useControllable(
-      value === null ? "" : value,
-      defaultValue ?? "",
-      onValueChange,
-    );
-    const [preview, setPreview] = useState<string | null>(null);
-    useEffect(() => {
-      const reset = () => setPreview(null);
-      window.addEventListener("pointerup", reset);
-      window.addEventListener("pointercancel", reset);
-      return () => {
-        window.removeEventListener("pointerup", reset);
-        window.removeEventListener("pointercancel", reset);
-      };
-    }, []);
-
-    return (
-      <Radio.Root
-        {...props}
-        orientation={props.orientation ?? "horizontal"}
-        value={selected}
-        onValueChange={setSelected}
-        ref={ref}
-        aria-label={label}
-        className={cx("mf-radio-group", className)}
-      >
-        {options.map((o) => (
-          <label
-            key={o.value}
-            className="mf-choice"
-            onClick={(event) => {
-              if (!(event.target as Element).closest("button, input"))
-                event.preventDefault();
-            }}
-            onPointerDown={(event) => {
-              if (
-                event.button === 0 &&
-                (event.target as Element).closest(".mf-radio") &&
-                !o.disabled &&
-                !props.disabled
-              )
-                setPreview(o.value);
-            }}
-            onPointerUp={(event) => {
-              if (event.button === 0 && preview === o.value) {
-                setSelected(o.value);
-                setPreview(null);
-              }
-            }}
-            onPointerCancel={() => setPreview(null)}
-          >
-            <Radio.Item
-              className="mf-radio"
-              value={o.value}
-              disabled={o.disabled}
-            >
-              <Radio.Indicator forceMount className="mf-radio-dot">
-                <ChoiceFill
-                  radio
-                  active={selected === o.value || preview === o.value}
-                  radioPreview={
-                    preview !== null && preview !== selected
-                      ? preview === o.value
-                        ? "incoming"
-                        : selected === o.value
-                          ? "outgoing"
-                          : undefined
-                      : undefined
-                  }
-                />
-              </Radio.Indicator>
-            </Radio.Item>
-            <span>{o.label}</span>
-          </label>
-        ))}
-      </Radio.Root>
-    );
-  },
-);
-export interface SwitchProps
-  extends
-    Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onChange" | "value">,
-    Omit<AppearanceProps, "variant" | "labelPosition"> {
-  labelPosition?: "end";
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onCheckedChange?: (value: boolean) => void;
-  label: ReactNode;
-  icon?: "wifi" | "bluetooth" | SwitchStateIcon;
-  languageLabels?: { off: string; on: string };
-  name?: string;
-  value?: string;
-}
-export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
-  function Switch(rawProps, ref) {
-    const defaults = useComponentAppearance();
-    const {
-      checked,
-      defaultChecked = false,
-      onCheckedChange,
-      label,
-      size,
-      icon,
-      languageLabels,
-      name,
-      value = "on",
-      className,
-      disabled,
-      onClick,
-      onPointerDown,
-      onPointerMove,
-      onPointerUp,
-      onPointerCancel,
-      ...props
-    } = useAppearanceProps(
-      {
-        ...rawProps,
-        labelPosition: "end",
-        variant: "primary",
-        size: rawProps.size ?? defaults.size ?? "md",
-      },
-      { preserveSize: true },
-    );
-
-    const [active, set] = useControllable(
-      checked,
-      defaultChecked,
-      onCheckedChange,
-    );
-    const travel = size === "sm" ? 16 : size === "lg" ? 22 : 20;
-    const { dir, motion: mode, reducedMotion } = useMaterialFluid();
-    const pointer = useRef<{
-      id: number;
-      start: number;
-      last: number;
-      moved: boolean;
-      base: number;
-    } | null>(null);
-    const suppressClick = useRef(false);
-    const [dragPosition, setDragPosition] = useState<number | null>(null);
-    const [pressing, setPressing] = useState(false);
-    const position = (state: NonNullable<typeof pointer.current>) =>
-      Math.max(
-        0,
-        Math.min(
-          travel,
-          state.base + (state.last - state.start) * (dir === "rtl" ? -1 : 1),
-        ),
-      );
-    const stop = (element: HTMLButtonElement, cancel: boolean) => {
-      const state = pointer.current;
-      if (!state) return;
-      pointer.current = null;
-      setDragPosition(null);
-      setPressing(false);
-      if (element.hasPointerCapture(state.id))
-        element.releasePointerCapture(state.id);
-      if (cancel) {
-        suppressClick.current = false;
+const RadioGroupImpl = forwardRef<
+  HTMLDivElement,
+  RadioGroupProps & { onNullableValueChange?: (value: string | null) => void }
+>(function RadioGroup(rawProps, ref) {
+  const [overrides, setOverrides] = useState<Partial<RadioGroupProps>>({}),
+    configuration = { ...rawProps, ...overrides },
+    labelPosition =
+      configuration.labelPosition ??
+      (configuration.labelBefore ? "start" : "end");
+  const {
+    options: givenOptions,
+    children,
+    label,
+    ariaLabel,
+    className,
+    value,
+    defaultValue,
+    onValueChange,
+    onNullableValueChange,
+    onChange,
+    direction,
+    orientation = "horizontal",
+    name,
+    form,
+    required,
+    disabled,
+    loop = true,
+    asChild: _asChild,
+    ...props
+  } = useAppearanceProps({
+    ...configuration,
+    labelPosition,
+    variant: "outline" as const,
+  });
+  const declarations = radioDeclarations(children);
+  const options = givenOptions ?? declarations,
+    orientationValue = direction ?? orientation,
+    initial = useRef(
+      defaultValue !== undefined ? defaultValue : (value ?? null),
+    ),
+    [internal, setInternal] = useState<string | null>(initial.current),
+    controlled = value !== undefined;
+  const selectedRaw = controlled ? (value ?? null) : internal,
+    selected =
+      selectedRaw !== null &&
+      options.some((option) => option.value === selectedRaw)
+        ? selectedRaw
+        : null;
+  const [preview, setPreview] = useState<string | null>(null),
+    [destroyed, setDestroyed] = useState(false),
+    root = useRef<HTMLDivElement>(null),
+    inputs = useRef(new Map<string, HTMLInputElement>()),
+    buttons = useRef(new Map<string, HTMLButtonElement>()),
+    labels = useRef(new Map<string, HTMLLabelElement>()),
+    alive = useRef(true),
+    generated = useId();
+  const { dir: ownerDir } = useMaterialFluid(),
+    dir = props.dir ?? ownerDir;
+  const latest = useRef({
+    options,
+    selected,
+    disabled,
+    controlled,
+    onValueChange,
+    onNullableValueChange,
+    onChange,
+  });
+  latest.current = {
+    options,
+    selected,
+    disabled,
+    controlled,
+    onValueChange,
+    onNullableValueChange,
+    onChange,
+  };
+  const listeners = useRef(new Set<RadiosEvents["change"]>());
+  function apply(next: string | null) {
+    if (!alive.current) return;
+    const current = latest.current,
+      previous = current.selected,
+      known =
+        next !== null &&
+        current.options.some((option) => option.value === next),
+      result = known ? next : null;
+    if (!current.controlled) {
+      current.selected = result;
+      setInternal(result);
+      for (const [value, input] of inputs.current)
+        input.checked = result !== null && value === result;
+    }
+    if (previous !== result) {
+      current.onValueChange?.(result ?? "");
+      current.onNullableValueChange?.(result);
+    }
+    return result;
+  }
+  function activate(value: string) {
+    const input = inputs.current.get(value);
+    if (input && !input.matches(":disabled")) input.click();
+  }
+  function mutateOptions(next: RadioOptionConfig[]) {
+    latest.current.options = next;
+    setOverrides((previous) => ({ ...previous, options: next }));
+    if (
+      latest.current.selected !== null &&
+      !next.some((option) => option.value === latest.current.selected)
+    )
+      apply(null);
+  }
+  function destroy() {
+    alive.current = false;
+    listeners.current.clear();
+    setPreview(null);
+    setDestroyed(true);
+  }
+  useLayoutEffect(() => {
+    for (const [value, input] of inputs.current) {
+      input.defaultChecked =
+        initial.current !== null && value === initial.current;
+      input.checked = selected !== null && value === selected;
+    }
+  }, [selected, options]);
+  useEffect(() => {
+    const element = root.current;
+    if (!element) return;
+    const change = (event: Event) => {
+      if(!alive.current)return;
+      const target = event.target;
+      if (
+        !(target instanceof HTMLInputElement) ||
+        target.type !== "radio" ||
+        !target.checked
+      )
         return;
-      }
-      suppressClick.current = true;
-      set(state.moved ? position(state) >= travel / 2 : !active);
-      window.setTimeout(() => {
-        suppressClick.current = false;
-      }, 400);
+      const option = latest.current.options.find(
+        (option) => inputs.current.get(option.value) === target,
+      );
+      if (!option || target.matches(":disabled")) return;
+      apply(option.value);
+      const payload = {
+        value: option.value || null,
+        originalEvent: event,
+        option,
+      };
+      latest.current.onChange?.(payload);
+      if (alive.current)
+        for (const listener of listeners.current) listener(payload);
+      if (latest.current.controlled)
+        for (const [value, input] of inputs.current)
+          input.checked =
+            latest.current.selected !== null &&
+            value === latest.current.selected;
     };
-    return (
-      <label
-        className={cx("mf-choice", className)}
-        onClick={(event) => {
-          if (!(event.target as Element).closest("button, input"))
-            event.preventDefault();
-        }}
-      >
-        <button
-          {...props}
-          type="button"
-          ref={ref}
-          role="switch"
-          aria-checked={active}
-          disabled={disabled}
-          className="mf-switch"
-          data-state={active ? "checked" : "unchecked"}
-          onClick={(e) => {
-            onClick?.(e);
-            if (e.detail > 0 && suppressClick.current) {
-              suppressClick.current = false;
-              return;
-            }
-            if (!e.defaultPrevented) set(!active);
+    element.addEventListener("change", change);
+    return () => element.removeEventListener("change", change);
+  }, [destroyed]);
+  useEffect(() => {
+    const owner = inputs.current.values().next().value?.form;
+    if (!owner) return;
+    const reset = () => {
+      apply(initial.current);
+      setPreview(null);
+    };
+    owner.addEventListener("reset", reset);
+    return () => owner.removeEventListener("reset", reset);
+  }, [form, options.length, destroyed]);
+  useEffect(() => {
+    if (destroyed) return;
+    alive.current = true;
+    const reset = () => setPreview(null);
+    window.addEventListener("pointerup", reset);
+    window.addEventListener("pointercancel", reset);
+    return () => {
+      alive.current = false;
+      listeners.current.clear();
+      window.removeEventListener("pointerup", reset);
+      window.removeEventListener("pointercancel", reset);
+    };
+  }, [destroyed]);
+  function keydown(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    value: string,
+  ) {
+    if (event.defaultPrevented) return;
+    const enabled = latest.current.options.filter(
+        (option) =>
+          !disabled &&
+          !option.disabled &&
+          !inputs.current.get(option.value)?.matches(":disabled"),
+      ),
+      index = enabled.findIndex((option) => option.value === value);
+    let next = -1;
+    const backward =
+        orientationValue === "vertical"
+          ? event.key === "ArrowUp"
+          : event.key === (dir === "rtl" ? "ArrowRight" : "ArrowLeft"),
+      forward =
+        orientationValue === "vertical"
+          ? event.key === "ArrowDown"
+          : event.key === (dir === "rtl" ? "ArrowLeft" : "ArrowRight");
+    if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = enabled.length - 1;
+    else if (backward || forward) {
+      const offset = index + (backward ? -1 : 1);
+      next = loop
+        ? (offset + enabled.length) % enabled.length
+        : Math.max(0, Math.min(enabled.length - 1, offset));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      return;
+    } else if (event.key === " ") {
+      event.preventDefault();
+      if (!event.repeat) activate(value);
+      return;
+    } else return;
+    event.preventDefault();
+    if (next >= 0 && enabled[next]) {
+      buttons.current.get(enabled[next].value)?.focus();
+      activate(enabled[next].value);
+    }
+  }
+  const tabValue =
+    options.find(
+      (option) => option.value === selected && !disabled && !option.disabled,
+    )?.value ?? options.find((option) => !disabled && !option.disabled)?.value;
+  if (destroyed) return null;
+  return (
+    <div
+      {...props}
+      dir={dir}
+      role="radiogroup"
+      aria-label={props["aria-label"] ?? ariaLabel ?? label}
+      aria-orientation={orientationValue}
+      aria-required={required || undefined}
+      aria-disabled={disabled || undefined}
+      data-orientation={orientationValue}
+      className={cx("mf-radio-group", className)}
+      ref={(node) => {
+        root.current = node;
+        if (!node) {
+          setRef(ref, null);
+          return;
+        }
+        const handle = node as RadioGroupHandle;
+        const disableGroup = (value: boolean) => {
+          if (!alive.current) return handle;
+          latest.current.disabled = value;
+          for (const item of latest.current.options) {
+            const disabled = value || !!item.disabled;
+            const input = inputs.current.get(item.value),
+              button = buttons.current.get(item.value);
+            if (input) input.disabled = disabled;
+            if (button) button.disabled = disabled;
+          }
+          setOverrides((previous) => ({ ...previous, disabled: value }));
+          return handle;
+        };
+        const disableOption = (value: string, disabled: boolean) => {
+          if (!alive.current) return handle;
+          const next = latest.current.options.map((option) =>
+            option.value === value ? { ...option, disabled } : option,
+          );
+          mutateOptions(next);
+          const input = inputs.current.get(value),
+            button = buttons.current.get(value);
+          if (input) input.disabled = disabled || !!latest.current.disabled;
+          if (button) button.disabled = disabled || !!latest.current.disabled;
+          return handle;
+        };
+        Object.assign(handle, {
+          getValue: () => latest.current.selected || null,
+          getSelected: () =>
+            latest.current.options.find(
+              (option) => option.value === latest.current.selected,
+            ) ?? null,
+          setValue: (value: string | null) => {
+            apply(value);
+            return handle;
+          },
+          getClass: (name: string) =>
+            (
+              ({
+                radios: "mf-radio-group",
+                item: "mf-choice",
+                input: "mf-radio-native",
+                label: "mf-radio-item-label",
+                control: "mf-radio",
+                circle: "mf-radio-center",
+                text: "mf-radio-label",
+              }) as Record<string, string>
+            )[name] ?? `mf-radio-${name}`,
+          addOption: (option: RadioOptionConfig) => {
+            if (alive.current)
+              mutateOptions([...latest.current.options, option]);
+            return handle;
+          },
+          removeOption: (value: string) => {
+            if (alive.current)
+              mutateOptions(
+                latest.current.options.filter(
+                  (option) => option.value !== value,
+                ),
+              );
+            return handle;
+          },
+          enable: () => disableGroup(false),
+          disable: () => disableGroup(true),
+          isDisabled: () => !!latest.current.disabled,
+          enableOption: (value: string) => disableOption(value, false),
+          disableOption: (value: string) => disableOption(value, true),
+          on: (_name: "change", callback: RadiosEvents["change"]) => {
+            if (alive.current) listeners.current.add(callback);
+            return handle;
+          },
+          off: (_name: "change", callback: RadiosEvents["change"]) => {
+            listeners.current.delete(callback);
+            return handle;
+          },
+          destroy,
+        });
+        Object.defineProperties(handle, {
+          element: { get: () => node, configurable: true },
+          lifecycle: { get: () => ({ destroy }), configurable: true },
+          radios: {
+            get: () =>
+              latest.current.options.flatMap((config) => {
+                const input = inputs.current.get(config.value),
+                  label = labels.current.get(config.value);
+                return input && label
+                  ? [
+                      {
+                        element: label,
+                        input,
+                        label,
+                        config,
+                        destroy: () => handle.removeOption(config.value),
+                      },
+                    ]
+                  : [];
+              }),
+            configurable: true,
+          },
+        });
+        setRef(ref, handle);
+      }}
+    >
+      {options.map((option, index) => (
+        <label
+          key={option.value}
+          ref={(node) => {
+            if (node) labels.current.set(option.value, node);
+            else labels.current.delete(option.value);
           }}
-          onPointerDown={(e) => {
-            onPointerDown?.(e);
+          className="mf-choice mf-radio-item-label"
+          data-label-position={
+            option.labelBefore === undefined
+              ? labelPosition
+              : option.labelBefore
+                ? "start"
+                : "end"
+          }
+          onClick={(event) => {
             if (
-              e.defaultPrevented ||
-              disabled ||
-              !e.isPrimary ||
-              e.button !== 0
+              !(event.target as Element).closest(
+                "button,input,a,select,textarea",
+              )
+            ) {
+              event.preventDefault();
+              activate(option.value);
+            }
+          }}
+          onPointerDown={(event) => {
+            const interactive = (event.target as Element).closest(
+              "a,button,input,select,textarea",
+            );
+            if (
+              interactive &&
+              interactive !== buttons.current.get(option.value)
             )
               return;
-            suppressClick.current = false;
-            setPressing(true);
-            pointer.current = {
-              id: e.pointerId,
-              start: e.clientX,
-              last: e.clientX,
-              moved: false,
-              base: active ? travel : 0,
-            };
-            e.currentTarget.setPointerCapture(e.pointerId);
+            if (
+              event.button === 0 &&
+              !disabled &&
+              !option.disabled &&
+              !inputs.current.get(option.value)?.matches(":disabled")
+            )
+              setPreview(option.value);
           }}
-          onPointerMove={(e) => {
-            onPointerMove?.(e);
-            if (pointer.current?.id === e.pointerId) {
-              pointer.current.last = e.clientX;
-              pointer.current.moved ||=
-                Math.abs(e.clientX - pointer.current.start) > 7;
-              if (pointer.current.moved)
-                setDragPosition(position(pointer.current));
+          onPointerUp={(event) => {
+            if (event.button === 0 && preview === option.value) {
+              activate(option.value);
+              setPreview(null);
             }
           }}
-          onPointerUp={(e) => {
-            onPointerUp?.(e);
-            stop(e.currentTarget, false);
-          }}
-          onPointerCancel={(e) => {
-            onPointerCancel?.(e);
-            stop(e.currentTarget, true);
-          }}
-          onLostPointerCapture={() => {
-            pointer.current = null;
-            setDragPosition(null);
-            setPressing(false);
-          }}
+          onPointerCancel={() => setPreview(null)}
         >
-          <motion.span
-            className="mf-switch-thumb"
-            animate={{
-              x:
-                (dragPosition === null
-                  ? (active ? travel : 0) +
-                    (pressing ? (active ? -1 : 1) * travel * 0.18 : 0)
-                  : dragPosition >= travel / 2
-                    ? travel
-                    : 0) * (dir === "rtl" ? -1 : 1),
+          <button
+            type="button"
+            value={option.value}
+            form={form}
+            ref={(node) => {
+              if (node) buttons.current.set(option.value, node);
+              else buttons.current.delete(option.value);
             }}
-            transition={
-              mode === "expressive" && !reducedMotion
-                ? { duration: 0.14, ease: [0.2, 0.65, 0.3, 1] }
-                : { duration: 0 }
+            role="radio"
+            aria-checked={selected === option.value}
+            aria-label={option.ariaLabel}
+            aria-labelledby={
+              option.ariaLabel ? undefined : `${generated}-${index}-label`
             }
+            disabled={disabled || option.disabled}
+            tabIndex={option.value === tabValue ? 0 : -1}
+            className="mf-radio"
+            data-state={selected === option.value ? "checked" : "unchecked"}
+            onClick={(event) => {
+              event.preventDefault();
+              activate(option.value);
+            }}
+            onKeyDown={(event) => keydown(event, option.value)}
           >
-            {languageLabels ? (
-              <motion.span
-                key={active ? "on" : "off"}
-                className="mf-switch-language"
-                dir="auto"
-                initial={
-                  mode === "expressive" && !reducedMotion
-                    ? { opacity: 0, scale: 0.75 }
-                    : false
+            <span className="mf-radio-dot">
+              <ChoiceFill
+                radio
+                active={selected === option.value || preview === option.value}
+                radioPreview={
+                  preview !== null && preview !== selected
+                    ? preview === option.value
+                      ? "incoming"
+                      : selected === option.value
+                        ? "outgoing"
+                        : undefined
+                    : undefined
                 }
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.16 }}
-              >
-                {active ? languageLabels.on : languageLabels.off}
-              </motion.span>
-            ) : icon && icon !== "wifi" && icon !== "bluetooth" ? (
-              <SwitchIcon
-                name={icon}
-                active={active}
-                animated={mode === "expressive" && !reducedMotion}
               />
-            ) : icon ? (
-              <AnimatedIcon
-                name={active ? icon : `${icon}-off`}
-                animateOnMount
-                animated
-                active={active}
-                size={18}
-              />
-            ) : (
-              active && <AnimatedIcon name="check" size={14} />
-            )}
-          </motion.span>
-        </button>
-        <span>{label}</span>
-        {name && (
+            </span>
+          </button>
           <input
-            type="checkbox"
-            className="mf-sr"
-            tabIndex={-1}
+            className="mf-checkbox-native mf-radio-native"
+            type="radio"
             aria-hidden="true"
-            name={name}
-            value={value}
-            checked={active}
-            disabled={disabled}
-            readOnly
+            tabIndex={-1}
+            name={name || generated}
+            value={option.value}
+            form={form}
+            required={required}
+            disabled={disabled || option.disabled}
+            defaultChecked={initial.current === option.value}
+            ref={(node) => {
+              if (node) inputs.current.set(option.value, node);
+              else inputs.current.delete(option.value);
+            }}
+            onInvalid={(event) => {
+              event.preventDefault();
+              const first = latest.current.options.find(
+                (item) => !inputs.current.get(item.value)?.matches(":disabled"),
+              );
+              if (first) buttons.current.get(first.value)?.focus();
+            }}
           />
-        )}
-      </label>
-    );
-  },
-);
+          <span id={`${generated}-${index}-label`} className="mf-radio-label">
+            {option.label}
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+});
+export const RadioGroup: React.ForwardRefExoticComponent<
+  RadioGroupProps & React.RefAttributes<HTMLDivElement>
+> = RadioGroupImpl;
+export interface RadiosProps extends Omit<RadioGroupProps, "onValueChange"> {
+  onValueChange?: (value: string | null) => void;
+}
+/** Reference-compatible alias; existing RadioGroup keeps its horizontal default. */
+export const Radios = forwardRef<HTMLDivElement, RadiosProps>(function Radios(
+  { onValueChange, ...props },
+  ref,
+) {
+  return (
+    <RadioGroupImpl
+      {...props}
+      onNullableValueChange={onValueChange}
+      onKeyDownCapture={(event) => {
+        props.onKeyDownCapture?.(event);
+        if (event.defaultPrevented || event.key !== "Enter") return;
+        const button = (event.target as Element).closest<HTMLButtonElement>(
+          'button[role="radio"]',
+        );
+        if (!button) return;
+        event.preventDefault();
+        if (event.repeat) return;
+        const form = button.form;
+        if (!form) return;
+        const submitter = Array.from(form.elements).find(
+          (element) =>
+            (element instanceof HTMLButtonElement &&
+              element.type === "submit") ||
+            (element instanceof HTMLInputElement &&
+              ["submit", "image"].includes(element.type)),
+        ) as HTMLButtonElement | HTMLInputElement | undefined;
+        if (submitter?.matches(":disabled")) return;
+        form.requestSubmit(submitter);
+      }}
+      direction={props.direction ?? props.orientation ?? "vertical"}
+      ref={ref}
+    />
+  );
+});
+export {Switch,type SwitchProps,type SwitchHandle,type SwitchChangePayload,type SwitchEvents,type SwitchTapPayload,type SwitchSwipePayload} from './switch';
 export interface SliderProps
   extends
     Slide.SliderProps,

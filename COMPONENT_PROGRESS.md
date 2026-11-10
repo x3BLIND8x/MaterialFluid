@@ -14,9 +14,9 @@ Reference: https://md3.io/components/ . Work proceeds in reference order, comple
 
 ## Selection and input
 
-- [ ] Checkbox — **in progress: source state, form and parent/child cases**.
-- [ ] Switch.
-- [ ] Radio buttons.
+- [x] Checkbox - shared state/form/API, parent/child examples, React/Web recipes and validated package/browser support; see reports/checkbox-2026-11-10/REVIEW.md.
+- [x] Switch - shared API, help/error/forms, icons, both recipes and verified browser/package support; see reports/switch-2026-11-10/REVIEW.md.
+- [x] Radio buttons - shared API, native forms, declarations, dynamic options, both recipes and verified browser/package support; see reports/radios-2026-11-10/REVIEW.md.
 - [ ] Chips.
 - [ ] Slider.
 - [ ] Text field.

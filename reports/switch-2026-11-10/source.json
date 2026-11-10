@@ -1,0 +1,84 @@
+{
+  "reference": "https://md3.io/components/switch/",
+  "source": [
+    {
+      "url": "https://github.com/floor/material/blob/main/scripts/check-switch-transition.ts",
+      "sha256": "e1f00edc5880873c3474662928c2f48a92f04a91667b5983ea834d7d7e58b861"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/scripts/fixtures/switch-factory.ts",
+      "sha256": "3a7dc86384a3c91afbdd40394eb0371a6692ba9905a4eab2dac65e9fa436e5c4"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/api.ts",
+      "sha256": "e9d04e04403b40051c27241664cf69d325336cfcd7f0a8304e9985b7ce9805ef"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/config.ts",
+      "sha256": "51408f36afa5e7adafc01ae9cfb3c025072c3d8f0af6b459fd128f3a886a6ff5"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/constants.ts",
+      "sha256": "f1a0070b2388bbfce805c0fe2aa28bf4a0f0cd8dd8768732ba54b713c157888d"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/features.ts",
+      "sha256": "57aa058ca0b6c416a79ac5caffc0ea4e592e7b57c9fd300da0e6132c51d25bd1"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/index.ts",
+      "sha256": "36df885b51e308dca1cd8957dac3758900a55c6e7c38c0485e38e01412db5e59"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/switch.ts",
+      "sha256": "43d5a4f68de008b8f44109abc6e64ba3e9a8b31d9bb6ccfa6b754d3a7e9d1290"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/switch/types.ts",
+      "sha256": "b4527a43383c99d2bfd885d57d704841f91988a1fd8bd14fd1c58581f178902c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/switch.ts",
+      "sha256": "a81c958b5fa7a35ad0c90e9bfeea19c8abc27c49d9700e581debd168ad210e26"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/switch.ts",
+      "sha256": "66ab59690868b8b5175c9edbc296b13f634e5fc253fce91f3c13093fb408c7bf"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/switch.ts",
+      "sha256": "fea4315d81a4f30a96927b534b0bc0b6fbd4f965c06b7762c45cc22705bed26b"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/components/_switch.scss",
+      "sha256": "a73a4fc943f4fc12f6b2248b064cb417ad4f9af2287455485515f5ae7e2e3331"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/elements/_switch.scss",
+      "sha256": "3ee84537bf8f1c9dfabc3f1efca23e5b0049066ac9698878a00f9a6b034f8c28"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/switch.ts",
+      "sha256": "bce4ae1da1563b941d8dbb3abf5c499400c3ccf050af8854fda585cd9f6a3243"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/switch/switch.test.ts",
+      "sha256": "87784a095efd417b1d4c96e24a857e3f2556efa278d12fcc59bc13ee2e3900d1"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/styles/switch.test.ts",
+      "sha256": "aacad92117936c8abd59804dba98b85f90181077aa5e3bc4a91a0d28744e71bd"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/types/switch-events.fixture.ts",
+      "sha256": "973dc8d213884778af121b0ecf4cb4abba91c811405e75381a8cb2e2287f16b1"
+    }
+  ],
+  "decisions": [
+    "The reference page and docs could not be fetched; inspected authoritative source, adapters, styles and tests instead.",
+    "Native user changes carry the original change event; model setters are silent, following current implementation/tests.",
+    "Preserve MaterialFluid end-label default, owner sizes/colors, legacy icons, drag behavior and finite motion.",
+    "Reference prefix/componentName/controlLabelOnly are implementation details; the wrapper does not acquire a redundant accessible name.",
+    "Use catalogue names or ReactNode artwork rather than unsanitized icon HTML; optional full catalogue registration is preserved."
+  ]
+}

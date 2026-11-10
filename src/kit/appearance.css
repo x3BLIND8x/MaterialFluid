@@ -2241,7 +2241,22 @@ mf-button > .mf-root, mf-icon-button > .mf-root { display: contents; }
 .mf-root .mf-checkbox-native {position:absolute;width:1px;height:1px;padding:0;opacity:0;pointer-events:none;}
 .mf-root .mf-choice[data-error] .mf-checkbox {--mf-outline:var(--mf-error);--mf-primary-fill:var(--mf-error);--mf-on-primary-fill:var(--mf-on-error);--mf-primary:var(--mf-error);border-color:var(--mf-error);color:var(--mf-on-error);}
 .mf-root .mf-choice[data-error] .mf-checkbox .mf-choice-fill {background:var(--mf-error);}
+.mf-choice[data-switch] {position:relative;}
+.mf-choice[data-switch][data-label-position="start"] {flex-direction:row-reverse;}
+.mf-switch-content {display:flex;flex-direction:column;gap:4px;min-width:0;}
+.mf-switch-glyph {grid-area:1 / 1;display:grid;place-items:center;--mf-switch-glyph-size:16px;}
+.mf-scale--sm .mf-switch-glyph {--mf-switch-glyph-size:12px;}
+.mf-scale--lg .mf-switch-glyph {--mf-switch-glyph-size:20px;}
+.mf-switch-glyph :is(svg,.mf-animated-icon) {width:var(--mf-switch-glyph-size)!important;height:var(--mf-switch-glyph-size)!important;}
+.mf-switch-supporting {font-size:.85em;color:var(--mf-on-surface-variant);font-weight:400;}
+.mf-root .mf-choice[data-switch][data-error] {--mf-primary:var(--mf-error);--mf-on-primary:var(--mf-on-error);--mf-primary-fill:var(--mf-error);--mf-on-primary-fill:var(--mf-on-error);--mf-palette-primary-fill:var(--mf-error);--mf-palette-on-primary-fill:var(--mf-on-error);--mf-outline:var(--mf-error);--mf-outline-stroke:var(--mf-error);}
+.mf-choice[data-switch][data-error] .mf-switch-supporting {color:var(--mf-error);}
+@media (pointer:coarse) {.mf-choice[data-switch] {min-height:48px;min-width:48px;}}
 .mf-root .mf-choice .mf-checkbox {position:relative;}
 @media(pointer:coarse){.mf-root .mf-choice .mf-checkbox::after {content:"";position:absolute;inset:50% auto auto 50%;width:48px;height:48px;transform:translate(-50%,-50%);}}
 
 @media(pointer:coarse){.mf-root .mf-choice[data-checkbox]{min-width:48px;min-height:48px;}}
+.mf-radio-group[data-orientation="vertical"] {flex-direction:column;align-items:flex-start;}
+:where(.mf-radios-host) {display:block;}
+.mf-radio-group .mf-choice {position:relative;}
+@media(pointer:coarse){.mf-radio-group .mf-choice {min-height:48px;min-width:48px;}}

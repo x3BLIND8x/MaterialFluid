@@ -1,0 +1,23 @@
+# Switch reference additions, 2026-11-10
+
+The reference page/docs could not be fetched in this run. Reviewed authoritative Floor Material switch source, API, config, supporting-text features, React/Web adapters, styles and tests instead. Exact source URLs and SHA-256 hashes are retained in source.json; the MIT notice remains in licenses/floor-material-MIT.txt.
+
+The shared Switch now supports optional rich label/children or ariaLabel, start/end label placement, independent selected/unselected glyphs, supporting text, independent error state, required/native forms, external form ownership and default-state reset. Existing native button refs, three owner sizes, end-label default, connection/state/language treatments, RTL drag/cancel interaction and owner colors remain compatible. Handle travel uses the authored finite press curve; glyph dimensions follow component size and custom glyph changes fade. No Square, Elevated, independent icon-size or public timing/animation controls were added.
+
+SwitchHandle exposes the real input, root and live supporting-text node, checked/value-token methods, labels/help/error, enable/disable, focus/blur/change/tap/swipe subscriptions and destruction. Model setters are silent; native activation emits checked, boolean value, HTML valueAttribute and the original native change event. Replacing/removing help does not clear error. Space and Enter toggle once, with repeat guards. The native button ref retains its usual DOM methods and the typed extension remains optional.
+
+The optional mf-switch preserves original rich label nodes and default/live checked state, emits one CustomEvent change, integrates real native form values/required/reset behavior, and supports quiet methods, attributes, icons, language labels, lifecycle and reconnection. Icon content uses named catalogue glyphs or ReactNode artwork instead of unsanitized source HTML.
+
+Configuration contains Example Presets, Appearance, Content and Behavior only; React/Web recipes, API and notes remain in Documentation. Custom glyph presets load the optional full catalogue when needed; icon selection covers all 4,322 names. The 45-entry visible catalogue is unchanged.
+
+Evidence:
+
+- Full unit suite: 245 tests in 19 files passed with a 15-second runner timeout. The initial 5-second run passed 243 and timed out in existing palette/calendar cases under simultaneous build/browser load. No assertions were removed. Eight Switch-specific cases cover refs, native events/forms, setters, descriptions/error persistence, glyphs, controlled state, keyboard, cleanup and recipe generation.
+- Root typecheck and full lint passed; production showcase/library builds and fresh declarations/assets passed. The final color-only correction was rebuilt and checked in all four browser matrices. Final incremental root verification is recorded in VALIDATION.md.
+- Installed-package smoke passed 85 exports/SSR (including Switch error/help/form rendering), foundation namespace/35 shapes, server-safe optional elements, full icons and assets. Consumer compilation passed all 45 default and 45 size recipes, 24 Switch cases and the existing component/compatibility fixtures, including native refs, method/payload typing and excluded APIs. Both recipe formats were generated; this is not a claim that every generated HTML document was executed.
+- Eleven production Edge cases passed: five existing catalogue checks, four Switch locale/theme/viewport matrices, drag/required/reset/full-icon behavior and coarse-pointer activation/48px targets. The final four matrices passed again with explicit semantic error-border and error/helper axe checks. The separate Web Component case passed source events, quiet setters, dirty defaults, forms, rich labels, focus, normalized tap/swipe, errors, disabled state and lifecycle.
+- Desktop/narrow captures were reviewed. Later viewport checks confirmed the apparent skip-link overlap in the initial full-page captures was a capture artifact at nonzero scroll, rather than an observed live layout defect. See reports/radios-2026-11-10/shell-capture-probe.json.
+
+Limits: local Edge/axe/keyboard automation does not establish other browser engines, physical-device or manual screen-reader acceptance. Existing optional-icon/application chunk warnings remain. This is a component adaptation, not a new Git release.
+
+Final confirmation: incremental root typecheck passed against the final source. The final four Switch matrices passed semantic error-border and error/helper axe assertions; final installed-package smoke and 24 Switch consumer recipes passed against the rebuilt assets. Full lint and final targeted lint/whitespace checks passed. The existing development server was preserved; only the owned preview was stopped.

@@ -1,0 +1,98 @@
+{
+  "reference": "https://md3.io/components/radios/",
+  "tree": "ee6884c144a5198f8a41cbb4771ad6800992d576",
+  "source": [
+    {
+      "url": "https://github.com/floor/material/blob/main/scripts/check-radios-layout.ts",
+      "sha256": "25974339e68e27d6c26904ba5b278669a53d9ecb8b0eb8a25765418894c20639"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/api.ts",
+      "sha256": "ea396d0a34cfa6b5f1107e401635014f73030fb8d6d0c12e06079fcc8f7917ab"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/config.ts",
+      "sha256": "1376729eec95d2c77b08b9bfafeec1789fa96c0bfa443951d45fdec940c50deb"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/constants.ts",
+      "sha256": "8f28bc96a26fc42e14b1daef41db4cb69b63273cbf66a3904aeec4d52c247fcd"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/index.ts",
+      "sha256": "00514f5f02cbfc7ff2941694c6ca3982f2235c1d7fc68742023d85a75cbe8ea1"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/radio.ts",
+      "sha256": "1ca1ee021b47ad5f6018ca3aa6234c8cdb09cccfa561ba91289eddad7fc5bcd2"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/radios.ts",
+      "sha256": "ec1320a555a5cdd8ee740742e653225faf98559d42f8a92c131ce1277012933e"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/components/radios/types.ts",
+      "sha256": "5bb8bdbce521ca398d85af4d60c9f45d72de157780e15fb8858e3d0973e03211"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/elements/radios.ts",
+      "sha256": "a08aff65bdd4bf0c4c0ea5cc061df891ff2890eb87012be88735b3d3d4191704"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/radio.ts",
+      "sha256": "7a6b854d24d7b9bbdc194607b6f08c3913e85d0a2085c60becb2fce59a02fe40"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/react/radios.ts",
+      "sha256": "92dfb529df94831dad46a4b4a89415adaaa579d0a0d0619d79b0af22867e63d4"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/radio.ts",
+      "sha256": "3d30dbf33e4d4927f6d485feab35f5fd425967b599a4569f923091321ca16031"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/solid/radios.ts",
+      "sha256": "b5ddf094e061378fe6cb6fd135b2651c9458676aa4906eb6c492294748c5d721"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/components/_radios.scss",
+      "sha256": "277d1da3dde968b7d5b722fd2b457c1e21d0c1a968a6530e296bec0f186e246c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/styles/elements/_radios.scss",
+      "sha256": "584a9b4c24385c74ffe26d8630a641dbdcdcb5871aef1f09eabe1d457ddfc25c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/radio.ts",
+      "sha256": "82d37de58e8074ffcee6366b98ea0dc884f1750bb15da829a1545213a2e728eb"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/src/vue/radios.ts",
+      "sha256": "8ea0c8ea59f40f79044acdf146d11e95e477401e31bb08a5ba2c7a1d37c700ce"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/event-value-time-select-radio.test.ts",
+      "sha256": "9fb3df2a2aab310bcdd5f1530cb9c12c5d0c0063c2d42664463dfddc002ce1c9"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/components/radios/radios.test.ts",
+      "sha256": "0e7fead9c9282ba137033dcd15c7bb5ecb55bfff48baf714b847e277aa3ebdb2"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/types/radios-events.fixture.ts",
+      "sha256": "a07a95845cf062d0c5148c4997215b0bb50959d1762a2ccfeb66f59462c43c4c"
+    },
+    {
+      "url": "https://github.com/floor/material/blob/main/test/types/time-select-radio-elements.fixture.ts",
+      "sha256": "c242b484db795d75730fa0b36aded8a268ae6c40fa9885851c2777b284bd5f6a"
+    }
+  ],
+  "decisions": [
+    "Keep owner colors, three sizes, ChoiceFill finite press/selection motion and legacy RadioGroup horizontal default.",
+    "The source-compatible Radios alias defaults to vertical and provides nullable model updates; RadioGroup retains its string callback for compatibility.",
+    "Current source setters and option mutations are silent; native change carries value, option and the original Event.",
+    "Use named native inputs with visible button proxies to retain owner native button interaction and provide actual form validation/values.",
+    "No source ripple/prefix/componentName tuning, Square or Elevated controls are exposed.",
+    "Radio indicators are semantic circles, so no arbitrary indicator icon API or picker is introduced."
+  ]
+}
